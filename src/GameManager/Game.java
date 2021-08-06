@@ -11,6 +11,7 @@ public class Game {
     BoardState board;
     List<Move> movesPlayed;
     Scanner input;
+    String currentMove;
 
     private static final String startFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 
@@ -29,7 +30,10 @@ public class Game {
     public void playGame() {
         while(true) {
             board.printBoard();
-            movesPlayed.add(board.makeMove(input.nextLine()));
+            while(!board.validateMove(currentMove)) {
+                currentMove = input.nextLine();
+            }
+            movesPlayed.add(board.makeMove(currentMove));
         }
     }
 }
