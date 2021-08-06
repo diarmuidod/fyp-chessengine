@@ -10,11 +10,13 @@ public class BoardState {
 
     public BoardState(String FEN) {
         squares = new int[64];
+        enPassantSquare = -1;
         loadPositionFromFEN(FEN);
     }
 
     //move format "e2e4"
     public Move makeMove(String move) {
+        //System.out.println("Debug - En Passant: " + enPassantSquare);
 
         int startSquare = (((move.charAt(0) - 97) - 8) + (move.charAt(1) - 48) * 8);
         int targetSquare = (((move.charAt(2) - 97) - 8) + (move.charAt(3) - 48) * 8);
@@ -35,29 +37,91 @@ public class BoardState {
         if(startSquare == targetSquare) return false;
         if(squares[startSquare] == Piece.NONE) return false;
 
-        if((squares[startSquare] & Piece.PAWN) == Piece.PAWN) return validatePawnKnightKing(Piece.PAWN);
-        if((squares[startSquare] & Piece.KNIGHT) == Piece.KNIGHT) return validatePawnKnightKing(Piece.KNIGHT);
-        if((squares[startSquare] & Piece.BISHOP) == Piece.BISHOP) return validatePawnKnightKing(Piece.BISHOP);
-        if((squares[startSquare] & Piece.ROOK) == Piece.ROOK) return validatePawnKnightKing(Piece.ROOK);
-        if((squares[startSquare] & Piece.QUEEN) == Piece.QUEEN) return validatePawnKnightKing(Piece.QUEEN);
-        if((squares[startSquare] & Piece.KING) == Piece.KING) return validatePawnKnightKing(Piece.KING);
+        if((squares[startSquare] & Piece.PAWN) == Piece.PAWN) return validatePawn(startSquare, targetSquare);
+        if((squares[startSquare] & Piece.KNIGHT) == Piece.KNIGHT) return validateKnight(startSquare, targetSquare);
+        if((squares[startSquare] & Piece.KING) == Piece.KING) return validateKing(startSquare, targetSquare);
+
+        if((squares[startSquare] & Piece.BISHOP) == Piece.BISHOP) return validateBishopRookQueen(Piece.BISHOP, startSquare, targetSquare);
+        if((squares[startSquare] & Piece.ROOK) == Piece.ROOK) return validateBishopRookQueen(Piece.ROOK, startSquare, targetSquare);
+        if((squares[startSquare] & Piece.QUEEN) == Piece.QUEEN) return validateBishopRookQueen(Piece.QUEEN, startSquare, targetSquare);
 
         return true;
     }
 
-    public boolean validatePawnKnightKing(int pieceType) {
-        switch(pieceType) {
-            case Piece.PAWN:
-                break;
-            case Piece.KNIGHT:
-                break;
-            case Piece.KING:
-                break;
+    public boolean validatePawn(int startSquare, int targetSquare) {
+        //Possible move offsets, ignoring caveats (I'll address promoting, pins, etc. later)
+        if((squares[startSquare] & Piece.WHITE) == Piece.WHITE) {
+            //White Pawn
+
+            //Move 1 space
+            if(targetSquare - startSquare == 8 && squares[targetSquare] == Piece.NONE) {
+                enPassantSquare = -1;
+                return true;
+            }
+
+            //Move 2 spaces
+            if(targetSquare - startSquare == 16 && squares[startSquare+8] == Piece.NONE && squares[targetSquare] == Piece.NONE
+                && (startSquare >= 8 && startSquare <= 15)) {
+                enPassantSquare = targetSquare - 8;
+                return true;
+            }
+
+            //En Passant
+            if(targetSquare == enPassantSquare && (targetSquare - startSquare == 7 || targetSquare - startSquare == 9)) {
+                squares[enPassantSquare - 8] = Piece.NONE;
+                enPassantSquare = -1;
+                return true;
+            }
+
+            //Capture
+            if(((squares[targetSquare] & Piece.BLACK) == Piece.BLACK) && (targetSquare - startSquare == 7 || targetSquare - startSquare == 9)) {
+                enPassantSquare = -1;
+                return true;
+            }
+        } else {
+            //Black Pawn
+
+            //Move 1 space
+            if(startSquare - targetSquare == 8 && squares[targetSquare] == Piece.NONE) {
+                enPassantSquare = -1;
+                return true;
+            }
+
+            //Move 2 spaces
+            if(startSquare - targetSquare == 16 && squares[startSquare-8] == Piece.NONE && squares[targetSquare] == Piece.NONE
+                    && (startSquare >= 48 && startSquare <= 55)) {
+                enPassantSquare = targetSquare + 8;
+                return true;
+            }
+
+            //En Passant
+            if(targetSquare == enPassantSquare && (targetSquare - startSquare == 7 || targetSquare - startSquare == 9)) {
+                squares[enPassantSquare + 8] = Piece.NONE;
+                enPassantSquare = -1;
+                return true;
+            }
+
+            //Capture
+            if(((squares[targetSquare] & Piece.WHITE) == Piece.WHITE) && (startSquare - targetSquare == 7 || startSquare - targetSquare == 9)) {
+                enPassantSquare = -1;
+                return true;
+            }
         }
+        return false;
+    }
+
+    public boolean validateKnight(int startSquare, int targetSquare) {
+
         return true;
     }
 
-    public boolean validateBishopRookQueen(int pieceType) {
+    public boolean validateKing(int startSquare, int targetSquare) {
+
+        return true;
+    }
+
+    //Very similar/overlapping moveset
+    public boolean validateBishopRookQueen(int pieceType, int startSquare, int targetSquare) {
         switch(pieceType) {
             case Piece.BISHOP:
                 break;
