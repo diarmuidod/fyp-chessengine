@@ -12,8 +12,10 @@ public class Game {
     List<Move> movesPlayed;
     Scanner input;
 
+    private static final String startFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+
     public Game() {
-        board = new BoardState("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        board = new BoardState(startFEN);
         movesPlayed = new LinkedList<>();
         input = new Scanner(System.in);
     }

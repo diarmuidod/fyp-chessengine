@@ -1,10 +1,10 @@
 package Board;
 
-import java.util.Dictionary;
-import java.util.Hashtable;
+import java.util.HashMap;
 
 public class BoardState {
-    public static int[] squares;
+    private static int[] squares;
+    private static boolean whiteToMove;
 
     public BoardState(String FEN) {
         squares = new int[64];
@@ -13,22 +13,20 @@ public class BoardState {
 
     //move format "e2e4"
     public Move makeMove(String move) {
-
         int startSquare = (((move.charAt(0) - 97) - 8) + (move.charAt(1) - 48) * 8);
         int targetSquare = (((move.charAt(2) - 97) - 8) + (move.charAt(3) - 48) * 8);
 
         System.out.println(startSquare);
         System.out.println(targetSquare);
 
-        int val = squares[startSquare];
-        squares[startSquare] = squares[targetSquare];
-        squares[targetSquare] = val;
+        squares[targetSquare] = squares[startSquare];
+        squares[startSquare] = Piece.NONE;
 
         return new Move(startSquare, targetSquare);
     }
 
     public void loadPositionFromFEN(String FEN) {
-        Dictionary<Character, Integer> pieceType = new Hashtable<>();
+        HashMap<Character, Integer> pieceType = new HashMap<>();
         pieceType.put('p', Piece.PAWN);
         pieceType.put('n', Piece.KNIGHT);
         pieceType.put('b', Piece.BISHOP);
@@ -37,8 +35,7 @@ public class BoardState {
         pieceType.put('k', Piece.KING);
 
         String FENtoBoard = FEN.split(" ", 2)[0];
-        int file = 0, rank = 7, type = 0, colour = 0;
-
+        int file = 0, rank = 7, type, colour;
 
         for (int i = 0; i < FENtoBoard.length(); i++) {
             char symbol = FENtoBoard.charAt(i);

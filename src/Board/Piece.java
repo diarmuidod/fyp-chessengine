@@ -1,5 +1,7 @@
 package Board;
 
+import java.util.HashMap;
+
 public class Piece {
     public static final int NONE = 0;
     public static final int PAWN = 1;
@@ -11,22 +13,12 @@ public class Piece {
     public static final int WHITE = 8;
     public static final int BLACK = 16;
 
-    //Don't hate me, I'll fix it later
+    public static final HashMap<Integer, Character> pieceSymbolMap = new HashMap<Integer, Character>()
+            {{ put(WHITE | PAWN, 'P');  put(WHITE | KNIGHT, 'N'); put(WHITE | BISHOP, 'B'); put(WHITE | ROOK, 'R'); put(WHITE | QUEEN, 'Q'); put(WHITE | KING, 'K');
+               put(BLACK | PAWN, 'p');  put(BLACK | KNIGHT, 'n'); put(BLACK | BISHOP, 'b'); put(BLACK | ROOK, 'r'); put(BLACK | QUEEN, 'q'); put(BLACK | KING, 'k');
+               put(NONE, ' '); }};
+
     public static char getPieceSymbol(int pieceValue) {
-        if(pieceValue == (WHITE | PAWN)) return 'P';
-        if(pieceValue == (WHITE | KNIGHT)) return 'N';
-        if(pieceValue == (WHITE | BISHOP)) return 'B';
-        if(pieceValue == (WHITE | ROOK)) return 'R';
-        if(pieceValue == (WHITE | QUEEN)) return 'Q';
-        if(pieceValue == (WHITE | KING)) return 'K';
-
-        if(pieceValue == (BLACK | PAWN)) return 'p';
-        if(pieceValue == (BLACK | KNIGHT)) return 'n';
-        if(pieceValue == (BLACK | BISHOP)) return 'b';
-        if(pieceValue == (BLACK | ROOK)) return 'r';
-        if(pieceValue == (BLACK | QUEEN)) return 'q';
-        if(pieceValue == (BLACK | KING)) return 'k';
-
-        return ' ';
+        return pieceSymbolMap.get(pieceValue);
     }
 }
