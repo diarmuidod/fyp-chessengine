@@ -28,12 +28,6 @@ public class Game {
     }
 
     public void playGame() {
-        while(true) {
-            board.printBoard();
-            while(!board.validateMove(currentMove)) {
-                currentMove = input.nextLine();
-            }
-            movesPlayed.add(board.makeMove(currentMove));
-        }
+
     }
 }

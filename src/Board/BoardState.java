@@ -3,175 +3,32 @@ package Board;
 import java.util.HashMap;
 
 public class BoardState {
-    private static int[] squares;
+    private BitBoard board;
     private static int enPassantSquare;
     private static boolean whiteToMove;
-    private static String moveRegex = "[a-hA-H][1-8][a-hA-H][1-8]";
+    private static String moveRegex = "[a-hA-H][1-8][a-hA-H][1-8]"; //move format - e2e4, e7e5, etc.
 
-    public BoardState(String FEN) {
-        squares = new int[64];
+    public BoardState() {
         enPassantSquare = -1;
-        loadPositionFromFEN(FEN);
+        board = new BitBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+        whiteToMove = true;
     }
 
-    //move format "e2e4"
+    public BoardState(String FEN) {
+        enPassantSquare = -1;
+        board = new BitBoard(FEN);
+        whiteToMove = FEN.split(" ", 2)[1].charAt(0) == 'w';
+    }
+
     public Move makeMove(String move) {
         //System.out.println("Debug - En Passant: " + enPassantSquare);
 
         int startSquare = (((move.charAt(0) - 97) - 8) + (move.charAt(1) - 48) * 8);
         int targetSquare = (((move.charAt(2) - 97) - 8) + (move.charAt(3) - 48) * 8);
 
-        squares[targetSquare] = squares[startSquare];
-        squares[startSquare] = Piece.NONE;
+        //squares[targetSquare] = squares[startSquare];
+        //squares[startSquare] = Piece.NONE;
 
         return new Move(startSquare, targetSquare);
-    }
-
-    public boolean validateMove(String moveToValidate) {
-        if(moveToValidate == null) return false;
-        if(!moveToValidate.matches("[a-hA-H][1-8][a-hA-H][1-8]")) return false;
-
-        int startSquare = (((moveToValidate.charAt(0) - 97) - 8) + (moveToValidate.charAt(1) - 48) * 8);
-        int targetSquare = (((moveToValidate.charAt(2) - 97) - 8) + (moveToValidate.charAt(3) - 48) * 8);
-
-        if(startSquare == targetSquare) return false;
-        if(squares[startSquare] == Piece.NONE) return false;
-
-        if((squares[startSquare] & Piece.PAWN) == Piece.PAWN) return validatePawn(startSquare, targetSquare);
-        if((squares[startSquare] & Piece.KNIGHT) == Piece.KNIGHT) return validateKnight(startSquare, targetSquare);
-        if((squares[startSquare] & Piece.KING) == Piece.KING) return validateKing(startSquare, targetSquare);
-
-        if((squares[startSquare] & Piece.BISHOP) == Piece.BISHOP) return validateBishopRookQueen(Piece.BISHOP, startSquare, targetSquare);
-        if((squares[startSquare] & Piece.ROOK) == Piece.ROOK) return validateBishopRookQueen(Piece.ROOK, startSquare, targetSquare);
-        if((squares[startSquare] & Piece.QUEEN) == Piece.QUEEN) return validateBishopRookQueen(Piece.QUEEN, startSquare, targetSquare);
-
-        return true;
-    }
-
-    public boolean validatePawn(int startSquare, int targetSquare) {
-        //Possible move offsets, ignoring caveats (I'll address promoting, pins, etc. later)
-        if((squares[startSquare] & Piece.WHITE) == Piece.WHITE) {
-            //White Pawn
-
-            //Move 1 space
-            if(targetSquare - startSquare == 8 && squares[targetSquare] == Piece.NONE) {
-                enPassantSquare = -1;
-                return true;
-            }
-
-            //Move 2 spaces
-            if(targetSquare - startSquare == 16 && squares[startSquare+8] == Piece.NONE && squares[targetSquare] == Piece.NONE
-                && (startSquare >= 8 && startSquare <= 15)) {
-                enPassantSquare = targetSquare - 8;
-                return true;
-            }
-
-            //En Passant
-            if(targetSquare == enPassantSquare && (targetSquare - startSquare == 7 || targetSquare - startSquare == 9)) {
-                squares[enPassantSquare - 8] = Piece.NONE;
-                enPassantSquare = -1;
-                return true;
-            }
-
-            //Capture
-            if(((squares[targetSquare] & Piece.BLACK) == Piece.BLACK) && (targetSquare - startSquare == 7 || targetSquare - startSquare == 9)) {
-                enPassantSquare = -1;
-                return true;
-            }
-        } else {
-            //Black Pawn
-
-            //Move 1 space
-            if(startSquare - targetSquare == 8 && squares[targetSquare] == Piece.NONE) {
-                enPassantSquare = -1;
-                return true;
-            }
-
-            //Move 2 spaces
-            if(startSquare - targetSquare == 16 && squares[startSquare-8] == Piece.NONE && squares[targetSquare] == Piece.NONE
-                    && (startSquare >= 48 && startSquare <= 55)) {
-                enPassantSquare = targetSquare + 8;
-                return true;
-            }
-
-            //En Passant
-            if(targetSquare == enPassantSquare && (targetSquare - startSquare == 7 || targetSquare - startSquare == 9)) {
-                squares[enPassantSquare + 8] = Piece.NONE;
-                enPassantSquare = -1;
-                return true;
-            }
-
-            //Capture
-            if(((squares[targetSquare] & Piece.WHITE) == Piece.WHITE) && (startSquare - targetSquare == 7 || startSquare - targetSquare == 9)) {
-                enPassantSquare = -1;
-                return true;
-            }
-        }
-        return false;
-    }
-
-    public boolean validateKnight(int startSquare, int targetSquare) {
-
-        return true;
-    }
-
-    public boolean validateKing(int startSquare, int targetSquare) {
-
-        return true;
-    }
-
-    //Very similar/overlapping moveset
-    public boolean validateBishopRookQueen(int pieceType, int startSquare, int targetSquare) {
-        switch(pieceType) {
-            case Piece.BISHOP:
-                break;
-            case Piece.ROOK:
-                break;
-            case Piece.QUEEN:
-                break;
-        }
-        return true;
-    }
-
-    public void loadPositionFromFEN(String FEN) {
-        HashMap<Character, Integer> pieceType = new HashMap<>();
-        pieceType.put('p', Piece.PAWN);
-        pieceType.put('n', Piece.KNIGHT);
-        pieceType.put('b', Piece.BISHOP);
-        pieceType.put('r', Piece.ROOK);
-        pieceType.put('q', Piece.QUEEN);
-        pieceType.put('k', Piece.KING);
-
-        String FENtoBoard = FEN.split(" ", 2)[0];
-        int file = 0, rank = 7, type, colour;
-
-        for (int i = 0; i < FENtoBoard.length(); i++) {
-            char symbol = FENtoBoard.charAt(i);
-            if(symbol == '/') {
-                file = 0;
-                rank--;
-            } else {
-                if(Character.isDigit(symbol)) {
-                    file += Character.getNumericValue(symbol);
-                } else {
-                    type = pieceType.get(Character.toLowerCase(symbol));
-                    colour = Character.isUpperCase(symbol) ? Piece.WHITE : Piece.BLACK;
-                    squares[(rank*8) + file] = type | colour;
-                    file++;
-                }
-            }
-        }
-    }
-
-    public void printBoard() {
-        int mark = 64;
-
-        for (int i = 0; i < 8; i++) {
-            for (int j = mark - 8; j < mark; j++) {
-                System.out.print("[" + Piece.getPieceSymbol(squares[j]) + "]  ");
-            }
-            mark -= 8;
-            System.out.println();
-        }
     }
 }
