@@ -8,7 +8,7 @@ public class MoveGenerator {
     private static final int[] bishopOffsets = {7, 9, -7, -9};
     private static final int[] rookOffsets   = {8, 1, -8, -1};
     private static final int[] queenOffsets  = {7, 8, 9, 1, -7, -8, -9, -1};
-    private static final int[] kingOffsets   = {7, 8, 9, 1, -7, -8, -9, -1}; //redundant but idc, its my code, leave me alone
+    private static final int[] kingOffsets   = {7, 8, 9, 1, 2, -7, -8, -9, -1, -2}; //redundant but idc, its my code, leave me alone
 
     public BitSet getPawnMoves(int position, boolean whiteToPlay, BitBoard currentBoard) {
         BitSet pawnMoves = new BitSet(64);
@@ -21,10 +21,12 @@ public class MoveGenerator {
             }
 
             //capture left and right, including en passant
+            //beware an edge case involving a horizontal pin making en passant illegal.
             if(currentBoard.blackPieces.get(position + pawnOffsets[2]) || currentBoard.enPassantSquare == pawnOffsets[2]) pawnMoves.set(position + pawnOffsets[2]);
             if(currentBoard.blackPieces.get(position + pawnOffsets[3]) || currentBoard.enPassantSquare == pawnOffsets[3]) pawnMoves.set(position + pawnOffsets[3]);
 
             //promotions
+
         } else {
             //forward one
             if(!currentBoard.allPieces.get(position - pawnOffsets[0])) pawnMoves.set(position - pawnOffsets[0]);
@@ -50,8 +52,41 @@ public class MoveGenerator {
                 if(!currentBoard.whitePieces.get(position + knightOffsets[5])) knightMoves.set(position + knightOffsets[5]);
                 if(!currentBoard.whitePieces.get(position + knightOffsets[6])) knightMoves.set(position + knightOffsets[6]);
             }
-        } else {
 
+            if(rank <= 5) {
+                if(!currentBoard.whitePieces.get(position + knightOffsets[1])) knightMoves.set(position + knightOffsets[1]);
+                if(!currentBoard.whitePieces.get(position + knightOffsets[2])) knightMoves.set(position + knightOffsets[2]);
+            }
+
+            if(file >= 2) {
+                if(!currentBoard.whitePieces.get(position + knightOffsets[0])) knightMoves.set(position + knightOffsets[0]);
+                if(!currentBoard.whitePieces.get(position + knightOffsets[4])) knightMoves.set(position + knightOffsets[4]);
+            }
+
+            if(file <= 5) {
+                if(!currentBoard.whitePieces.get(position + knightOffsets[3])) knightMoves.set(position + knightOffsets[3]);
+                if(!currentBoard.whitePieces.get(position + knightOffsets[7])) knightMoves.set(position + knightOffsets[7]);
+            }
+        } else {
+            if(rank >= 2) {
+                if(!currentBoard.blackPieces.get(position + knightOffsets[5])) knightMoves.set(position + knightOffsets[5]);
+                if(!currentBoard.blackPieces.get(position + knightOffsets[6])) knightMoves.set(position + knightOffsets[6]);
+            }
+
+            if(rank <= 5) {
+                if(!currentBoard.blackPieces.get(position + knightOffsets[1])) knightMoves.set(position + knightOffsets[1]);
+                if(!currentBoard.blackPieces.get(position + knightOffsets[2])) knightMoves.set(position + knightOffsets[2]);
+            }
+
+            if(file >= 2) {
+                if(!currentBoard.blackPieces.get(position + knightOffsets[0])) knightMoves.set(position + knightOffsets[0]);
+                if(!currentBoard.blackPieces.get(position + knightOffsets[4])) knightMoves.set(position + knightOffsets[4]);
+            }
+
+            if(file <= 5) {
+                if (!currentBoard.blackPieces.get(position + knightOffsets[3])) knightMoves.set(position + knightOffsets[3]);
+                if (!currentBoard.blackPieces.get(position + knightOffsets[7])) knightMoves.set(position + knightOffsets[7]);
+            }
         }
         return knightMoves;
     }
