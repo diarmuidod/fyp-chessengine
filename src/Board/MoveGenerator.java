@@ -7,8 +7,7 @@ public class MoveGenerator {
     private static final int[] knightOffsets = {6, 15, 17, 10, -6, -15, -17, -10};
     private static final int[] bishopOffsets = {7, 9, -7, -9};
     private static final int[] rookOffsets   = {8, 1, -8, -1};
-    private static final int[] queenOffsets  = {7, 8, 9, 1, -7, -8, -9, -1};
-    private static final int[] kingOffsets   = {7, 8, 9, 1, 2, -7, -8, -9, -1, -2}; //redundant but idc, its my code, leave me alone
+    private static final int[] kingOffsets   = {7, 8, 9, 1, 2, -7, -8, -9, -1, -2};
 
     public BitSet getPawnMoves(int position, boolean whiteToPlay, BitBoard currentBoard) {
         BitSet pawnMoves = new BitSet(64);
@@ -93,11 +92,74 @@ public class MoveGenerator {
 
     public BitSet getBishopMoves(int position, boolean whiteToPlay, BitBoard currentBoard) {
         BitSet bishopMoves = new BitSet(64);
+
+        int offsetPos = position;
+
+        if(whiteToPlay) {
+            for(int i = 0; i < bishopOffsets.length; i++) {
+                //keep iterating until you can't
+                while(!currentBoard.whitePieces.get(offsetPos + bishopOffsets[i])) {
+                    offsetPos += bishopOffsets[i];
+                    bishopMoves.set(offsetPos);
+                    //stop after a capture
+                    if(currentBoard.blackPieces.get(offsetPos + bishopOffsets[i])) {
+                        offsetPos = position;
+                        break;
+                    }
+                }
+            }
+        } else {
+            for(int i = 0; i < bishopOffsets.length; i++) {
+                //keep iterating until you can't
+                while(!currentBoard.blackPieces.get(offsetPos + bishopOffsets[i])) {
+                    offsetPos += bishopOffsets[i];
+                    bishopMoves.set(offsetPos);
+                    //stop after a capture
+                    if(currentBoard.whitePieces.get(offsetPos + bishopOffsets[i])) {
+                        offsetPos = position;
+                        break;
+                    }
+                }
+            }
+        }
+
         return bishopMoves;
     }
 
     public BitSet getRookMoves(int position, boolean whiteToPlay, BitBoard currentBoard) {
         BitSet rookMoves = new BitSet(64);
+
+        int offsetPos = position;
+
+        if(whiteToPlay) {
+            for(int i = 0; i < rookOffsets.length; i++) {
+                //keep iterating until you can't
+                while(!currentBoard.whitePieces.get(offsetPos + rookOffsets[i])) {
+                    offsetPos += rookOffsets[i];
+                    rookMoves.set(offsetPos);
+                    //stop after a capture
+                    if(currentBoard.blackPieces.get(offsetPos + rookOffsets[i])) {
+                        offsetPos = position;
+                        break;
+                    }
+                }
+            }
+        } else {
+            for(int i = 0; i < rookOffsets.length; i++) {
+                //keep iterating until you can't
+                while(!currentBoard.blackPieces.get(offsetPos + rookOffsets[i])) {
+                    offsetPos += rookOffsets[i];
+                    rookMoves.set(offsetPos);
+                    //stop after a capture
+                    if(currentBoard.whitePieces.get(offsetPos + rookOffsets[i])) {
+                        offsetPos = position;
+                        break;
+                    }
+                }
+
+            }
+        }
+
         return rookMoves;
     }
 
@@ -110,25 +172,43 @@ public class MoveGenerator {
 
     public BitSet getKingMoves(int position, boolean whiteToPlay, BitBoard currentBoard) {
         BitSet kingMoves = new BitSet(64);
+
+        if(whiteToPlay) {
+            for (int i = 0; i < kingOffsets.length; i++) {
+                if(!currentBoard.whitePieces.get(position + kingOffsets[i])) kingMoves.set(position + kingOffsets[i]);
+            }
+        } else {
+            for (int i = 0; i < kingOffsets.length; i++) {
+                if(!currentBoard.blackPieces.get(position + kingOffsets[i])) kingMoves.set(position + kingOffsets[i]);
+            }
+        }
         return kingMoves;
     }
 
-    public boolean pieceIsPinned(int position, boolean whiteToPlay, BitBoard currentBoard) {
+    public boolean pieceIsPinned(int position, int target, boolean whiteToPlay, BitBoard currentBoard) {
+
         return false;
     }
 
     public boolean isValidMove(int startSquare, int targetSquare, boolean whiteToPlay, BitBoard currentBoard) {
-        //no piece at square
-        if(!currentBoard.allPieces.get(startSquare)) return false;
-        //no white piece at square for whites move
-        if(!(whiteToPlay && currentBoard.whitePieces.get(startSquare))) return false;
-        //no black piece at square for blacks move
-        if(!(!whiteToPlay && currentBoard.blackPieces.get(startSquare))) return false;
+        //ensure theres a piece to move to begin with
+        if(whiteToPlay && !currentBoard.whitePieces.get(startSquare)) return false;
+        if(!whiteToPlay && !currentBoard.blackPieces.get(startSquare)) return false;
 
-        //check if piece is pinned to the king
-        if(pieceIsPinned(startSquare, whiteToPlay, currentBoard)) return false;
+        //Only disallows moves violating pins, not every move involving a pin
+        //i.e rook pawn king horizontally disallows pawn move, but is allowed arranged vertically
+        if(pieceIsPinned(startSquare, targetSquare, whiteToPlay, currentBoard)) {
 
-        return true;
+        }
+
+        //determine whether the move is among the legal moves for that piece
+        if(currentBoard.pawnPieces.get(startSquare)) return getPawnMoves(startSquare, whiteToPlay, currentBoard).get(targetSquare);
+        if(currentBoard.knightPieces.get(startSquare)) return getKnightMoves(startSquare, whiteToPlay, currentBoard).get(targetSquare);
+        if(currentBoard.bishopPieces.get(startSquare)) return getBishopMoves(startSquare, whiteToPlay, currentBoard).get(targetSquare);
+        if(currentBoard.rookPieces.get(startSquare)) return getRookMoves(startSquare, whiteToPlay, currentBoard).get(targetSquare);
+        if(currentBoard.queenPieces.get(startSquare)) return getQueenMoves(startSquare, whiteToPlay, currentBoard).get(targetSquare);
+        if(currentBoard.kingPieces.get(startSquare)) return getKingMoves(startSquare, whiteToPlay, currentBoard).get(targetSquare);
+
+        return false;
     }
 }
-//
