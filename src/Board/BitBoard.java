@@ -15,7 +15,7 @@ public class BitBoard {
     final BitSet queenPieces = new BitSet(64);
     final BitSet kingPieces = new BitSet(64);
 
-    final int enPassantSquare = -1;
+    int enPassantSquare = -1;
 
     public BitBoard() {}
 
@@ -68,6 +68,25 @@ public class BitBoard {
                 }
             }
         }
+    }
+
+    public BitBoard clone() {
+        BitBoard newBoard = new BitBoard();
+        newBoard.allPieces.or(this.allPieces);
+
+        newBoard.whitePieces.or(this.whitePieces);
+        newBoard.blackPieces.or(this.blackPieces);
+
+        newBoard.pawnPieces.or(this.pawnPieces);
+        newBoard.knightPieces.or(this.knightPieces);
+        newBoard.bishopPieces.or(this.bishopPieces);
+        newBoard.rookPieces.or(this.rookPieces);
+        newBoard.queenPieces.or(this.queenPieces);
+        newBoard.kingPieces.or(this.kingPieces);
+
+        newBoard.enPassantSquare = this.enPassantSquare;
+
+        return newBoard;
     }
 
     public void printBoard() {

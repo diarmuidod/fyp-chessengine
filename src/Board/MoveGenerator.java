@@ -172,22 +172,77 @@ public class MoveGenerator {
 
     public BitSet getKingMoves(int position, boolean whiteToPlay, BitBoard currentBoard) {
         BitSet kingMoves = new BitSet(64);
+        BitSet attackedSquares = getAttackedSquares(whiteToPlay, currentBoard);
 
         if(whiteToPlay) {
             for (int i = 0; i < kingOffsets.length; i++) {
-                if(!currentBoard.whitePieces.get(position + kingOffsets[i])) kingMoves.set(position + kingOffsets[i]);
+                if(!currentBoard.whitePieces.get(position + kingOffsets[i]) && !attackedSquares.get(position + kingOffsets[i])) {
+                    kingMoves.set(position + kingOffsets[i]);
+                }
             }
         } else {
             for (int i = 0; i < kingOffsets.length; i++) {
-                if(!currentBoard.blackPieces.get(position + kingOffsets[i])) kingMoves.set(position + kingOffsets[i]);
+                if(!currentBoard.blackPieces.get(position + kingOffsets[i]) && !attackedSquares.get(position + kingOffsets[i])) {
+                    kingMoves.set(position + kingOffsets[i]);
+                }
             }
         }
         return kingMoves;
     }
 
+    public BitSet getAttackedSquares(boolean whiteToPlay, BitBoard currentBoard) {
+        BitSet attackedSquares = new BitSet(64);
+
+        for(int position = 0; position < 64; position++) {
+            //Pawns accounted for separately, only piece with moves that can't be a capture
+            if(currentBoard.pawnPieces.get(position)) {
+                if(!whiteToPlay) {
+                    if (currentBoard.blackPieces.get(position + pawnOffsets[2]) || currentBoard.enPassantSquare == pawnOffsets[2]) attackedSquares.set(position + pawnOffsets[2]);
+                    if (currentBoard.blackPieces.get(position + pawnOffsets[3]) || currentBoard.enPassantSquare == pawnOffsets[3]) attackedSquares.set(position + pawnOffsets[3]);
+                } else {
+                    if(currentBoard.blackPieces.get(position - pawnOffsets[2]) || currentBoard.enPassantSquare == pawnOffsets[2]) attackedSquares.set(position - pawnOffsets[2]);
+                    if(currentBoard.blackPieces.get(position - pawnOffsets[3]) || currentBoard.enPassantSquare == pawnOffsets[3]) attackedSquares.set(position - pawnOffsets[3]);
+                }
+            }
+
+            attackedSquares.or(getKnightMoves(position, !whiteToPlay, currentBoard));
+            attackedSquares.or(getBishopMoves(position, !whiteToPlay, currentBoard));
+            attackedSquares.or(getRookMoves(position, !whiteToPlay, currentBoard));
+            attackedSquares.or(getQueenMoves(position, !whiteToPlay, currentBoard));
+            attackedSquares.or(getKingMoves(position, !whiteToPlay, currentBoard));
+        }
+
+        return attackedSquares;
+    }
+
     public boolean pieceIsPinned(int position, int target, boolean whiteToPlay, BitBoard currentBoard) {
 
         return false;
+    }
+
+    //only called if move has been validated already, or should not be validated (for filtering pseudo legal moves)
+    public BitBoard makeMove(int startSquare, int targetSquare, boolean whiteToPlay, BitBoard currentBoard) {
+        BitBoard newBoard = currentBoard.clone();
+        /*
+        newBoard.allPieces.clear(startSquare);
+
+        if(whiteToPlay) {
+            newBoard.whitePieces.clear(startSquare);
+        } else {
+            newBoard.blackPieces.clear(startSquare);
+        }
+
+        if (newBoard.knightPieces.get(startSquare)) {
+            newBoard.knightPieces.clear(startSquare);
+            newBoard.
+        }
+        if (newBoard.bishopPieces.get(startSquare)) newBoard.bishopPieces.clear(startSquare);
+        if (newBoard.rookPieces.get(startSquare)) newBoard.rookPieces.clear(startSquare);
+        if (newBoard.queenPieces.get(startSquare)) newBoard.queenPieces.clear(startSquare);
+        if (newBoard.kingPieces.get(startSquare)) newBoard.kingPieces.clear(startSquare);
+         */
+
+        return newBoard;
     }
 
     public boolean isValidMove(int startSquare, int targetSquare, boolean whiteToPlay, BitBoard currentBoard) {
@@ -198,7 +253,7 @@ public class MoveGenerator {
         //Only disallows moves violating pins, not every move involving a pin
         //i.e rook pawn king horizontally disallows pawn move, but is allowed arranged vertically
         if(pieceIsPinned(startSquare, targetSquare, whiteToPlay, currentBoard)) {
-
+            return false;
         }
 
         //determine whether the move is among the legal moves for that piece
