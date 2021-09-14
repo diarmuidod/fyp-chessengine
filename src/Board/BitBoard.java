@@ -17,7 +17,8 @@ public class BitBoard {
 
     int enPassantSquare = -1;
 
-    public BitBoard() {}
+    public BitBoard() {
+    }
 
     public BitBoard(String FEN) {
         loadPositionFromFEN(FEN);
@@ -33,35 +34,35 @@ public class BitBoard {
 
         for (int i = 0; i < FENtoBoard.length(); i++) {
             char symbol = FENtoBoard.charAt(i);
-            if(symbol == '/') {
+            if (symbol == '/') {
                 file = 0;
                 rank--;
             } else {
-                if(Character.isDigit(symbol)) {
+                if (Character.isDigit(symbol)) {
                     file += Character.getNumericValue(symbol);
                 } else {
-                    allPieces.set((rank*8)+file);
-                    if(Character.isUpperCase(symbol)) whitePieces.set((rank*8)+file);
-                    if(!Character.isUpperCase(symbol)) blackPieces.set((rank*8)+file);
+                    allPieces.set((rank * 8) + file);
+                    if (Character.isUpperCase(symbol)) whitePieces.set((rank * 8) + file);
+                    if (!Character.isUpperCase(symbol)) blackPieces.set((rank * 8) + file);
 
-                    switch(Character.toUpperCase(symbol)) {
+                    switch (Character.toUpperCase(symbol)) {
                         case 'P':
-                            pawnPieces.set((rank*8)+file);
+                            pawnPieces.set((rank * 8) + file);
                             break;
                         case 'N':
-                            knightPieces.set((rank*8)+file);
+                            knightPieces.set((rank * 8) + file);
                             break;
                         case 'B':
-                            bishopPieces.set((rank*8)+file);
+                            bishopPieces.set((rank * 8) + file);
                             break;
                         case 'R':
-                            rookPieces.set((rank*8)+file);
+                            rookPieces.set((rank * 8) + file);
                             break;
                         case 'Q':
-                            queenPieces.set((rank*8)+file);
+                            queenPieces.set((rank * 8) + file);
                             break;
                         case 'K':
-                            kingPieces.set((rank*8)+file);
+                            kingPieces.set((rank * 8) + file);
                             break;
                     }
                     file++;
@@ -94,16 +95,16 @@ public class BitBoard {
 
         for (int i = 0; i < 8; i++) {
             for (int j = mark - 8; j < mark; j++) {
-                if(!allPieces.get(j)) {
+                if (!allPieces.get(j)) {
                     System.out.print("[ ] ");
                 } else {
                     boolean isWhite = whitePieces.get(j);
-                    if(pawnPieces.get(j)) System.out.print(isWhite ? "[P] " : "[p] ");
-                    if(knightPieces.get(j)) System.out.print(isWhite ? "[N] " : "[n] ");
-                    if(bishopPieces.get(j)) System.out.print(isWhite ? "[B] " : "[b] ");
-                    if(rookPieces.get(j)) System.out.print(isWhite ? "[R] " : "[r] ");
-                    if(queenPieces.get(j)) System.out.print(isWhite ? "[Q] " : "[q] ");
-                    if(kingPieces.get(j)) System.out.print(isWhite ? "[K] " : "[k] ");
+                    if (pawnPieces.get(j)) System.out.print(isWhite ? "[P] " : "[p] ");
+                    if (knightPieces.get(j)) System.out.print(isWhite ? "[N] " : "[n] ");
+                    if (bishopPieces.get(j)) System.out.print(isWhite ? "[B] " : "[b] ");
+                    if (rookPieces.get(j)) System.out.print(isWhite ? "[R] " : "[r] ");
+                    if (queenPieces.get(j)) System.out.print(isWhite ? "[Q] " : "[q] ");
+                    if (kingPieces.get(j)) System.out.print(isWhite ? "[K] " : "[k] ");
                 }
             }
             mark -= 8;
@@ -123,15 +124,15 @@ public class BitBoard {
 
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(toBinaryString(allPieces) + '\n');
-        sb.append(toBinaryString(whitePieces) + '\n');
-        sb.append(toBinaryString(blackPieces) + '\n');
-        sb.append(toBinaryString(pawnPieces) + '\n');
-        sb.append(toBinaryString(knightPieces) + '\n');
-        sb.append(toBinaryString(bishopPieces) + '\n');
-        sb.append(toBinaryString(rookPieces) + '\n');
-        sb.append(toBinaryString(queenPieces) + '\n');
-        sb.append(toBinaryString(kingPieces) + '\n');
+        sb.append(toBinaryString(allPieces)).append('\n')
+            .append(toBinaryString(whitePieces)).append('\n')
+            .append(toBinaryString(blackPieces)).append('\n')
+            .append(toBinaryString(pawnPieces)).append('\n')
+            .append(toBinaryString(knightPieces)).append('\n')
+            .append(toBinaryString(bishopPieces)).append('\n')
+            .append(toBinaryString(rookPieces)).append('\n')
+            .append(toBinaryString(queenPieces)).append('\n')
+            .append(toBinaryString(kingPieces)).append('\n');
         return sb.toString();
     }
 }
