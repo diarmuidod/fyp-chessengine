@@ -31,4 +31,8 @@ public class BoardState {
 
         return new Move(startSquare, targetSquare);
     }
+
+    public void printBoard() {
+        board.printBoard();
+    }
 }

@@ -176,7 +176,6 @@ public class MoveGenerator {
                         break;
                     }
                 }
-
             }
         }
 
@@ -260,7 +259,7 @@ public class MoveGenerator {
 
     //only called if move has been validated already, or should not be validated (for filtering pseudo legal moves)
     public BitBoard makeMove(int startSquare, int targetSquare, boolean whiteToPlay, BitBoard currentBoard) {
-        BitBoard newBoard = currentBoard.clone();
+        BitBoard newBoard = currentBoard.copy();
         newBoard.allPieces.clear(startSquare);
 
         if (whiteToPlay) {

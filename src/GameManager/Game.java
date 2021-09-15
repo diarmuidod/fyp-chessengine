@@ -28,6 +28,13 @@ public class Game {
     }
 
     public void playGame() {
+    }
 
+    public String saveGameToFEN() {
+        return null;
+    }
+
+    public void printBoard() {
+        board.printBoard();
     }
 }

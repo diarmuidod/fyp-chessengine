@@ -15,9 +15,15 @@ public class BitBoard {
     final BitSet queenPieces = new BitSet(64);
     final BitSet kingPieces = new BitSet(64);
 
+    boolean whiteToMove;
+    boolean whiteKingSide;
+    boolean whiteQueenSide;
+    boolean blackKingSide;
+    boolean blackQueenSide;
+
     int enPassantSquare = -1;
 
-    public BitBoard() {
+    private BitBoard() {
     }
 
     public BitBoard(String FEN) {
@@ -29,8 +35,18 @@ public class BitBoard {
     }
 
     public void loadPositionFromFEN(String FEN) {
-        String FENtoBoard = FEN.split(" ", 2)[0];
+        String FENtoBoard = FEN.split(" ", 6)[0];
+        String sideToMove = FEN.split(" ", 6)[1];
+        String castlingRights = FEN.split(" ", 6)[2];
+
         int file = 0, rank = 7, type, colour;
+
+        whiteToMove = sideToMove.contains("w");
+
+        whiteKingSide = castlingRights.contains("K");
+        whiteQueenSide = castlingRights.contains("Q");
+        blackKingSide = castlingRights.contains("k");
+        blackQueenSide = castlingRights.contains("q");
 
         for (int i = 0; i < FENtoBoard.length(); i++) {
             char symbol = FENtoBoard.charAt(i);
@@ -71,7 +87,7 @@ public class BitBoard {
         }
     }
 
-    public BitBoard clone() {
+    public BitBoard copy() {
         BitBoard newBoard = new BitBoard();
         newBoard.allPieces.or(this.allPieces);
 
@@ -84,6 +100,13 @@ public class BitBoard {
         newBoard.rookPieces.or(this.rookPieces);
         newBoard.queenPieces.or(this.queenPieces);
         newBoard.kingPieces.or(this.kingPieces);
+
+        newBoard.whiteToMove = whiteToMove;
+
+        newBoard.whiteKingSide = whiteKingSide;
+        newBoard.whiteQueenSide = whiteQueenSide;
+        newBoard.blackKingSide = blackKingSide;
+        newBoard.blackQueenSide = blackQueenSide;
 
         newBoard.enPassantSquare = this.enPassantSquare;
 
@@ -110,6 +133,13 @@ public class BitBoard {
             mark -= 8;
             System.out.println();
         }
+
+        System.out.println("\nWhite Kingside Castling: " + whiteKingSide);
+        System.out.println("White Queenside Castling: " + whiteQueenSide);
+        System.out.println("Black Kingside Castling: " + blackKingSide);
+        System.out.println("Black Queenside Castling: " + blackQueenSide);
+
+        System.out.println("White to move: " + whiteToMove);
     }
 
     public static String toBinaryString(BitSet bitSet) {
@@ -123,16 +153,14 @@ public class BitBoard {
     }
 
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(toBinaryString(allPieces)).append('\n')
-            .append(toBinaryString(whitePieces)).append('\n')
-            .append(toBinaryString(blackPieces)).append('\n')
-            .append(toBinaryString(pawnPieces)).append('\n')
-            .append(toBinaryString(knightPieces)).append('\n')
-            .append(toBinaryString(bishopPieces)).append('\n')
-            .append(toBinaryString(rookPieces)).append('\n')
-            .append(toBinaryString(queenPieces)).append('\n')
-            .append(toBinaryString(kingPieces)).append('\n');
-        return sb.toString();
+        return toBinaryString(allPieces) + '\n' +
+                toBinaryString(whitePieces) + '\n' +
+                toBinaryString(blackPieces) + '\n' +
+                toBinaryString(pawnPieces) + '\n' +
+                toBinaryString(knightPieces) + '\n' +
+                toBinaryString(bishopPieces) + '\n' +
+                toBinaryString(rookPieces) + '\n' +
+                toBinaryString(queenPieces) + '\n' +
+                toBinaryString(kingPieces) + '\n';
     }
 }
