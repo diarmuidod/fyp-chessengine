@@ -8,6 +8,8 @@ public class BoardState {
     private static boolean whiteToMove;
     private static String moveRegex = "[a-hA-H][1-8][a-hA-H][1-8]"; //move format - e2e4, e7e5, etc.
 
+    //private static String sanRegex = "((?:(?:O-O(?:-O)?)|(?:[KQNBR](?:[a-h1-8]?x?[a-h][1-8])|(?:([a-h]x)?[a-h][1-7])|(?:([a-h]x)?[a-h][8])(?:=[QNBR]))))[+#]?";
+
     public BoardState() {
         enPassantSquare = -1;
         board = new BitBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
