@@ -1,13 +1,14 @@
 package Board;
 
 import java.util.BitSet;
+import java.util.LinkedList;
 
 public class MoveGenerator {
     private static final int[] pawnOffsets = {8, 16, 7, 9}; //white offsets, values inverted for black
     private static final int[] knightOffsets = {6, 15, 17, 10, -6, -15, -17, -10};
     private static final int[] bishopOffsets = {7, 9, -7, -9};
     private static final int[] rookOffsets = {8, 1, -8, -1};
-    private static final int[] kingOffsets = {7, 8, 9, 1, 2, -7, -8, -9, -1, -2};
+    private static final int[] kingOffsets = {7, 8, 9, 1, -7, -8, -9, -1};
 
     public BitSet getPawnMoves(int position, boolean whiteToPlay, BitBoard currentBoard) {
         BitSet pawnMoves = new BitSet(64);
@@ -199,10 +200,39 @@ public class MoveGenerator {
                     kingMoves.set(position + kingOffset);
                 }
             }
+
+            if(currentBoard.whiteKingSide) {
+                if(!attackedSquares.get(position) && !attackedSquares.get(position + 1) && !attackedSquares.get(position + 2)
+                    && !currentBoard.allPieces.get(position + 1) && !currentBoard.allPieces.get(position + 2)) {
+                        kingMoves.set(position + 2);
+                }
+            }
+
+            if(currentBoard.whiteQueenSide) {
+                if(!attackedSquares.get(position) && !attackedSquares.get(position - 1) && !attackedSquares.get(position - 2)
+                    && !currentBoard.allPieces.get(position - 1) && !currentBoard.allPieces.get(position - 2) && !currentBoard.allPieces.get(position - 3)) {
+                        kingMoves.set(position - 2);
+                }
+            }
+
         } else {
             for (int kingOffset : kingOffsets) {
                 if (!currentBoard.blackPieces.get(position + kingOffset) && !attackedSquares.get(position + kingOffset)) {
                     kingMoves.set(position + kingOffset);
+                }
+            }
+
+            if(currentBoard.blackKingSide) {
+                if(!attackedSquares.get(position) && !attackedSquares.get(position + 1) && !attackedSquares.get(position + 2)
+                    && !currentBoard.allPieces.get(position + 1) && !currentBoard.allPieces.get(position + 2)) {
+                        kingMoves.set(position + 2);
+                }
+            }
+
+            if(currentBoard.blackQueenSide) {
+                if(!attackedSquares.get(position) && !attackedSquares.get(position - 1) && !attackedSquares.get(position - 2)
+                    && !currentBoard.allPieces.get(position - 1) && !currentBoard.allPieces.get(position - 2) && !currentBoard.allPieces.get(position - 3)) {
+                        kingMoves.set(position - 2);
                 }
             }
         }
@@ -277,13 +307,40 @@ public class MoveGenerator {
         } else if (newBoard.rookPieces.get(startSquare)) {
             newBoard.rookPieces.clear(startSquare);
             newBoard.rookPieces.set(targetSquare);
+
+            if(whiteToPlay) {
+                if(startSquare == 7) {
+                    newBoard.whiteKingSide = false;
+                } else if(startSquare == 0) {
+                    newBoard.whiteQueenSide = false;
+                }
+            } else {
+                if(startSquare == 63) {
+                    newBoard.blackKingSide = false;
+                } else if(startSquare == 56) {
+                    newBoard.blackQueenSide = false;
+                }
+            }
         } else if (newBoard.queenPieces.get(startSquare)) {
             newBoard.queenPieces.clear(startSquare);
             newBoard.queenPieces.set(targetSquare);
         } else if (newBoard.kingPieces.get(startSquare)) {
             newBoard.kingPieces.clear(startSquare);
             newBoard.kingPieces.set(targetSquare);
+
+            if(whiteToPlay) {
+                newBoard.whiteKingSide = false;
+                newBoard.whiteQueenSide = false;
+            } else {
+                newBoard.blackKingSide = false;
+                newBoard.blackQueenSide = false;
+            }
         }
+
+        if(targetSquare == 7) newBoard.whiteKingSide = false;
+        if(targetSquare == 0) newBoard.whiteQueenSide = false;
+        if(targetSquare == 63) newBoard.blackKingSide = false;
+        if(targetSquare == 56) newBoard.blackQueenSide = false;
 
         return newBoard;
     }
@@ -314,5 +371,15 @@ public class MoveGenerator {
             return getKingMoves(startSquare, whiteToPlay, currentBoard).get(targetSquare);
 
         return false;
+    }
+
+    public long perft(int depth, BitBoard board) {
+        long moves = 0;
+        LinkedList<BitBoard> boards = new LinkedList<>();
+        if(depth == 0) {
+            return moves;
+        }
+
+        return moves += perft(depth - 1, board);
     }
 }

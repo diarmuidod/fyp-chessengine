@@ -6,10 +6,8 @@ public class BoardState {
     private BitBoard board;
     private static int enPassantSquare;
     private static boolean whiteToMove;
-    private static String moveRegex = "[a-hA-H][1-8][a-hA-H][1-8]"; //move format - e2e4, e7e5, etc.
-
-    //private static String sanRegex = "((?:(?:O-O(?:-O)?)|(?:[KQNBR](?:[a-h1-8]?x?[a-h][1-8])|(?:([a-h]x)?[a-h][1-7])|(?:([a-h]x)?[a-h][8])(?:=[QNBR]))))[+#]?";
-
+    private static final String REGEX = "(?:(?:O-O(?:-O)?)|(?:[KQNBR](?:[a-h1-8]?x?[a-h][1-8])|(?:(?:[a]x)?[b][2-7])|(?:(?:[b]x)?[ac][2-7])|(?:(?:[c]x)?[bd][2-7])|(?:(?:[d]x)?[ce][2-7])|(?:(?:[e]x)?[df][2-7])|(?:(?:[f]x)?[eg][2-7])|(?:(?:[g]x)?[fh][2-7]))|(?:(?:(?:[h]x)?[g][2-7])|(?:(?:[a]x)?[b][18])|(?:(?:[b]x)?[ac][18])|(?:(?:[c]x)?[bd][18])|(?:(?:[d]x)?[ce][18])|(?:(?:[e]x)?[df][18])|(?:(?:[f]x)?[eg][18])|(?:(?:[g]x)?[fh][18])|(?:(?:[h]x)?[g][18]))(?:=[QNBR]))[+#]?"; //move format - e2e4, e7e5, etc.
+    
     public BoardState() {
         enPassantSquare = -1;
         board = new BitBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
