@@ -4,30 +4,43 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Scanner;
 
-import Board.BoardState;
+import Board.Board;
 import Board.Move;
+import Board.MoveGenerator;
 
 public class Game {
-    BoardState board;
-    List<Move> movesPlayed;
-    Scanner input;
-    String currentMove;
+    public Board board;
+    public MoveGenerator moveGenerator;
+    public List<Move> movesPlayed;
+    public Scanner input;
+    public String currentMove;
 
-    private static final String startFEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    private static final String REGEX = "(?:(?:O-O(?:-O)?)|(?:[KQNBR](?:[a-h1-8]?x?[a-h][1-8])|(?:(?:[a]x)?[b][2-7])|(?:(?:[b]x)?[ac][2-7])|(?:(?:[c]x)?[bd][2-7])|(?:(?:[d]x)?[ce][2-7])|(?:(?:[e]x)?[df][2-7])|(?:(?:[f]x)?[eg][2-7])|(?:(?:[g]x)?[fh][2-7]))|(?:(?:(?:[h]x)?[g][2-7])|(?:(?:[a]x)?[b][18])|(?:(?:[b]x)?[ac][18])|(?:(?:[c]x)?[bd][18])|(?:(?:[d]x)?[ce][18])|(?:(?:[e]x)?[df][18])|(?:(?:[f]x)?[eg][18])|(?:(?:[g]x)?[fh][18])|(?:(?:[h]x)?[g][18]))(?:=[QNBR]))[+#]?";
 
     public Game() {
-        board = new BoardState(startFEN);
+        board = new Board();
+        moveGenerator = new MoveGenerator();
         movesPlayed = new LinkedList<>();
         input = new Scanner(System.in);
     }
 
     public Game(String FEN) {
-        board = new BoardState(FEN);
+        board = new Board(FEN);
+        moveGenerator = new MoveGenerator();
         movesPlayed = new LinkedList<>();
         input = new Scanner(System.in);
     }
 
     public void playGame() {
+        for(Move m : moveGenerator.getLegalMoves(board)) {
+            System.out.println(moveFromIndex(m.startSquare) + " - " + moveFromIndex(m.targetSquare));
+        }
+    }
+
+    public String moveFromIndex(int index) {
+        char number = (char) ((index / 8) + 49);
+        char letter = (char) ((index % 8) + 97);
+        return letter + String.valueOf(number);
     }
 
     public String saveGameToFEN() {

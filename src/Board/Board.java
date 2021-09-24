@@ -2,7 +2,7 @@ package Board;
 
 import java.util.BitSet;
 
-public class BitBoard {
+public class Board {
     final BitSet allPieces = new BitSet(64);
 
     final BitSet whitePieces = new BitSet(64);
@@ -16,6 +16,7 @@ public class BitBoard {
     final BitSet kingPieces = new BitSet(64);
 
     boolean whiteToMove;
+
     boolean whiteKingSide;
     boolean whiteQueenSide;
     boolean blackKingSide;
@@ -23,21 +24,19 @@ public class BitBoard {
 
     int enPassantSquare = -1;
 
-    private BitBoard() {
-    }
-
-    public BitBoard(String FEN) {
-        loadPositionFromFEN(FEN);
-    }
-
-    public void setupBoard() {
+    public Board() {
         loadPositionFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    }
+
+    public Board(String FEN) {
+        loadPositionFromFEN(FEN);
     }
 
     public void loadPositionFromFEN(String FEN) {
         String FENtoBoard = FEN.split(" ", 6)[0];
         String sideToMove = FEN.split(" ", 6)[1];
         String castlingRights = FEN.split(" ", 6)[2];
+        String enPassant = FEN.split(" ", 6)[3];
 
         int file = 0, rank = 7, type, colour;
 
@@ -47,6 +46,8 @@ public class BitBoard {
         whiteQueenSide = castlingRights.contains("Q");
         blackKingSide = castlingRights.contains("k");
         blackQueenSide = castlingRights.contains("q");
+
+        enPassantSquare = enPassant.equals("-") ? -1 : (enPassant.charAt(0) - 97) + ((Character.getNumericValue(enPassant.charAt(1)) - 1) * 8);
 
         for (int i = 0; i < FENtoBoard.length(); i++) {
             char symbol = FENtoBoard.charAt(i);
@@ -58,8 +59,12 @@ public class BitBoard {
                     file += Character.getNumericValue(symbol);
                 } else {
                     allPieces.set((rank * 8) + file);
-                    if (Character.isUpperCase(symbol)) whitePieces.set((rank * 8) + file);
-                    if (!Character.isUpperCase(symbol)) blackPieces.set((rank * 8) + file);
+
+                    if (Character.isUpperCase(symbol)) {
+                        whitePieces.set((rank * 8) + file);
+                    } else {
+                        blackPieces.set((rank * 8) + file);
+                    }
 
                     switch (Character.toUpperCase(symbol)) {
                         case 'P':
@@ -87,8 +92,8 @@ public class BitBoard {
         }
     }
 
-    public BitBoard copy() {
-        BitBoard newBoard = new BitBoard();
+    public Board copy() {
+        Board newBoard = new Board();
         newBoard.allPieces.or(this.allPieces);
 
         newBoard.whitePieces.or(this.whitePieces);
