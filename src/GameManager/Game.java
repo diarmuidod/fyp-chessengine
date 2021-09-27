@@ -32,15 +32,7 @@ public class Game {
     }
 
     public void playGame() {
-        for(Move m : moveGenerator.getLegalMoves(board)) {
-            System.out.println(moveFromIndex(m.startSquare) + " - " + moveFromIndex(m.targetSquare));
-        }
-    }
 
-    public String moveFromIndex(int index) {
-        char number = (char) ((index / 8) + 49);
-        char letter = (char) ((index % 8) + 97);
-        return letter + String.valueOf(number);
     }
 
     public String saveGameToFEN() {

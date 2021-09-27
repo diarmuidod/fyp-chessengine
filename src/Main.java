@@ -9,10 +9,8 @@ public class Main {
 
         List<Move> moves = chess.moveGenerator.getLegalMoves(chess.board);
 
-        for(Move move : moves) {
-            System.out.println(chess.moveFromIndex(move.startSquare) + " -> " + chess.moveFromIndex(move.targetSquare));
+        for(int i = 0; i <= 5; i++) {
+            System.out.println("Positions at depth " + i + ": " + chess.moveGenerator.perft(i, chess.board));
         }
-
-        System.out.println("Move Count: " + moves.size());
     }
 }
