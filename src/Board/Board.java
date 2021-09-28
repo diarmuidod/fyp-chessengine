@@ -147,6 +147,22 @@ public class Board {
         System.out.println("White to move: " + whiteToMove);
     }
 
+    public void printBoard(BitSet bitset) {
+        int mark = 64;
+
+        for (int i = 0; i < 8; i++) {
+            for (int j = mark - 8; j < mark; j++) {
+                if (!bitset.get(j)) {
+                    System.out.print("[ ] ");
+                } else {
+                    System.out.print("[*] ");
+                }
+            }
+            mark -= 8;
+            System.out.println();
+        }
+    }
+
     public static String toBinaryString(BitSet bitSet) {
         int bits = 64;
         StringBuilder sb = new StringBuilder(bitSet.length());

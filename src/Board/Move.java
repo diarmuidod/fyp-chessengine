@@ -28,10 +28,13 @@ public class Move {
     }
 
     public enum Flag {
-        PROMOTE_QUEEN("Q"),
-        PROMOTE_ROOK("R"),
-        PROMOTE_KNIGHT("K"),
-        PROMOTE_BISHOP("B");
+        CASTLE_SHORT("O-O"),
+        CASTLE_LONG("O-O-O"),
+        CAPTURE("x"),
+        PROMOTE_QUEEN("=Q"),
+        PROMOTE_KNIGHT("=N"),
+        PROMOTE_BISHOP("=B"),
+        PROMOTE_ROOK("=R");
 
         String flag;
 
