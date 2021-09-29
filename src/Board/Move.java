@@ -1,17 +1,11 @@
 package Board;
 
-import java.util.UUID;
-
 public class Move {
-    UUID id;
-    UUID parentId;
-    String move;
-
     public int startSquare;
     public int targetSquare;
     public Flag[] moveFlag;
 
-    Move(int startSquare, int targetSquare, Flag... moveFlag) {
+    public Move(int startSquare, int targetSquare, Flag... moveFlag) {
         this.startSquare = startSquare;
         this.targetSquare = targetSquare;
         this.moveFlag = moveFlag;

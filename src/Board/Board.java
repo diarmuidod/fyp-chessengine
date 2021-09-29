@@ -15,7 +15,7 @@ public class Board {
     final BitSet queenPieces = new BitSet(64);
     final BitSet kingPieces = new BitSet(64);
 
-    public boolean whiteToMove;
+    boolean whiteToMove;
 
     boolean whiteKingSide;
     boolean whiteQueenSide;
@@ -38,7 +38,7 @@ public class Board {
         String castlingRights = FEN.split(" ", 6)[2];
         String enPassant = FEN.split(" ", 6)[3];
 
-        int file = 0, rank = 7, type, colour;
+        int file = 0, rank = 7;
 
         whiteToMove = sideToMove.contains("w");
 
@@ -138,13 +138,15 @@ public class Board {
             mark -= 8;
             System.out.println();
         }
-
+/*
         System.out.println("\nWhite Kingside Castling: " + whiteKingSide);
         System.out.println("White Queenside Castling: " + whiteQueenSide);
         System.out.println("Black Kingside Castling: " + blackKingSide);
         System.out.println("Black Queenside Castling: " + blackQueenSide);
 
         System.out.println("White to move: " + whiteToMove);
+
+ */
     }
 
     public void printBoard(BitSet bitset) {
