@@ -33,40 +33,36 @@ public class MoveGenerator {
             }
         }
         //captures
-        pawnMoves.or(getPawnAttacks(position, currentBoard));
+        pawnMoves.or(getPawnAttacks(position, currentBoard, currentBoard.whiteToMove));
 
         return pawnMoves;
     }
 
-    public BitSet getPawnAttacks(int position, Board currentBoard) {
+    public BitSet getPawnAttacks(int position, Board currentBoard, boolean whiteToMove) {
         BitSet pawnAttacks = new BitSet(64);
 
         if (!currentBoard.pawnPieces.get(position)) return pawnAttacks;
         boolean inRange;
 
-        if (currentBoard.whiteToMove) {
+        if (whiteToMove) {
             inRange = (position + pawnOffsets[2] >= 0 && position + pawnOffsets[2] <= 63);
-            if (inRange) {
-                if (currentBoard.blackPieces.get(position + pawnOffsets[2]) || currentBoard.enPassantSquare == pawnOffsets[2])
-                    pawnAttacks.set(position + pawnOffsets[2]);
+            if (inRange && position % 8 != 0) {
+                pawnAttacks.set(position + pawnOffsets[2]);
             }
 
             inRange = (position + pawnOffsets[3] >= 0 && position + pawnOffsets[3] <= 63);
-            if (inRange) {
-                if (currentBoard.blackPieces.get(position + pawnOffsets[3]) || currentBoard.enPassantSquare == pawnOffsets[3])
-                    pawnAttacks.set(position + pawnOffsets[3]);
+            if (inRange && position % 8 != 7) {
+                pawnAttacks.set(position + pawnOffsets[3]);
             }
         } else {
             inRange = (position - pawnOffsets[2] >= 0 && position - pawnOffsets[2] <= 63);
-            if (inRange) {
-                if (currentBoard.whitePieces.get(position - pawnOffsets[2]) || currentBoard.enPassantSquare == pawnOffsets[2])
-                    pawnAttacks.set(position - pawnOffsets[2]);
+            if (inRange && position % 8 != 7) {
+                pawnAttacks.set(position - pawnOffsets[2]);
             }
 
             inRange = (position - pawnOffsets[3] >= 0 && position - pawnOffsets[3] <= 63);
-            if (inRange) {
-                if (currentBoard.whitePieces.get(position - pawnOffsets[3]) || currentBoard.enPassantSquare == pawnOffsets[3])
-                    pawnAttacks.set(position - pawnOffsets[3]);
+            if (inRange && position % 8 != 0) {
+                pawnAttacks.set(position - pawnOffsets[3]);
             }
         }
 
@@ -211,108 +207,26 @@ public class MoveGenerator {
         return knightMoves;
     }
 
-    public BitSet getKnightAttacks(int position, Board currentBoard) {
+    public BitSet getKnightAttacks(int position, boolean whiteToMove) {
         BitSet knightAttacks = new BitSet(64);
         boolean inRange;
 
         int rank = (position / 8) + 1, file = position % 8;
 
-        if (currentBoard.whiteToMove) {
-            if (rank >= 2) {
-                inRange = position + knightOffsets[5] >= 0 && position + knightOffsets[5] <= 63;
-                if (inRange) {
-                    knightAttacks.set(position + knightOffsets[5]);
-                }
+        for(int knightOffset : knightOffsets) {
+            if(position + knightOffset < 0 || position + knightOffset > 63) continue;
 
-                inRange = position + knightOffsets[6] >= 0 && position + knightOffsets[6] <= 63;
-                if (inRange) {
-                    knightAttacks.set(position + knightOffsets[6]);
-                }
-            }
+            if(rank == 0 && knightOffset < 0) continue;
+            if(rank == 1 && knightOffset <= -15) continue;
+            if(rank == 7 && knightOffset > 0) continue;
+            if(rank == 6 && knightOffset >= 15) continue;
 
-            if (rank <= 5) {
-                inRange = position + knightOffsets[1] >= 0 && position + knightOffsets[1] <= 63;
-                if (inRange) {
-                    knightAttacks.set(position + knightOffsets[1]);
-                }
+            if(file == 0 && (knightOffset == 15 || knightOffset == 6 || knightOffset == -10 || knightOffset == -17)) continue;
+            if(file == 1 && (knightOffset == 6 || knightOffset == -10)) continue;
+            if(file == 7 && (knightOffset == -15 || knightOffset == -6 || knightOffset == 10 || knightOffset == 17)) continue;
+            if(file == 6 && (knightOffset == -6 || knightOffset == 10)) continue;
 
-                inRange = position + knightOffsets[2] >= 0 && position + knightOffsets[2] <= 63;
-                if (inRange) {
-                    knightAttacks.set(position + knightOffsets[2]);
-                }
-            }
-
-            if (file >= 2) {
-                inRange = position + knightOffsets[0] >= 0 && position + knightOffsets[0] <= 63;
-                if (inRange) {
-                    knightAttacks.set(position + knightOffsets[0]);
-                }
-
-                inRange = position + knightOffsets[4] >= 0 && position + knightOffsets[4] <= 63;
-                if (inRange) {
-                    knightAttacks.set(position + knightOffsets[4]);
-                }
-            }
-
-            if (file <= 5) {
-                inRange = position + knightOffsets[3] >= 0 && position + knightOffsets[3] <= 63;
-                if (inRange) {
-                    knightAttacks.set(position + knightOffsets[3]);
-                }
-
-                inRange = position + knightOffsets[7] >= 0 && position + knightOffsets[7] <= 63;
-                if (inRange) {
-                    knightAttacks.set(position + knightOffsets[7]);
-                }
-            }
-        } else {
-            if (rank >= 2) {
-                inRange = position + knightOffsets[5] >= 0 && position + knightOffsets[5] <= 63;
-                if (inRange) {
-                    knightAttacks.set(position + knightOffsets[5]);
-                }
-
-                inRange = position + knightOffsets[6] >= 0 && position + knightOffsets[6] <= 63;
-                if (inRange) {
-                    knightAttacks.set(position + knightOffsets[6]);
-                }
-            }
-
-            if (rank <= 5) {
-                inRange = position + knightOffsets[1] >= 0 && position + knightOffsets[1] <= 63;
-                if (inRange) {
-                    knightAttacks.set(position + knightOffsets[1]);
-                }
-
-                inRange = position + knightOffsets[2] >= 0 && position + knightOffsets[2] <= 63;
-                if (inRange) {
-                    knightAttacks.set(position + knightOffsets[2]);
-                }
-            }
-
-            if (file >= 2) {
-                inRange = position + knightOffsets[0] >= 0 && position + knightOffsets[0] <= 63;
-                if (inRange) {
-                    knightAttacks.set(position + knightOffsets[0]);
-                }
-
-                inRange = position + knightOffsets[4] >= 0 && position + knightOffsets[4] <= 63;
-                if (inRange) {
-                    knightAttacks.set(position + knightOffsets[4]);
-                }
-            }
-
-            if (file <= 5) {
-                inRange = position + knightOffsets[3] >= 0 && position + knightOffsets[3] <= 63;
-                if (inRange) {
-                    knightAttacks.set(position + knightOffsets[3]);
-                }
-
-                inRange = position + knightOffsets[7] >= 0 && position + knightOffsets[7] <= 63;
-                if (inRange) {
-                    knightAttacks.set(position + knightOffsets[7]);
-                }
-            }
+            knightAttacks.set(position + knightOffset);
         }
         return knightAttacks;
     }
@@ -324,7 +238,7 @@ public class MoveGenerator {
         BitSet sideToMove = currentBoard.whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
         BitSet sideToWait = !currentBoard.whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
 
-        for(int bishopOffset : bishopOffsets) {
+        for (int bishopOffset : bishopOffsets) {
             offsetPos = position;
             offsetPos += bishopOffset;
 
@@ -346,7 +260,7 @@ public class MoveGenerator {
                     break;
                 }
 
-                if(sideToWait.get(offsetPos)) {
+                if (sideToWait.get(offsetPos)) {
                     bishopMoves.set(offsetPos);
                     break;
                 }
@@ -359,6 +273,48 @@ public class MoveGenerator {
         return bishopMoves;
     }
 
+    public BitSet getBishopAttacks(int position, Board currentBoard, boolean whiteToMove) {
+        BitSet bishopAttacks = new BitSet(64);
+        int offsetPos;
+
+        BitSet sideToMove = whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
+        BitSet sideToWait = !whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
+
+        for (int bishopOffset : bishopOffsets) {
+            offsetPos = position;
+            offsetPos += bishopOffset;
+
+            while (true) {
+                //started on edge, no legal moves
+                if (slidingMoveEdgeCase(bishopOffset, position)) break;
+
+                //out of bounds
+                if (offsetPos > 63 || offsetPos < 0) break;
+
+                //about to wrap around, disallow
+                if (slidingMoveEdgeCase(bishopOffset, offsetPos) && !sideToMove.get(offsetPos)) {
+                    bishopAttacks.set(offsetPos);
+                    break;
+                }
+
+                if (sideToMove.get(offsetPos)) {
+                    bishopAttacks.set(offsetPos);
+                    break;
+                }
+
+                if (sideToWait.get(offsetPos)) {
+                    bishopAttacks.set(offsetPos);
+                    break;
+                }
+
+                bishopAttacks.set(offsetPos);
+                offsetPos += bishopOffset;
+            }
+        }
+
+        return bishopAttacks;
+    }
+
     public BitSet getRookMoves(int position, Board currentBoard) {
         BitSet rookMoves = new BitSet(64);
         int offsetPos;
@@ -366,7 +322,7 @@ public class MoveGenerator {
         BitSet sideToMove = currentBoard.whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
         BitSet sideToWait = !currentBoard.whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
 
-        for(int rookOffset : rookOffsets) {
+        for (int rookOffset : rookOffsets) {
             offsetPos = position;
             offsetPos += rookOffset;
 
@@ -388,7 +344,7 @@ public class MoveGenerator {
                     break;
                 }
 
-                if(sideToWait.get(offsetPos)) {
+                if (sideToWait.get(offsetPos)) {
                     rookMoves.set(offsetPos);
                     break;
                 }
@@ -401,36 +357,78 @@ public class MoveGenerator {
         return rookMoves;
     }
 
+    public BitSet getRookAttacks(int position, Board currentBoard, boolean whiteToMove) {
+        BitSet rookAttacks = new BitSet(64);
+        int offsetPos;
+
+        BitSet sideToMove = whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
+        BitSet sideToWait = !whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
+
+        for (int rookOffset : rookOffsets) {
+            offsetPos = position;
+            offsetPos += rookOffset;
+
+            while (true) {
+                //started on edge, no legal moves
+                if (slidingMoveEdgeCase(rookOffset, position)) break;
+
+                //out of bounds
+                if (offsetPos > 63 || offsetPos < 0) break;
+
+                //about to wrap around, disallow
+                if (slidingMoveEdgeCase(rookOffset, offsetPos) && !sideToMove.get(offsetPos)) {
+                    rookAttacks.set(offsetPos);
+                    break;
+                }
+
+                if (sideToMove.get(offsetPos)) {
+                    rookAttacks.set(offsetPos);
+                    break;
+                }
+
+                if (sideToWait.get(offsetPos)) {
+                    rookAttacks.set(offsetPos);
+                    break;
+                }
+
+                rookAttacks.set(offsetPos);
+                offsetPos += rookOffset;
+            }
+        }
+
+        return rookAttacks;
+    }
+
     private boolean slidingMoveEdgeCase(int offset, int position) {
-        if(offset == bishopOffsets[0]) {
+        if (offset == bishopOffsets[0]) {
             return (position % 8 == 0 || position >= 56);
         }
 
-        if(offset == bishopOffsets[1]) {
+        if (offset == bishopOffsets[1]) {
             return (position % 8 == 7 || position >= 56);
         }
 
-        if(offset == bishopOffsets[2]) {
+        if (offset == bishopOffsets[2]) {
             return (position % 8 == 0 || position < 8);
         }
 
-        if(offset == bishopOffsets[3]) {
+        if (offset == bishopOffsets[3]) {
             return (position % 8 == 7 || position < 8);
         }
 
-        if(offset == rookOffsets[0]) {
+        if (offset == rookOffsets[0]) {
             return (position >= 56);
         }
 
-        if(offset == rookOffsets[1]) {
+        if (offset == rookOffsets[1]) {
             return (position % 8 == 7);
         }
 
-        if(offset == rookOffsets[2]) {
+        if (offset == rookOffsets[2]) {
             return (position < 8);
         }
 
-        if(offset == rookOffsets[3]) {
+        if (offset == rookOffsets[3]) {
             return (position % 8 == 0);
         }
 
@@ -444,27 +442,25 @@ public class MoveGenerator {
         return queenMoves;
     }
 
-    public BitSet getKingAttacks(int position, Board currentBoard) {
+    public BitSet getQueenAttacks(int position, Board currentBoard, boolean whiteToMove) {
+        BitSet queenAttacks = new BitSet(64);
+
+        queenAttacks.or(getBishopAttacks(position, currentBoard, whiteToMove));
+        queenAttacks.or(getRookAttacks(position, currentBoard, whiteToMove));
+
+        return queenAttacks;
+    }
+
+    public BitSet getKingAttacks(int position, Board currentBoard, boolean whiteToMove) {
         BitSet kingAttacks = new BitSet(64);
         boolean inRange;
 
-        if (currentBoard.whiteToMove) {
-            for (int kingOffset : kingOffsets) {
-                inRange = (position + kingOffset >= 0 && position + kingOffset <= 63);
-                if (inRange) {
-                    if (!currentBoard.whitePieces.get(position + kingOffset)) {
-                        kingAttacks.set(position + kingOffset);
-                    }
-                }
-            }
-        } else {
-            for (int kingOffset : kingOffsets) {
-                inRange = (position + kingOffset >= 0 && position + kingOffset <= 63);
-                if (inRange) {
-                    if (!currentBoard.blackPieces.get(position + kingOffset)) {
-                        kingAttacks.set(position + kingOffset);
-                    }
-                }
+        for (int kingOffset : kingOffsets) {
+            if(position % 8 == 0 && (kingOffset == 7 || kingOffset == -1 || kingOffset == -9)) continue;
+            if(position % 8 == 7 && (kingOffset == 9 || kingOffset == 1 || kingOffset == -7)) continue;
+            inRange = (position + kingOffset >= 0 && position + kingOffset <= 63);
+            if (inRange) {
+                kingAttacks.set(position + kingOffset);
             }
         }
 
@@ -473,12 +469,15 @@ public class MoveGenerator {
 
     public BitSet getKingMoves(int position, Board currentBoard) {
         BitSet kingMoves = new BitSet(64);
-        BitSet attackedSquares = getAttackedSquares(currentBoard);
+        BitSet attackedSquares = getAttackedSquares(currentBoard, currentBoard.whiteToMove);
 
         boolean inRange;
 
         if (currentBoard.whiteToMove) {
             for (int kingOffset : kingOffsets) {
+                if(position % 8 == 0 && (kingOffset == 7 || kingOffset == -1 || kingOffset == -9)) continue;
+                if(position % 8 == 7 && (kingOffset == 9 || kingOffset == 1 || kingOffset == -7)) continue;
+
                 inRange = position + kingOffset >= 0 && position + kingOffset <= 63;
                 if (inRange) {
                     if (!currentBoard.whitePieces.get(position + kingOffset) && !attackedSquares.get(position + kingOffset)) {
@@ -528,42 +527,39 @@ public class MoveGenerator {
         return kingMoves;
     }
 
-    public BitSet getAttackedSquares(Board currentBoard) {
+    public BitSet getAttackedSquares(Board currentBoard, boolean whiteToPlay) {
         BitSet attackedSquares = new BitSet(64);
-        BitSet sideToAttack = currentBoard.whiteToMove ? currentBoard.blackPieces : currentBoard.whitePieces;
+        BitSet sideToPlay = whiteToPlay ? currentBoard.whitePieces : currentBoard.blackPieces;
 
-        for(int i = sideToAttack.nextSetBit(0); i >= 0; i = sideToAttack.nextSetBit(i + 1)) {
+        for(int i = sideToPlay.nextSetBit(0); i >= 0; i = sideToPlay.nextSetBit(i + 1)) {
             if(currentBoard.pawnPieces.get(i)) {
-                attackedSquares.or(getPawnAttacks(i, currentBoard));
+                attackedSquares.or(getPawnAttacks(i, currentBoard, whiteToPlay));
+            } else if(currentBoard.knightPieces.get(i)) {
+                attackedSquares.or(getKnightAttacks(i, whiteToPlay));
+            } else if(currentBoard.bishopPieces.get(i)) {
+                attackedSquares.or(getBishopAttacks(i, currentBoard, whiteToPlay));
+            } else if(currentBoard.rookPieces.get(i)) {
+                attackedSquares.or(getRookAttacks(i, currentBoard, whiteToPlay));
+            } else if(currentBoard.queenPieces.get(i)) {
+                attackedSquares.or(getQueenAttacks(i, currentBoard, whiteToPlay));
+            } else if(currentBoard.kingPieces.get(i)) {
+                attackedSquares.or(getKingAttacks(i, currentBoard, whiteToPlay));
             }
         }
-
 
         return attackedSquares;
     }
 
     private boolean pieceIsPinned(int position, int target, Board currentBoard) {
         Board newPosition = makeMove(position, target, currentBoard);
-        BitSet kingPosition = new BitSet(64);
-
-        kingPosition.or(newPosition.kingPieces);
-
-
-        if (currentBoard.whiteToMove) {
-            kingPosition.and(newPosition.whitePieces);
-        } else {
-            kingPosition.and(newPosition.blackPieces);
-        }
-
-        kingPosition.and(getAttackedSquares(newPosition));
-
-        return kingPosition.nextSetBit(0) == -1;
+        newPosition.whiteToMove = !newPosition.whiteToMove;
+        return kingInCheck(newPosition, newPosition.whiteToMove);
     }
 
-    private boolean kingInCheck(Board currentBoard) {
-        BitSet sideToPlay = currentBoard.whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces ;
+    private boolean kingInCheck(Board currentBoard, boolean whiteToMove) {
+        BitSet sideToPlay = whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
         sideToPlay.and(currentBoard.kingPieces);
-        sideToPlay.and(getAttackedSquares(currentBoard));
+        sideToPlay.and(getAttackedSquares(currentBoard, whiteToMove));
 
         return sideToPlay.nextSetBit(0) != -1;
     }
@@ -652,7 +648,7 @@ public class MoveGenerator {
         }
 
         //determine if king is in check, and if so, will this move resolve the check
-        if (kingInCheck(currentBoard) && kingInCheck(makeMove(startSquare, targetSquare, currentBoard))) {
+        if (kingInCheck(currentBoard, currentBoard.whiteToMove) && kingInCheck(makeMove(startSquare, targetSquare, currentBoard), currentBoard.whiteToMove)) {
             return false;
         }
 

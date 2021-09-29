@@ -1,22 +1,16 @@
 import Board.Move;
 import GameManager.Game;
 
+import java.util.BitSet;
 import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        Game chess = new Game("rnbqkbnr/ppp1pppp/8/1B1p4/4P3/8/PPPP1PPP/RNBQK1NR w KQkq - 0 1");
-
-        List<Move> moves = chess.moveGenerator.getLegalMoves(chess.board);
+        Game chess = new Game("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 
         chess.printBoard();
 
-        //chess.printBoard(chess.moveGenerator.getAttackedSquares(chess.board));
-
-        for(int i = 0; i <= 5; i++) {
-            //System.out.println("Positions at depth " + i + ": " + chess.moveGenerator.perft(i, chess.board));
-        }
-
+        List<Move> moves = chess.moveGenerator.getLegalMoves(chess.board);
 
         System.out.println("Moves: " + moves.size());
         for(Move m : moves) {

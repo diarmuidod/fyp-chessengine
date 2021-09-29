@@ -15,7 +15,7 @@ public class Board {
     final BitSet queenPieces = new BitSet(64);
     final BitSet kingPieces = new BitSet(64);
 
-    boolean whiteToMove;
+    public boolean whiteToMove;
 
     boolean whiteKingSide;
     boolean whiteQueenSide;
