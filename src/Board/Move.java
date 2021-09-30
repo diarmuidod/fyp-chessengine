@@ -5,10 +5,17 @@ public class Move {
     public int targetSquare;
     public Flag[] moveFlag;
 
-    public Move(int startSquare, int targetSquare, Flag... moveFlag) {
+    public Board board;
+
+    public Move(int startSquare, int targetSquare, Board board, Flag... moveFlag) {
         this.startSquare = startSquare;
         this.targetSquare = targetSquare;
+        this.board = board;
         this.moveFlag = moveFlag;
+    }
+
+    public Move(String move) {
+
     }
 
     public String moveFromIndex(int index) {
