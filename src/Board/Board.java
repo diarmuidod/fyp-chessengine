@@ -94,16 +94,31 @@ public class Board {
 
     public Board copy() {
         Board newBoard = new Board();
+        newBoard.allPieces.clear();
         newBoard.allPieces.or(this.allPieces);
 
+        newBoard.whitePieces.clear();
         newBoard.whitePieces.or(this.whitePieces);
+        
+        newBoard.blackPieces.clear();
         newBoard.blackPieces.or(this.blackPieces);
 
+        newBoard.pawnPieces.clear();
         newBoard.pawnPieces.or(this.pawnPieces);
+
+        newBoard.knightPieces.clear();
         newBoard.knightPieces.or(this.knightPieces);
+
+        newBoard.bishopPieces.clear();
         newBoard.bishopPieces.or(this.bishopPieces);
+
+        newBoard.rookPieces.clear();
         newBoard.rookPieces.or(this.rookPieces);
+
+        newBoard.queenPieces.clear();
         newBoard.queenPieces.or(this.queenPieces);
+
+        newBoard.kingPieces.clear();
         newBoard.kingPieces.or(this.kingPieces);
 
         newBoard.whiteToMove = whiteToMove;

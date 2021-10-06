@@ -555,13 +555,12 @@ public class MoveGenerator {
         if (targetSquare == 63) board.blackKingSide = false;
         if (targetSquare == 56) board.blackQueenSide = false;
 
-        board.whiteToMove = !currentBoard.whiteToMove;
+        board.whiteToMove = !board.whiteToMove;
 
         return board;
     }
 
     public boolean isValidMove(int startSquare, int targetSquare, Board currentBoard) {
-
         //ensure there's a piece to move to begin with
         if (currentBoard.whiteToMove && !currentBoard.whitePieces.get(startSquare)) return false;
         if (!currentBoard.whiteToMove && !currentBoard.blackPieces.get(startSquare)) return false;
@@ -601,26 +600,30 @@ public class MoveGenerator {
             } else if (board.knightPieces.get(i)) {
                 BitSet knightMoves = getKnightMoves(i, board);
                 for (int j = knightMoves.nextSetBit(0); j >= 0; j = knightMoves.nextSetBit(j + 1)) {
-                    if (isValidMove(i, j, board))
-                        moves.add(new Move(i, j, board, this));
+                    if (!isValidMove(i, j, board)) continue;
+
+                    moves.add(new Move(i, j, board, this));
                 }
             } else if (board.bishopPieces.get(i)) {
                 BitSet bishopMoves = getBishopMoves(i, board);
                 for (int j = bishopMoves.nextSetBit(0); j >= 0; j = bishopMoves.nextSetBit(j + 1)) {
-                    if (isValidMove(i, j, board))
-                        moves.add(new Move(i, j, board, this));
+                    if (!isValidMove(i, j, board)) continue;
+
+                    moves.add(new Move(i, j, board, this));
                 }
             } else if (board.rookPieces.get(i)) {
                 BitSet rookMoves = getRookMoves(i, board);
                 for (int j = rookMoves.nextSetBit(0); j >= 0; j = rookMoves.nextSetBit(j + 1)) {
-                    if (isValidMove(i, j, board))
-                        moves.add(new Move(i, j, board, this));
+                    if (!isValidMove(i, j, board)) continue;
+
+                    moves.add(new Move(i, j, board, this));
                 }
             } else if (board.queenPieces.get(i)) {
                 BitSet queenMoves = getQueenMoves(i, board);
                 for (int j = queenMoves.nextSetBit(0); j >= 0; j = queenMoves.nextSetBit(j + 1)) {
-                    if (isValidMove(i, j, board))
-                        moves.add(new Move(i, j, board, this));
+                    if (!isValidMove(i, j, board)) continue;
+
+                    moves.add(new Move(i, j, board, this));
                 }
             } else if (board.kingPieces.get(i)) {
                 BitSet kingMoves = getKingMoves(i, board);
