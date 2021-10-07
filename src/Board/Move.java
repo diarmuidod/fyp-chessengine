@@ -36,7 +36,7 @@ public class Move {
         if(moveFlag.contains(Flag.CASTLE_LONG)) return Flag.CASTLE_LONG.getFlag();
 
         if(board.pawnPieces.get(startSquare)) { //Pawn Moves
-            if(board.allPieces.get(targetSquare)) {
+            if(board.allPieces.get(targetSquare) || moveFlag.contains(Flag.EN_PASSANT)) {
                 move = moveFromIndex(startSquare).charAt(0) + "x" + moveFromIndex(targetSquare);
             } else {
                 move = moveFromIndex(targetSquare);
@@ -76,7 +76,8 @@ public class Move {
         PROMOTE_QUEEN("=Q"),
         PROMOTE_KNIGHT("=N"),
         PROMOTE_BISHOP("=B"),
-        PROMOTE_ROOK("=R");
+        PROMOTE_ROOK("=R"),
+        EN_PASSANT("(EP)");
 
         String flag;
 

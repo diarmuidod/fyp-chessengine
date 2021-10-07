@@ -37,15 +37,6 @@ public class Game {
     }
 
     public void playGame() {
-        /*
-        while(true) {
-            while(!currentMove.matches(MOVE_REGEX)) {
-                currentMove = input.nextLine();
-            }
-
-            Move newMove = new Move(currentMove);
-        }
-         */
     }
 
     public String saveGameToFEN() {

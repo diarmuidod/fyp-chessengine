@@ -13,35 +13,41 @@ public class MoveGenerator {
 
     public BitSet getPawnMoves(int position, Board currentBoard) {
         BitSet pawnMoves = new BitSet(64);
-        int multiplier = currentBoard.whiteToMove ? 1 : -1;
+        int sideToMove = currentBoard.whiteToMove ? 1 : -1;
         BitSet sideToWait = !currentBoard.whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
         boolean inRange;
 
+
         //forward one
-        if (!currentBoard.allPieces.get(position + (pawnOffsets[0] * multiplier)))
-            pawnMoves.set(position + (pawnOffsets[0] * multiplier));
+        inRange = (position + (pawnOffsets[0] * sideToMove) >= 0 && position + (pawnOffsets[0] * sideToMove) <= 63);
+        if(inRange) {
+            if (!currentBoard.allPieces.get(position + (pawnOffsets[0] * sideToMove)))
+                pawnMoves.set(position + (pawnOffsets[0] * sideToMove));
+        }
+
         //forward two
-        if ((position / 8 == 1) || (position / 8) == 6) {
-            if (!currentBoard.allPieces.get(position + (pawnOffsets[0] * multiplier))
-                    && !currentBoard.allPieces.get(position + (pawnOffsets[1] * multiplier))) {
-                pawnMoves.set(position + (pawnOffsets[1] * multiplier));
+        inRange = (position + (pawnOffsets[1] * sideToMove) >= 0 && position + (pawnOffsets[1] * sideToMove) <= 63);
+        if(inRange) {
+            if (position / 8 == 1 || position / 8 == 6) {
+                if (!currentBoard.allPieces.get(position + (pawnOffsets[0] * sideToMove))
+                        && !currentBoard.allPieces.get(position + (pawnOffsets[1] * sideToMove))) {
+                    pawnMoves.set(position + (pawnOffsets[1] * sideToMove));
+                }
             }
         }
 
         //captures
-        inRange = (position + (pawnOffsets[2] * multiplier) >= 0 && position + (pawnOffsets[2] * multiplier) <= 63);
+        inRange = (position + (pawnOffsets[2] * sideToMove) >= 0 && position + (pawnOffsets[2] * sideToMove) <= 63);
         if (inRange && position % 8 != 0) {
-            if (sideToWait.get(position + (pawnOffsets[2] * multiplier)) ||
-                    currentBoard.enPassantSquare == position + (pawnOffsets[2] * multiplier)) {
-                pawnMoves.set(position + (pawnOffsets[2] * multiplier));
+            if (sideToWait.get(position + (pawnOffsets[2] * sideToMove)) || currentBoard.enPassantSquare == position + (pawnOffsets[2] * sideToMove)) {
+                pawnMoves.set(position + (pawnOffsets[2] * sideToMove));
             }
         }
 
-        inRange = (position + (pawnOffsets[3] * multiplier) >= 0 && position + (pawnOffsets[3] * multiplier) <= 63);
+        inRange = (position + (pawnOffsets[3] * sideToMove) >= 0 && position + (pawnOffsets[3] * sideToMove) <= 63);
         if (inRange && position % 8 != 7) {
-            if (sideToWait.get(position + (pawnOffsets[3] * multiplier)) ||
-                    currentBoard.enPassantSquare == position + (pawnOffsets[3] * multiplier)) {
-                pawnMoves.set(position + (pawnOffsets[3] * multiplier));
+            if (sideToWait.get(position + (pawnOffsets[3] * sideToMove)) || currentBoard.enPassantSquare == position + (pawnOffsets[3] * sideToMove)) {
+                pawnMoves.set(position + (pawnOffsets[3] * sideToMove));
             }
         }
 
@@ -61,7 +67,7 @@ public class MoveGenerator {
         }
 
         inRange = (position + (pawnOffsets[3] * sideToMove) >= 0 && position + (pawnOffsets[3] * sideToMove) <= 63);
-        if (inRange && position % 8 != 7) {
+        if (inRange && position % 8 != 0 && position % 8 != 7) {
             pawnAttacks.set(position + (pawnOffsets[3] * sideToMove));
         }
 
@@ -72,22 +78,23 @@ public class MoveGenerator {
         BitSet knightMoves = new BitSet(64);
         BitSet sideToMove = currentBoard.whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
 
-        int rank = (position / 8) + 1, file = position % 8;
+        int rank = (position / 8) + 1, file = (position % 8) + 1;
 
         for (int knightOffset : knightOffsets) {
             if (position + knightOffset < 0 || position + knightOffset > 63) continue;
 
-            if (rank == 0 && knightOffset < 0) continue;
-            if (rank == 1 && knightOffset <= -15) continue;
-            if (rank == 7 && knightOffset > 0) continue;
-            if (rank == 6 && knightOffset >= 15) continue;
+            if(((position + knightOffset) / 8) + 1 == rank) continue;
+            if(((position + knightOffset) % 8) + 1 == file) continue;
 
-            if (file == 0 && (knightOffset == 15 || knightOffset == 6 || knightOffset == -10 || knightOffset == -17))
-                continue;
-            if (file == 1 && (knightOffset == 6 || knightOffset == -10)) continue;
-            if (file == 7 && (knightOffset == -15 || knightOffset == -6 || knightOffset == 10 || knightOffset == 17))
-                continue;
-            if (file == 6 && (knightOffset == -6 || knightOffset == 10)) continue;
+            if (rank == 1 && knightOffset < 0) continue;
+            if (rank == 2 && knightOffset <= -15) continue;
+            if (rank == 8 && knightOffset > 0) continue;
+            if (rank == 7 && knightOffset >= 15) continue;
+
+            if (file == 1 && (knightOffset == 15 || knightOffset == 6 || knightOffset == -10 || knightOffset == -17)) continue;
+            if (file == 2 && (knightOffset == 6 || knightOffset == -10)) continue;
+            if (file == 8 && (knightOffset == -15 || knightOffset == -6 || knightOffset == 10 || knightOffset == 17)) continue;
+            if (file == 7 && (knightOffset == -6 || knightOffset == 10)) continue;
 
             if (!sideToMove.get(position + knightOffset)) {
                 knightMoves.set(position + knightOffset);
@@ -123,7 +130,6 @@ public class MoveGenerator {
     public BitSet getBishopMoves(int position, Board currentBoard) {
         BitSet bishopMoves = new BitSet(64);
         int offsetPos;
-        int file, rank;
 
         BitSet sideToMove = currentBoard.whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
         BitSet sideToWait = !currentBoard.whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
@@ -303,7 +309,7 @@ public class MoveGenerator {
         }
 
         if (offset == bishopOffsets[3]) {
-            return (position % 8 == 7 || position < 8);
+            return (position % 8 == 7 || position % 8 == 0 || position < 8);
         }
 
         if (offset == rookOffsets[0]) {
@@ -427,14 +433,6 @@ public class MoveGenerator {
 
         return (attackingSide.nextSetBit(0) != -1);
     }
-
-    /* // Redundant??
-    public boolean pieceIsPinned(int position, int target, Board currentBoard) {
-        boolean whiteToMove = currentBoard.whiteToMove;
-        Board newPosition = makeMove(position, target, currentBoard);
-        return kingInCheck(newPosition, whiteToMove);
-    }
-    */
 
     public BitSet getAttackedSquares(Board currentBoard, boolean whiteToPlay) {
         BitSet attackedSquares = new BitSet(64);
@@ -593,6 +591,8 @@ public class MoveGenerator {
                         moves.add(new Move(i, j, board, this, Move.Flag.PROMOTE_ROOK));
                         moves.add(new Move(i, j, board, this, Move.Flag.PROMOTE_BISHOP));
                         moves.add(new Move(i, j, board, this, Move.Flag.PROMOTE_KNIGHT));
+                    } else if(j == board.enPassantSquare){
+                        moves.add(new Move(i, j, board, this, Move.Flag.EN_PASSANT));
                     } else {
                         moves.add(new Move(i, j, board, this));
                     }

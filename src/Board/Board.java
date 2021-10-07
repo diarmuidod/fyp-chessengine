@@ -153,15 +153,6 @@ public class Board {
             mark -= 8;
             System.out.println();
         }
-/*
-        System.out.println("\nWhite Kingside Castling: " + whiteKingSide);
-        System.out.println("White Queenside Castling: " + whiteQueenSide);
-        System.out.println("Black Kingside Castling: " + blackKingSide);
-        System.out.println("Black Queenside Castling: " + blackQueenSide);
-
-        System.out.println("White to move: " + whiteToMove);
-
- */
     }
 
     public void printBoard(BitSet bitset) {
