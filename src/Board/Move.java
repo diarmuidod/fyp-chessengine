@@ -10,6 +10,7 @@ public class Move {
     public int targetSquare;
     public List<Flag> moveFlag;
 
+    //internal use only (ideally want to clean this up, generation isn't particularly great, not a priority)
     public Move(int startSquare, int targetSquare, Board board, MoveGenerator moveGenerator, Flag... moveFlag) {
         this.startSquare = startSquare;
         this.targetSquare = targetSquare;
@@ -18,13 +19,45 @@ public class Move {
         move = getMoveInSAN(board, moveGenerator);
     }
 
-    public Move(String move) {
+    //translate user input to board representation
+    public Move(String move, Board board) {
+        this.move = move;
 
+        int start = 0, target = 0;
+        if(!Character.isUpperCase(move.charAt(0))) { // pawn move
+            BitSet sideToMove = (BitSet) (board.whiteToMove ? board.whitePieces.clone() : board.blackPieces.clone());
+
+            //check each pawn of the side to move until match is found, for start and target squares
+            for(int i = board.pawnPieces.nextSetBit(0); i >= 0; i = board.pawnPieces.nextSetBit(i + 1)) {
+                if(sideToMove.get(i) && (getFile(i) == move.charAt(0))) {
+                    this.startSquare = i;
+                    continue;
+                }
+
+                if(move.contains("x")) {
+
+                }
+            }
+        }
+    }
+
+    public char getFile(int index) {
+        return (char) ((index % 8) + 97);
+    }
+
+    public char getRank(int index) {
+        return (char) ((index / 8) + 49);
+    }
+
+    public int getIndexFromSquare(String square) {
+        //Integer.valueOf(square.charAt(1))
+        return 0;
     }
 
     public String moveFromIndex(int index) {
-        char number = (char) ((index / 8) + 49);
-        char letter = (char) ((index % 8) + 97);
+        char number = getRank(index);
+        char letter = getFile(index);
+
         return letter + String.valueOf(number);
     }
 
@@ -41,6 +74,7 @@ public class Move {
             } else {
                 move = moveFromIndex(targetSquare);
             }
+
             if(moveFlag.contains(Flag.PROMOTE_QUEEN)) move += Flag.PROMOTE_QUEEN;
             if(moveFlag.contains(Flag.PROMOTE_KNIGHT)) move += Flag.PROMOTE_KNIGHT;
             if(moveFlag.contains(Flag.PROMOTE_BISHOP)) move += Flag.PROMOTE_BISHOP;
