@@ -643,18 +643,4 @@ public class MoveGenerator {
 
         return moves;
     }
-
-    public long perft(int depth, Board board) {
-        long moves = 0;
-
-        if (depth == 0) {
-            return 1;
-        }
-
-        for (Move m : getLegalMoves(board)) {
-            moves += perft(depth - 1, makeMove(m.startSquare, m.targetSquare, board));
-        }
-
-        return moves;
-    }
 }

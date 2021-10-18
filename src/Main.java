@@ -1,12 +1,25 @@
-import Board.Board;
-import Board.Move;
+import Board.Perft;
 import GameManager.Game;
 
 public class Main {
     public static void main(String[] args) {
-        if(args.length == 3) {
+        Perft perft = new Perft();
+
+        //For use in tandem with perftree, for debugging Move Generation
+        if(args.length > 0) {
             Game chess = new Game(args[1]);
-            chess.moveGenerator.perft(Integer.parseInt(args[0]), chess.board);
+            if(args.length == 3) {
+                String startSq = "" + args[2].charAt(0) + args[2].charAt(1);
+                String targetSq = "" + args[2].charAt(2) + args[2].charAt(3);
+
+                int startSquare = perft.getIndexFromSquare(startSq);
+                int targetSquare = perft.getIndexFromSquare(targetSq);
+
+                chess.board = chess.moveGenerator.makeMove(startSquare, targetSquare, chess.board);
+            }
+
+            perft.perft(Integer.parseInt(args[0]), chess.board);
+            return;
         }
 
         Game chess = new Game("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -18,6 +31,6 @@ public class Main {
 
         System.out.println(chess.getLegalMoves() + "\n\nMoves: " + chess.getLegalMoves().size());
 
-        for (int i = 0; i < 6; i++) System.out.println("Moves at depth " + i + ": " + chess.moveGenerator.perft(i, chess.board));
+        for (int i = 0; i < 6; i++) System.out.println("Moves at depth " + i + ": " + perft.perft(i, chess.board));
     }
 }

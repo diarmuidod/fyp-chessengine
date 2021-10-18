@@ -49,11 +49,6 @@ public class Move {
         return (char) ((index / 8) + 49);
     }
 
-    public int getIndexFromSquare(String square) {
-        //Integer.valueOf(square.charAt(1))
-        return 0;
-    }
-
     public String moveFromIndex(int index) {
         char number = getRank(index);
         char letter = getFile(index);
