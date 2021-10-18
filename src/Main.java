@@ -6,8 +6,11 @@ public class Main {
         Perft perft = new Perft();
 
         //For use in tandem with perftree, for debugging Move Generation
-        if(args.length > 0) {
+        if(args.length == 3) {
             perft.runPerft(args[0], args[1], args[2]);
+            return;
+        } else if(args.length == 2) {
+            perft.runPerft(args[0], args[1]);
             return;
         }
 

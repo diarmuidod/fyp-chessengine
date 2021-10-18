@@ -9,6 +9,24 @@ public class Perft {
         int start = getIndexFromSquare("" + m.charAt(0) + m.charAt(1));
         int target = getIndexFromSquare("" + m.charAt(2) + m.charAt(3));
 
+        Board board = moveGenerator.makeMove(start, target, new Board(FEN));
+
+        long total = perft(depth, board);
+
+        for(Move move : moveGenerator.getLegalMoves(board)) {
+            String startSq = squareFromIndex(move.startSquare);
+            String targetSq = squareFromIndex(move.targetSquare);
+
+            System.out.println(startSq + targetSq + " " + perft(depth - 1, moveGenerator.makeMove(move.startSquare, move.targetSquare, board)));
+        }
+
+        System.out.println("\n" + total);
+    }
+
+    public void runPerft(String d, String f) {
+        int depth = Integer.parseInt(d);
+        String FEN = f;
+
         Board board = new Board(FEN);
 
         long total = perft(depth, board);
