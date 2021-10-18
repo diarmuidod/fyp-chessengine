@@ -1,7 +1,12 @@
 package Board;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 public class Perft {
     private MoveGenerator moveGenerator = new MoveGenerator();
+    String txtOutput = "";
 
     public void runPerft(String d, String f, String m) {
     	int depth = Integer.parseInt(d);
@@ -17,10 +22,11 @@ public class Perft {
             String startSq = squareFromIndex(move.startSquare);
             String targetSq = squareFromIndex(move.targetSquare);
 
-            System.out.println(startSq + targetSq + " " + perft(depth - 1, moveGenerator.makeMove(move.startSquare, move.targetSquare, board)));
+            txtOutput += (startSq + targetSq + " " + perft(depth - 1, moveGenerator.makeMove(move.startSquare, move.targetSquare, board))) + "\n";
         }
 
-        System.out.println("\n" + total);
+        txtOutput += ("\n" + total);
+        writePerftOutput(txtOutput);
     }
 
     public void runPerft(String d, String f) {
@@ -35,10 +41,11 @@ public class Perft {
             String startSq = squareFromIndex(move.startSquare);
             String targetSq = squareFromIndex(move.targetSquare);
 
-            System.out.println(startSq + targetSq + " " + perft(depth - 1, moveGenerator.makeMove(move.startSquare, move.targetSquare, board)));
+            txtOutput += (startSq + targetSq + " " + perft(depth - 1, moveGenerator.makeMove(move.startSquare, move.targetSquare, board))) + "\n";
         }
 
-        System.out.println("\n" + total);
+        txtOutput += ("\n" + total);
+        writePerftOutput(txtOutput);
     }
 
     public char getFile(int index) {
@@ -75,5 +82,22 @@ public class Perft {
         int rank = Integer.parseInt("" + square.charAt(1));
 
         return file + rank;
+    }
+
+    public void writePerftOutput(String output) {
+        try {
+            File myObj = new File("output.txt");
+            try {
+                FileWriter myWriter = new FileWriter(myObj);
+                myWriter.write(output);
+                myWriter.close();
+            } catch (IOException e) {
+                System.out.println("An error occurred.");
+                e.printStackTrace();
+            }
+        } catch (Exception e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+        }
     }
 }
