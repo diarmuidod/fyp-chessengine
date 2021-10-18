@@ -4,31 +4,38 @@ public class Perft {
     private MoveGenerator moveGenerator = new MoveGenerator();
 
     public void runPerft(String d, String f, String m) {
-    	int startSquare = -1, targetSquare = -1;
-        int depth = Integer.parseInt(d);
+    	int depth = Integer.parseInt(d);
         String FEN = f;
-
-        String startSq = "";
-        String targetSq = "";
-/*
-	if(!(m == null || m == "")) {
-		startSq = "" + m.charAt(0) + m.charAt(1);
-		targetSq = "" + m.charAt(2) + m.charAt(3);
-		
-        	startSquare = getIndexFromSquare(startSq);
-        	targetSquare = getIndexFromSquare(targetSq);
-        }
-*/
+        int start = getIndexFromSquare("" + m.charAt(0) + m.charAt(1));
+        int target = getIndexFromSquare("" + m.charAt(2) + m.charAt(3));
 
         Board board = new Board(FEN);
 
-//        if(!(m == null || m == "")) board = moveGenerator.makeMove(startSquare, targetSquare, board);
+        long total = perft(depth, board);
 
         for(Move move : moveGenerator.getLegalMoves(board)) {
-        	System.out.println(move + " " + perft(depth - 1, board));
+            String startSq = squareFromIndex(move.startSquare);
+            String targetSq = squareFromIndex(move.targetSquare);
+
+            System.out.println(startSq + targetSq + " " + perft(depth - 1, moveGenerator.makeMove(move.startSquare, move.targetSquare, board)));
         }
-        
-        System.out.println("\n" + perft(depth, board));
+
+        System.out.println("\n" + total);
+    }
+
+    public char getFile(int index) {
+        return (char) ((index % 8) + 97);
+    }
+
+    public char getRank(int index) {
+        return (char) ((index / 8) + 49);
+    }
+
+    public String squareFromIndex(int index) {
+        char number = getRank(index);
+        char letter = getFile(index);
+
+        return letter + String.valueOf(number);
     }
 
     public long perft(int depth, Board board) {
