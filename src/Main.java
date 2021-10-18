@@ -7,18 +7,7 @@ public class Main {
 
         //For use in tandem with perftree, for debugging Move Generation
         if(args.length > 0) {
-            Game chess = new Game(args[1]);
-            if(args.length == 3) {
-                String startSq = "" + args[2].charAt(0) + args[2].charAt(1);
-                String targetSq = "" + args[2].charAt(2) + args[2].charAt(3);
-
-                int startSquare = perft.getIndexFromSquare(startSq);
-                int targetSquare = perft.getIndexFromSquare(targetSq);
-
-                chess.board = chess.moveGenerator.makeMove(startSquare, targetSquare, chess.board);
-            }
-
-            perft.perft(Integer.parseInt(args[0]), chess.board);
+            perft.runPerft(args[0], args[1], args[2]);
             return;
         }
 

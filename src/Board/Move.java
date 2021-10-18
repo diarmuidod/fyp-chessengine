@@ -34,6 +34,7 @@ public class Move {
                     continue;
                 }
 
+                //only piece moves can have disambiguations i.e. Raxd8
                 if(move.contains("x")) {
 
                 }
