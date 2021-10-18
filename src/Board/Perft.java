@@ -3,21 +3,32 @@ package Board;
 public class Perft {
     private MoveGenerator moveGenerator = new MoveGenerator();
 
-    public void runPerft(String d, String f, String... m) {
+    public void runPerft(String d, String f, String m) {
+    	int startSquare = -1, targetSquare = -1;
         int depth = Integer.parseInt(d);
         String FEN = f;
 
-        String startSq = "" + m[0].charAt(0) + m[0].charAt(1);
-        String targetSq = "" + m[0].charAt(2) + m[0].charAt(3);
-
-        int startSquare = getIndexFromSquare(startSq);
-        int targetSquare = getIndexFromSquare(targetSq);
+        String startSq = "";
+        String targetSq = "";
+/*
+	if(!(m == null || m == "")) {
+		startSq = "" + m.charAt(0) + m.charAt(1);
+		targetSq = "" + m.charAt(2) + m.charAt(3);
+		
+        	startSquare = getIndexFromSquare(startSq);
+        	targetSquare = getIndexFromSquare(targetSq);
+        }
+*/
 
         Board board = new Board(FEN);
 
-        if(m == null || m[0] == "") moveGenerator.makeMove(startSquare, targetSquare, new Board(FEN));
+//        if(!(m == null || m == "")) board = moveGenerator.makeMove(startSquare, targetSquare, board);
 
-        perft(depth, board);
+        for(Move move : moveGenerator.getLegalMoves(board)) {
+        	System.out.println(move + " " + perft(depth - 1, board));
+        }
+        
+        System.out.println("\n" + perft(depth, board));
     }
 
     public long perft(int depth, Board board) {
