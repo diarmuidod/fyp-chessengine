@@ -1,25 +1,15 @@
-import Board.Move;
+import Board.Perft;
 import GameManager.Game;
-
-import java.util.BitSet;
-import java.util.LinkedList;
-import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
+        Perft perft = new Perft();
 
-        //known bugs - moves not being filtered for pins and checks properly
-
-        Game chess = new Game("5k2/8/3r4/8/3B4/8/3K4/8 w - - 0 1");
-        chess.printBoard();
-
-        System.out.println(chess.moveGenerator.getLegalMoves(chess.board));
-        System.out.println("King in check: " + chess.moveGenerator.kingInCheck(chess.board, chess.board.whiteToMove));
-
-        for(Move m : chess.moveGenerator.getLegalMoves(chess.board)) {
-            System.out.println(m + ", " + chess.moveGenerator.perft(2, chess.moveGenerator.makeMove(m.startSquare, m.targetSquare, chess.board)));
+        //For use in tandem with perftree, for debugging Move Generation
+        if(args.length == 3) {
+            perft.runPerft(args[0], args[1], args[2]);
+        } else if(args.length == 2) {
+            perft.runPerft(args[0], args[1]);
         }
-
-        System.out.println("\nMoves: " + chess.moveGenerator.perft(3, chess.board));
     }
 }

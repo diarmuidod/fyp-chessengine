@@ -13,35 +13,41 @@ public class MoveGenerator {
 
     public BitSet getPawnMoves(int position, Board currentBoard) {
         BitSet pawnMoves = new BitSet(64);
-        int multiplier = currentBoard.whiteToMove ? 1 : -1;
+        int sideToMove = currentBoard.whiteToMove ? 1 : -1;
         BitSet sideToWait = !currentBoard.whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
         boolean inRange;
 
+
         //forward one
-        if (!currentBoard.allPieces.get(position + (pawnOffsets[0] * multiplier)))
-            pawnMoves.set(position + (pawnOffsets[0] * multiplier));
+        inRange = (position + (pawnOffsets[0] * sideToMove) >= 0 && position + (pawnOffsets[0] * sideToMove) <= 63);
+        if(inRange) {
+            if (!currentBoard.allPieces.get(position + (pawnOffsets[0] * sideToMove)))
+                pawnMoves.set(position + (pawnOffsets[0] * sideToMove));
+        }
+
         //forward two
-        if ((position / 8 == 1) || (position / 8) == 6) {
-            if (!currentBoard.allPieces.get(position + (pawnOffsets[0] * multiplier))
-                    && !currentBoard.allPieces.get(position + (pawnOffsets[1] * multiplier))) {
-                pawnMoves.set(position + (pawnOffsets[1] * multiplier));
+        inRange = (position + (pawnOffsets[1] * sideToMove) >= 0 && position + (pawnOffsets[1] * sideToMove) <= 63);
+        if(inRange) {
+            if (position / 8 == 1 || position / 8 == 6) {
+                if (!currentBoard.allPieces.get(position + (pawnOffsets[0] * sideToMove))
+                        && !currentBoard.allPieces.get(position + (pawnOffsets[1] * sideToMove))) {
+                    pawnMoves.set(position + (pawnOffsets[1] * sideToMove));
+                }
             }
         }
 
         //captures
-        inRange = (position + (pawnOffsets[2] * multiplier) >= 0 && position + (pawnOffsets[2] * multiplier) <= 63);
+        inRange = (position + (pawnOffsets[2] * sideToMove) >= 0 && position + (pawnOffsets[2] * sideToMove) <= 63);
         if (inRange && position % 8 != 0) {
-            if (sideToWait.get(position + (pawnOffsets[2] * multiplier)) ||
-                    currentBoard.enPassantSquare == position + (pawnOffsets[2] * multiplier)) {
-                pawnMoves.set(position + (pawnOffsets[2] * multiplier));
+            if (sideToWait.get(position + (pawnOffsets[2] * sideToMove)) || currentBoard.enPassantSquare == position + (pawnOffsets[2] * sideToMove)) {
+                pawnMoves.set(position + (pawnOffsets[2] * sideToMove));
             }
         }
 
-        inRange = (position + (pawnOffsets[3] * multiplier) >= 0 && position + (pawnOffsets[3] * multiplier) <= 63);
+        inRange = (position + (pawnOffsets[3] * sideToMove) >= 0 && position + (pawnOffsets[3] * sideToMove) <= 63);
         if (inRange && position % 8 != 7) {
-            if (sideToWait.get(position + (pawnOffsets[3] * multiplier)) ||
-                    currentBoard.enPassantSquare == position + (pawnOffsets[3] * multiplier)) {
-                pawnMoves.set(position + (pawnOffsets[3] * multiplier));
+            if (sideToWait.get(position + (pawnOffsets[3] * sideToMove)) || currentBoard.enPassantSquare == position + (pawnOffsets[3] * sideToMove)) {
+                pawnMoves.set(position + (pawnOffsets[3] * sideToMove));
             }
         }
 
@@ -61,7 +67,7 @@ public class MoveGenerator {
         }
 
         inRange = (position + (pawnOffsets[3] * sideToMove) >= 0 && position + (pawnOffsets[3] * sideToMove) <= 63);
-        if (inRange && position % 8 != 7) {
+        if (inRange && position % 8 != 0 && position % 8 != 7) {
             pawnAttacks.set(position + (pawnOffsets[3] * sideToMove));
         }
 
@@ -72,22 +78,23 @@ public class MoveGenerator {
         BitSet knightMoves = new BitSet(64);
         BitSet sideToMove = currentBoard.whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
 
-        int rank = (position / 8) + 1, file = position % 8;
+        int rank = (position / 8) + 1, file = (position % 8) + 1;
 
         for (int knightOffset : knightOffsets) {
             if (position + knightOffset < 0 || position + knightOffset > 63) continue;
 
-            if (rank == 0 && knightOffset < 0) continue;
-            if (rank == 1 && knightOffset <= -15) continue;
-            if (rank == 7 && knightOffset > 0) continue;
-            if (rank == 6 && knightOffset >= 15) continue;
+            if(((position + knightOffset) / 8) + 1 == rank) continue;
+            if(((position + knightOffset) % 8) + 1 == file) continue;
 
-            if (file == 0 && (knightOffset == 15 || knightOffset == 6 || knightOffset == -10 || knightOffset == -17))
-                continue;
-            if (file == 1 && (knightOffset == 6 || knightOffset == -10)) continue;
-            if (file == 7 && (knightOffset == -15 || knightOffset == -6 || knightOffset == 10 || knightOffset == 17))
-                continue;
-            if (file == 6 && (knightOffset == -6 || knightOffset == 10)) continue;
+            if (rank == 1 && knightOffset < 0) continue;
+            if (rank == 2 && knightOffset <= -15) continue;
+            if (rank == 8 && knightOffset > 0) continue;
+            if (rank == 7 && knightOffset >= 15) continue;
+
+            if (file == 1 && (knightOffset == 15 || knightOffset == 6 || knightOffset == -10 || knightOffset == -17)) continue;
+            if (file == 2 && (knightOffset == 6 || knightOffset == -10)) continue;
+            if (file == 8 && (knightOffset == -15 || knightOffset == -6 || knightOffset == 10 || knightOffset == 17)) continue;
+            if (file == 7 && (knightOffset == -6 || knightOffset == 10)) continue;
 
             if (!sideToMove.get(position + knightOffset)) {
                 knightMoves.set(position + knightOffset);
@@ -123,7 +130,6 @@ public class MoveGenerator {
     public BitSet getBishopMoves(int position, Board currentBoard) {
         BitSet bishopMoves = new BitSet(64);
         int offsetPos;
-        int file, rank;
 
         BitSet sideToMove = currentBoard.whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
         BitSet sideToWait = !currentBoard.whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
@@ -303,7 +309,7 @@ public class MoveGenerator {
         }
 
         if (offset == bishopOffsets[3]) {
-            return (position % 8 == 7 || position < 8);
+            return (position % 8 == 7 || position % 8 == 0 || position < 8);
         }
 
         if (offset == rookOffsets[0]) {
@@ -343,7 +349,7 @@ public class MoveGenerator {
 
     public BitSet getKingMoves(int position, Board currentBoard) {
         BitSet kingMoves = new BitSet(64);
-        BitSet attackedSquares = getAttackedSquares(currentBoard, currentBoard.whiteToMove);
+        BitSet attackedSquares = getAttackedSquares(currentBoard, !currentBoard.whiteToMove);
 
         boolean inRange;
 
@@ -398,6 +404,7 @@ public class MoveGenerator {
                 }
             }
         }
+
         return kingMoves;
     }
 
@@ -424,16 +431,8 @@ public class MoveGenerator {
         defendingSide.and(currentBoard.kingPieces);
         attackingSide.and(defendingSide);
 
-        return attackingSide.nextSetBit(0) != -1;
+        return (attackingSide.nextSetBit(0) != -1);
     }
-
-    /* // Redundant??
-    public boolean pieceIsPinned(int position, int target, Board currentBoard) {
-        boolean whiteToMove = currentBoard.whiteToMove;
-        Board newPosition = makeMove(position, target, currentBoard);
-        return kingInCheck(newPosition, whiteToMove);
-    }
-    */
 
     public BitSet getAttackedSquares(Board currentBoard, boolean whiteToPlay) {
         BitSet attackedSquares = new BitSet(64);
@@ -456,6 +455,10 @@ public class MoveGenerator {
         }
 
         return attackedSquares;
+    }
+
+    public Board makeMove(Move move, Board currentBoard) {
+        return makeMove(move.startSquare, move.targetSquare, currentBoard);
     }
 
     public Board makeMove(int startSquare, int targetSquare, Board currentBoard) {
@@ -534,6 +537,7 @@ public class MoveGenerator {
                 board.rookPieces.set(targetSquare + 1);
             }
 
+            //king move disallows all castling
             if (currentBoard.whiteToMove) {
                 board.whiteKingSide = false;
                 board.whiteQueenSide = false;
@@ -543,41 +547,32 @@ public class MoveGenerator {
             }
         }
 
+        //associated rook has been captured
         if (targetSquare == 7) board.whiteKingSide = false;
         if (targetSquare == 0) board.whiteQueenSide = false;
         if (targetSquare == 63) board.blackKingSide = false;
         if (targetSquare == 56) board.blackQueenSide = false;
 
-        board.whiteToMove = !currentBoard.whiteToMove;
+        board.whiteToMove = !board.whiteToMove;
 
         return board;
     }
 
     public boolean isValidMove(int startSquare, int targetSquare, Board currentBoard) {
-
         //ensure there's a piece to move to begin with
         if (currentBoard.whiteToMove && !currentBoard.whitePieces.get(startSquare)) return false;
         if (!currentBoard.whiteToMove && !currentBoard.blackPieces.get(startSquare)) return false;
 
         //determine if king will be in check after move
-        if (kingInCheck(makeMove(startSquare, targetSquare, currentBoard), !currentBoard.whiteToMove)) {
-            return false;
-        }
+        if (kingInCheck(makeMove(startSquare, targetSquare, currentBoard), currentBoard.whiteToMove)) return false;
 
         //determine whether the move is among the legal moves for that piece
-        if (currentBoard.pawnPieces.get(startSquare)) {
-            return getPawnMoves(startSquare, currentBoard).get(targetSquare);
-        } else if (currentBoard.knightPieces.get(startSquare)) {
-            return getKnightMoves(startSquare, currentBoard).get(targetSquare);
-        } else if (currentBoard.bishopPieces.get(startSquare)) {
-            return getBishopMoves(startSquare, currentBoard).get(targetSquare);
-        } else if (currentBoard.rookPieces.get(startSquare)) {
-            return getRookMoves(startSquare, currentBoard).get(targetSquare);
-        } else if (currentBoard.queenPieces.get(startSquare)) {
-            return getQueenMoves(startSquare, currentBoard).get(targetSquare);
-        } else if (currentBoard.kingPieces.get(startSquare)) {
-            return getKingMoves(startSquare, currentBoard).get(targetSquare);
-        }
+        if (currentBoard.pawnPieces.get(startSquare)) return getPawnMoves(startSquare, currentBoard).get(targetSquare);
+        if (currentBoard.knightPieces.get(startSquare)) return getKnightMoves(startSquare, currentBoard).get(targetSquare);
+        if (currentBoard.bishopPieces.get(startSquare)) return getBishopMoves(startSquare, currentBoard).get(targetSquare);
+        if (currentBoard.rookPieces.get(startSquare)) return getRookMoves(startSquare, currentBoard).get(targetSquare);
+        if (currentBoard.queenPieces.get(startSquare)) return getQueenMoves(startSquare, currentBoard).get(targetSquare);
+        if (currentBoard.kingPieces.get(startSquare)) return getKingMoves(startSquare, currentBoard).get(targetSquare);
 
         return false;
     }
@@ -592,59 +587,58 @@ public class MoveGenerator {
                 for (int j = pawnMoves.nextSetBit(0); j >= 0; j = pawnMoves.nextSetBit(j + 1)) {
                     if (!isValidMove(i, j, board)) continue;
                     if (j >= 56 && j <= 63) {
-                        moves.add(new Move(i, j, board, Move.Flag.PROMOTE_QUEEN));
-                        moves.add(new Move(i, j, board, Move.Flag.PROMOTE_ROOK));
-                        moves.add(new Move(i, j, board, Move.Flag.PROMOTE_BISHOP));
-                        moves.add(new Move(i, j, board, Move.Flag.PROMOTE_KNIGHT));
+                        moves.add(new Move(i, j, board, this, Move.Flag.PROMOTE_QUEEN));
+                        moves.add(new Move(i, j, board, this, Move.Flag.PROMOTE_ROOK));
+                        moves.add(new Move(i, j, board, this, Move.Flag.PROMOTE_BISHOP));
+                        moves.add(new Move(i, j, board, this, Move.Flag.PROMOTE_KNIGHT));
+                    } else if(j == board.enPassantSquare){
+                        moves.add(new Move(i, j, board, this, Move.Flag.EN_PASSANT));
                     } else {
-                        moves.add(new Move(i, j, board));
+                        moves.add(new Move(i, j, board, this));
                     }
                 }
             } else if (board.knightPieces.get(i)) {
                 BitSet knightMoves = getKnightMoves(i, board);
                 for (int j = knightMoves.nextSetBit(0); j >= 0; j = knightMoves.nextSetBit(j + 1)) {
-                    if (isValidMove(i, j, board))
-                        moves.add(new Move(i, j, board));
+                    if (!isValidMove(i, j, board)) continue;
+
+                    moves.add(new Move(i, j, board, this));
                 }
             } else if (board.bishopPieces.get(i)) {
                 BitSet bishopMoves = getBishopMoves(i, board);
                 for (int j = bishopMoves.nextSetBit(0); j >= 0; j = bishopMoves.nextSetBit(j + 1)) {
-                    if (isValidMove(i, j, board))
-                        moves.add(new Move(i, j, board));
+                    if (!isValidMove(i, j, board)) continue;
+
+                    moves.add(new Move(i, j, board, this));
                 }
             } else if (board.rookPieces.get(i)) {
                 BitSet rookMoves = getRookMoves(i, board);
                 for (int j = rookMoves.nextSetBit(0); j >= 0; j = rookMoves.nextSetBit(j + 1)) {
-                    if (isValidMove(i, j, board))
-                        moves.add(new Move(i, j, board));
+                    if (!isValidMove(i, j, board)) continue;
+
+                    moves.add(new Move(i, j, board, this));
                 }
             } else if (board.queenPieces.get(i)) {
                 BitSet queenMoves = getQueenMoves(i, board);
                 for (int j = queenMoves.nextSetBit(0); j >= 0; j = queenMoves.nextSetBit(j + 1)) {
-                    if (isValidMove(i, j, board))
-                        moves.add(new Move(i, j, board));
+                    if (!isValidMove(i, j, board)) continue;
+
+                    moves.add(new Move(i, j, board, this));
                 }
             } else if (board.kingPieces.get(i)) {
                 BitSet kingMoves = getKingMoves(i, board);
                 for (int j = kingMoves.nextSetBit(0); j >= 0; j = kingMoves.nextSetBit(j + 1)) {
-                    if (isValidMove(i, j, board))
-                        moves.add(new Move(i, j, board));
+                    if (!isValidMove(i, j, board)) continue;
+
+                    if (i - j == -2) {
+                        moves.add(new Move(i, j, board, this, Move.Flag.CASTLE_SHORT));
+                    } else if (i - j == 2) {
+                        moves.add(new Move(i, j, board, this, Move.Flag.CASTLE_LONG));
+                    } else {
+                        moves.add(new Move(i, j, board, this));
+                    }
                 }
             }
-        }
-
-        return moves;
-    }
-
-    public long perft(int depth, Board board) {
-        long moves = 0;
-
-        if (depth == 0) {
-            return 1;
-        }
-
-        for (Move m : getLegalMoves(board)) {
-            moves += perft(depth - 1, makeMove(m.startSquare, m.targetSquare, board));
         }
 
         return moves;
