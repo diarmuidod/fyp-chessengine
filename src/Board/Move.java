@@ -5,7 +5,7 @@ import java.util.BitSet;
 import java.util.List;
 
 public class Move {
-    String move;
+    public String move;
     public int startSquare;
     public int targetSquare;
     public List<Flag> moveFlag;
@@ -35,9 +35,9 @@ public class Move {
                 }
 
                 //only piece moves can have disambiguations i.e. Raxd8
-                if(move.contains("x")) {
+                //if(move.contains("x")) {
 
-                }
+                //}
             }
         }
     }
@@ -71,10 +71,10 @@ public class Move {
                 move = moveFromIndex(targetSquare);
             }
 
-            if(moveFlag.contains(Flag.PROMOTE_QUEEN)) move += Flag.PROMOTE_QUEEN;
-            if(moveFlag.contains(Flag.PROMOTE_KNIGHT)) move += Flag.PROMOTE_KNIGHT;
-            if(moveFlag.contains(Flag.PROMOTE_BISHOP)) move += Flag.PROMOTE_BISHOP;
-            if(moveFlag.contains(Flag.PROMOTE_ROOK)) move += Flag.PROMOTE_ROOK;
+            if(moveFlag.contains(Flag.PROMOTE_QUEEN)) move += Flag.PROMOTE_QUEEN.getFlag();
+            if(moveFlag.contains(Flag.PROMOTE_KNIGHT)) move += Flag.PROMOTE_KNIGHT.getFlag();
+            if(moveFlag.contains(Flag.PROMOTE_BISHOP)) move += Flag.PROMOTE_BISHOP.getFlag();
+            if(moveFlag.contains(Flag.PROMOTE_ROOK)) move += Flag.PROMOTE_ROOK.getFlag();
         } else { //Piece Moves
             if(board.kingPieces.get(startSquare)) move += "K";
             if(board.queenPieces.get(startSquare)) move += "Q";
@@ -89,7 +89,7 @@ public class Move {
             }
         }
 
-        if(moveGenerator.kingInCheck(moveGenerator.makeMove(startSquare, targetSquare, board), !board.whiteToMove)) {
+        if(moveGenerator.kingInCheck(moveGenerator.makeMove(startSquare, targetSquare, board, null), !board.whiteToMove)) {
             move += "+";
         }
 

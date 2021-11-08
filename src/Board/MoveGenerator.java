@@ -382,6 +382,9 @@ public class MoveGenerator {
 
         } else {
             for (int kingOffset : kingOffsets) {
+                if (position % 8 == 0 && (kingOffset == 7 || kingOffset == -1 || kingOffset == -9)) continue;
+                if (position % 8 == 7 && (kingOffset == 9 || kingOffset == 1 || kingOffset == -7)) continue;
+
                 inRange = position + kingOffset >= 0 && position + kingOffset <= 63;
                 if (inRange) {
                     if (!currentBoard.blackPieces.get(position + kingOffset) && !attackedSquares.get(position + kingOffset)) {
@@ -458,10 +461,10 @@ public class MoveGenerator {
     }
 
     public Board makeMove(Move move, Board currentBoard) {
-        return makeMove(move.startSquare, move.targetSquare, currentBoard);
+        return makeMove(move.startSquare, move.targetSquare, currentBoard, move.moveFlag);
     }
 
-    public Board makeMove(int startSquare, int targetSquare, Board currentBoard) {
+    public Board makeMove(int startSquare, int targetSquare, Board currentBoard, List<Move.Flag> flags) {
         Board board = currentBoard.copy();
 
         board.enPassantSquare = -1;
@@ -488,7 +491,20 @@ public class MoveGenerator {
 
         if (board.pawnPieces.get(startSquare)) {
             board.pawnPieces.clear(startSquare);
-            board.pawnPieces.set(targetSquare);
+
+            if(flags != null) {
+                if(flags.contains(Move.Flag.PROMOTE_QUEEN)) {
+                    board.queenPieces.set(targetSquare);
+                } else if(flags.contains(Move.Flag.PROMOTE_ROOK)) {
+                    board.rookPieces.set(targetSquare);
+                } else if(flags.contains(Move.Flag.PROMOTE_KNIGHT)) {
+                    board.knightPieces.set(targetSquare);
+                } else if(flags.contains(Move.Flag.PROMOTE_BISHOP)) {
+                    board.bishopPieces.set(targetSquare);
+                } else {
+                    board.pawnPieces.set(targetSquare);
+                }
+            }
 
             if (Math.abs(startSquare - targetSquare) == 16) {
                 if (currentBoard.whiteToMove) {
@@ -529,12 +545,22 @@ public class MoveGenerator {
 
             if (targetSquare - startSquare == 2) { //castle short
                 board.rookPieces.clear(startSquare + 3);
-                board.rookPieces.set(targetSquare - 1);
+                board.rookPieces.set(startSquare + 1);
+
+                board.allPieces.clear(startSquare + 3);
+                board.allPieces.set(startSquare + 1);
+
+                if(board.whiteToMove) {
+                    board.whitePieces.set(startSquare + 1);
+                } else {
+                    board.blackPieces.set(startSquare + 1);
+                }
             }
 
             if (targetSquare - startSquare == -2) { //castle long
                 board.rookPieces.clear(startSquare - 4);
-                board.rookPieces.set(targetSquare + 1);
+                board.rookPieces.set(startSquare - 1);
+                board.allPieces.set(startSquare - 1);
             }
 
             //king move disallows all castling
@@ -553,6 +579,13 @@ public class MoveGenerator {
         if (targetSquare == 63) board.blackKingSide = false;
         if (targetSquare == 56) board.blackQueenSide = false;
 
+        //50 move rule checks
+        if(currentBoard.allPieces.get(targetSquare) || currentBoard.pawnPieces.get(startSquare)) {
+            board.fiftyMoveCount = 0;
+        } else {
+            board.fiftyMoveCount++;
+        }
+
         board.whiteToMove = !board.whiteToMove;
 
         return board;
@@ -564,7 +597,7 @@ public class MoveGenerator {
         if (!currentBoard.whiteToMove && !currentBoard.blackPieces.get(startSquare)) return false;
 
         //determine if king will be in check after move
-        if (kingInCheck(makeMove(startSquare, targetSquare, currentBoard), currentBoard.whiteToMove)) return false;
+        if (kingInCheck(makeMove(startSquare, targetSquare, currentBoard, null), currentBoard.whiteToMove)) return false;
 
         //determine whether the move is among the legal moves for that piece
         if (currentBoard.pawnPieces.get(startSquare)) return getPawnMoves(startSquare, currentBoard).get(targetSquare);

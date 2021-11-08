@@ -8,6 +8,7 @@ import java.util.Scanner;
 import Board.Board;
 import Board.Move;
 import Board.MoveGenerator;
+import Board.Perft;
 
 public class Game {
     public Board board;
@@ -15,6 +16,8 @@ public class Game {
     public List<Move> movesPlayed;
     public Scanner input;
     public String currentMove;
+
+    public GameState gameState;
 
     //Stole this from the internet - https://gist.github.com/Dani4kor/e1e8b439115878f8c6dcf127a4ed5d3e
     private static final String FEN_REGEX = "\\s*^(((?:[rnbqkpRNBQKP1-8]+\\/){7})[rnbqkpRNBQKP1-8]+)\\s([b|w])\\s(-|[K|Q|k|q]{1,4})\\s(-|[a-h][1-8])\\s(\\d+\\s\\d+)$";
@@ -27,6 +30,7 @@ public class Game {
         moveGenerator = new MoveGenerator();
         movesPlayed = new LinkedList<>();
         input = new Scanner(System.in);
+        gameState = GameState.ONGOING;
     }
 
     public Game(String FEN) {
@@ -34,13 +38,131 @@ public class Game {
         moveGenerator = new MoveGenerator();
         movesPlayed = new LinkedList<>();
         input = new Scanner(System.in);
+        gameState = GameState.ONGOING;
     }
 
     public void playGame() {
+        Perft perft = new Perft();
+        Move activeMove;
+        List<Move> legalMoves;
+        GameState gameState;
+
+        while(getGameState() == GameState.ONGOING) {
+            legalMoves = moveGenerator.getLegalMoves(board);
+
+            printBoard();
+            System.out.println("\n" + legalMoves.size() + " - " + legalMoves);
+            System.out.println(movesPlayed.size() + " - " + movesPlayed);
+
+            if (board.whiteToMove) {
+                System.out.println("White to move\n");
+            } else {
+                System.out.println("Black to move\n");
+            }
+
+            System.out.println(saveGameToFEN());
+            System.out.println("Enter move: ");
+            String inp = input.nextLine();
+
+            if(inp.equals("quit") || inp.equals("exit")) break;
+
+            for(Move m : legalMoves) {
+                if(m.move.equals(inp)) {
+                    activeMove = m;
+                    board = moveGenerator.makeMove(activeMove, board);
+                    movesPlayed.add(activeMove);
+                }
+            }
+        }
+
+        switch(getGameState()) {
+            case WHITE_WINS:
+                System.out.println("White wins!");
+                break;
+            case BLACK_WINS:
+                System.out.println("Black wins!");
+                break;
+            case DRAW:
+                System.out.println("It's a draw!");
+                break;
+        }
+        System.out.println(saveGameToFEN());
+        printBoard();
     }
 
     public String saveGameToFEN() {
-        return null;
+        StringBuilder fen = new StringBuilder();
+        int emptySquares = 0;
+
+        int mark = 64;
+
+        for (int i = 0; i < 8; i++) {
+            for (int j = mark - 8; j < mark; j++) {
+                if(board.allPieces.get(j)) {
+                    if(emptySquares > 0) {
+                        fen.append(emptySquares);
+                        emptySquares = 0;
+                    }
+
+                    boolean isWhite = board.whitePieces.get(j);
+                    if (board.pawnPieces.get(j)) fen.append(isWhite ? "P" : "p");
+                    if (board.knightPieces.get(j)) fen.append(isWhite ? "N" : "n");
+                    if (board.bishopPieces.get(j)) fen.append(isWhite ? "B" : "b");
+                    if (board.rookPieces.get(j)) fen.append(isWhite ? "R" : "r");
+                    if (board.queenPieces.get(j)) fen.append(isWhite ? "Q" : "q");
+                    if (board.kingPieces.get(j)) fen.append(isWhite ? "K" : "k");
+                } else {
+                    emptySquares++;
+                }
+                if(j == mark - 1) {
+                    if(emptySquares > 0) {
+                        fen.append(emptySquares);
+                        emptySquares = 0;
+                    }
+
+                    if(j != 7) fen.append("/");
+                }
+            }
+            mark -= 8;
+        }
+
+        if (board.whiteToMove) {
+            fen.append(" w ");
+        } else {
+            fen.append(" b ");
+        }
+
+        if(board.whiteKingSide) fen.append("K");
+        if(board.whiteQueenSide) fen.append("Q");
+        if(board.blackKingSide) fen.append("k");
+        if(board.blackQueenSide) fen.append("q");
+
+        if(board.enPassantSquare == -1) {
+            fen.append(" - ");
+        } else {
+            fen.append(" ").append(moveFromIndex(board.enPassantSquare)).append(" ");
+        }
+
+        fen.append(board.fiftyMoveCount).append(" ");
+
+        fen.append((movesPlayed.size() / 2) + 1);
+
+        return fen.toString();
+    }
+
+    public char getFile(int index) {
+        return (char) ((index % 8) + 97);
+    }
+
+    public char getRank(int index) {
+        return (char) ((index / 8) + 49);
+    }
+
+    public String moveFromIndex(int index) {
+        char number = getRank(index);
+        char letter = getFile(index);
+
+        return letter + String.valueOf(number);
     }
 
     public void printBoard() {
@@ -53,5 +175,34 @@ public class Game {
 
     public void printBoard(BitSet bitset) {
         board.printBoard(bitset);
+    }
+
+    public GameState getGameState() {
+        if(board.fiftyMoveCount >= 50) {
+            return GameState.DRAW;
+        }
+
+        //no legal moves
+        if(getLegalMoves().size() == 0) {
+            //white in check
+            if (moveGenerator.kingInCheck(board, true)) {
+                return GameState.BLACK_WINS;
+            }
+
+            //white in check
+            if(moveGenerator.kingInCheck(board, false)) {
+                return GameState.WHITE_WINS;
+            }
+
+            return GameState.DRAW;
+        }
+        return GameState.ONGOING;
+    }
+
+    enum GameState {
+        ONGOING,
+        WHITE_WINS,
+        BLACK_WINS,
+        DRAW
     }
 }

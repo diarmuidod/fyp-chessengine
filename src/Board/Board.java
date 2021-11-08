@@ -3,26 +3,27 @@ package Board;
 import java.util.BitSet;
 
 public class Board {
-    final BitSet allPieces = new BitSet(64);
+    public final BitSet allPieces = new BitSet(64);
 
-    final BitSet whitePieces = new BitSet(64);
-    final BitSet blackPieces = new BitSet(64);
+    public final BitSet whitePieces = new BitSet(64);
+    public final BitSet blackPieces = new BitSet(64);
 
-    final BitSet pawnPieces = new BitSet(64);
-    final BitSet knightPieces = new BitSet(64);
-    final BitSet bishopPieces = new BitSet(64);
-    final BitSet rookPieces = new BitSet(64);
-    final BitSet queenPieces = new BitSet(64);
-    final BitSet kingPieces = new BitSet(64);
+    public final BitSet pawnPieces = new BitSet(64);
+    public final BitSet knightPieces = new BitSet(64);
+    public final BitSet bishopPieces = new BitSet(64);
+    public final BitSet rookPieces = new BitSet(64);
+    public final BitSet queenPieces = new BitSet(64);
+    public final BitSet kingPieces = new BitSet(64);
 
     public boolean whiteToMove;
 
-    boolean whiteKingSide;
-    boolean whiteQueenSide;
-    boolean blackKingSide;
-    boolean blackQueenSide;
+    public boolean whiteKingSide;
+    public boolean whiteQueenSide;
+    public boolean blackKingSide;
+    public boolean blackQueenSide;
 
-    int enPassantSquare = -1;
+    public int enPassantSquare = -1;
+    public int fiftyMoveCount = 0;
 
     public Board() {
         loadPositionFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
@@ -129,6 +130,7 @@ public class Board {
         newBoard.blackQueenSide = blackQueenSide;
 
         newBoard.enPassantSquare = this.enPassantSquare;
+        newBoard.fiftyMoveCount = this.fiftyMoveCount;
 
         return newBoard;
     }
