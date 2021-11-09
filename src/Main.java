@@ -8,19 +8,20 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Main {
+    //thinking about writing a python script to pull all positions at n depth from a given fen, as well
+    //as the count of legal moves for each position. do the same for my program, and compare to pinpoint bugs.
+
     static Perft perft = new Perft();
-    static Game game = new Game("7K/2p1pP1R/q1pB2Q1/P3P3/1rB1p1PR/6pP/1k1b3P/2n1rb2 w - - 0 1");
+    static Game game = new Game();
 
     public static void main(String[] args) {
-        //reason for current bug - -7 is bottom left offset, and is skipped, but here is needed.
-        //solution - check termination by file/rank adjacency instead?
-        //game.playGame();
+        game.playGame();
         //getDiff();
         //getPerft(5);
     }
 
     public static void getDiff() {
-        String pyMoves = "Kg8, Kg7, Rg7, R7h6, R7h5, Qg8, Qg7, Qh6, Qf6, Qe6, Qh5, Qg5, Qf5, Qxe4, Bxe7, Bxc7, Bc5, Bxb4, R4h6, R4h5, Be6, Bxa6, Bd5, Bb5, Bd3, Bb3, Be2, Ba2, Bxf1, hxg3, f8=Q, f8=R, f8=B, f8=N, e6, g5";
+        String pyMoves = "Bg7, Rxc7, Rxd6, Rxb6, Rc5, Rc4, Rxc3, Bxb7, Bb5+, Bc4, Bxd3, Kxd4, Rh5, Rh4, Rg3, Rf3, Rxh2, Nxf4, Nxd4, Neg3, Nxc3+, Nxg1, Nc1, Qxd3, Qxc3, Qxc2+, Qe1, Qd1, Qc1, Nfg3, Nxh2, exd7, axb6, exf4, exd4, h7, f7, e7, g5, b5, e4";
         String[] pythonOutput = pyMoves.split(", ");
         List<String> pyOut = Arrays.asList(pythonOutput);
 
@@ -46,7 +47,7 @@ public class Main {
             if(!pyOut.contains(s)) result.add("!" + s);
         }
 
-        System.out.println("\nThe Result: " + result + "\n\n");
+        System.out.println("\nThe Result: " + result + "\n");
     }
 
     public static void getPerft(int depth) {

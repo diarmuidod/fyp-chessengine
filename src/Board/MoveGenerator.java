@@ -62,12 +62,12 @@ public class MoveGenerator {
         boolean inRange;
 
         inRange = (position + (pawnOffsets[2] * sideToMove) >= 0 && position + (pawnOffsets[2] * sideToMove) <= 63);
-        if (inRange && position % 8 != 0) {
+        if (inRange && (Math.abs(getFile(position) - getFile(position + (pawnOffsets[2] * sideToMove))) == 1)) {
             pawnAttacks.set(position + (pawnOffsets[2] * sideToMove));
         }
 
         inRange = (position + (pawnOffsets[3] * sideToMove) >= 0 && position + (pawnOffsets[3] * sideToMove) <= 63);
-        if (inRange && position % 8 != 0 && position % 8 != 7) {
+        if (inRange &&  (Math.abs(getFile(position) - getFile(position + (pawnOffsets[3] * sideToMove))) == 1)) {
             pawnAttacks.set(position + (pawnOffsets[3] * sideToMove));
         }
 

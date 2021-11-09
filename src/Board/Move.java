@@ -72,56 +72,32 @@ public class Move {
         } else { //Piece Moves
             if(board.kingPieces.get(startSquare)) {
                 move.append("K");
-            } else if(board.queenPieces.get(startSquare)) {
-                move.append("Q");
-
-                for (int i = board.queenPieces.nextSetBit(0); i >= 0; i = board.queenPieces.nextSetBit(i + 1)) {
-                    if(i != startSquare && moveGenerator.isValidMove(i, targetSquare, board)) {
-                        if(getRank(startSquare) == getRank(i)) {
-                            move.append(getFile(startSquare));
-                        } else {
-                            move.append(getRank(startSquare));
-                        }
-                    }
+            } else {
+                BitSet pieceType = new BitSet(64);
+                if(board.queenPieces.get(startSquare)) {
+                    pieceType = board.queenPieces;
+                    move.append("Q");
+                } else if(board.knightPieces.get(startSquare)) {
+                    pieceType = board.knightPieces;
+                    move.append("N");
+                }else if(board.bishopPieces.get(startSquare)) {
+                    pieceType = board.bishopPieces;
+                    move.append("B");
+                }if(board.rookPieces.get(startSquare)) {
+                    pieceType = board.rookPieces;
+                    move.append("R");
                 }
-            } else if(board.knightPieces.get(startSquare)) {
-                move.append("N");
 
-                for (int i = board.knightPieces.nextSetBit(0); i >= 0; i = board.knightPieces.nextSetBit(i + 1)) {
+                for (int i = pieceType.nextSetBit(0); i >= 0; i = pieceType.nextSetBit(i + 1)) {
                     if(i != startSquare && moveGenerator.isValidMove(i, targetSquare, board)) {
-                        if(getRank(startSquare) == getRank(i)) {
-                            move.append(getFile(startSquare));
-                        } else {
+                        if(getFile(startSquare) == getFile(i)) {
                             move.append(getRank(startSquare));
-                        }
-                    }
-                }
-            } else if(board.bishopPieces.get(startSquare)) {
-                move.append("B");
-
-                for (int i = board.bishopPieces.nextSetBit(0); i >= 0; i = board.bishopPieces.nextSetBit(i + 1)) {
-                    if(i != startSquare && moveGenerator.isValidMove(i, targetSquare, board)) {
-                        if(getRank(startSquare) == getRank(i)) {
-                            move.append(getFile(startSquare));
                         } else {
-                            move.append(getRank(startSquare));
-                        }
-                    }
-                }
-            } else if(board.rookPieces.get(startSquare)) {
-                move.append("R");
-
-                for (int i = board.rookPieces.nextSetBit(0); i >= 0; i = board.rookPieces.nextSetBit(i + 1)) {
-                    if(i != startSquare && moveGenerator.isValidMove(i, targetSquare, board)) {
-                        if(getRank(startSquare) == getRank(i)) {
                             move.append(getFile(startSquare));
-                        } else {
-                            move.append(getRank(startSquare));
                         }
                     }
                 }
             }
-
 
             if(board.allPieces.get(targetSquare)) {
                 move.append("x").append(moveFromIndex(targetSquare));
