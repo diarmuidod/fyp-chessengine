@@ -51,17 +51,18 @@ public class Game {
             legalMoves = moveGenerator.getLegalMoves(board);
 
             printBoard();
-            System.out.println("\n" + legalMoves.size() + " - " + legalMoves);
+
+            System.out.println("\n" + saveGameToFEN());
+            System.out.println(legalMoves.size() + " - " + legalMoves);
             System.out.println(movesPlayed.size() + " - " + movesPlayed);
 
             if (board.whiteToMove) {
-                System.out.println("White to move\n");
+                System.out.println("\nWhite to move\n");
             } else {
-                System.out.println("Black to move\n");
+                System.out.println("\nBlack to move\n");
             }
 
-            System.out.println(saveGameToFEN());
-            System.out.println("Enter move: ");
+            System.out.print("Enter move: ");
             String inp = input.nextLine();
 
             if(inp.equals("quit") || inp.equals("exit")) break;

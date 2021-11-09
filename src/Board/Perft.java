@@ -5,7 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 public class Perft {
-    private final MoveGenerator moveGenerator = new MoveGenerator();
+    private MoveGenerator moveGenerator = new MoveGenerator();
 
     public char getFile(int index) {
         return (char) ((index % 8) + 97);
@@ -30,7 +30,7 @@ public class Perft {
         }
 
         for (Move m : moveGenerator.getLegalMoves(board)) {
-            moves += perft(depth - 1, moveGenerator.makeMove(m.startSquare, m.targetSquare, board, m.moveFlag));
+            moves += perft(depth - 1, moveGenerator.makeMove(m, board));
         }
 
         return moves;

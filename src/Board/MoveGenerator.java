@@ -139,15 +139,16 @@ public class MoveGenerator {
             offsetPos += bishopOffset;
 
             while (true) {
-                //started on edge, no legal moves
-                if (slidingMoveEdgeCase(bishopOffset, position)) break;
-
                 //out of bounds
                 if (offsetPos > 63 || offsetPos < 0) break;
 
-                //about to wrap around, disallow
-                if (slidingMoveEdgeCase(bishopOffset, offsetPos) && !sideToMove.get(offsetPos)) {
-                    bishopMoves.set(offsetPos);
+                //non-adjacent indices, both are always adjacent
+                if(Math.abs(getRank(offsetPos - bishopOffset) - getRank(offsetPos)) != 1) {
+                    //System.out.println("Rank - " + (Math.abs(getRank(position) - getRank(offsetPos))) + ", File - " + (Math.abs(getFile(position) - getFile(offsetPos))));
+                    break;
+                }
+
+                if(Math.abs(getFile(offsetPos - bishopOffset) - getFile(offsetPos)) != 1) {
                     break;
                 }
 
@@ -156,11 +157,13 @@ public class MoveGenerator {
                     break;
                 }
 
+                //capture
                 if (sideToWait.get(offsetPos)) {
                     bishopMoves.set(offsetPos);
                     break;
                 }
 
+                //normal move
                 bishopMoves.set(offsetPos);
                 offsetPos += bishopOffset;
             }
@@ -506,6 +509,16 @@ public class MoveGenerator {
                 }
             }
 
+            if(targetSquare == currentBoard.enPassantSquare) {
+                if(currentBoard.whiteToMove) {
+                    board.allPieces.clear(targetSquare - 8);
+                    board.pawnPieces.clear(targetSquare - 8);
+                } else {
+                    board.allPieces.clear(targetSquare + 8);
+                    board.pawnPieces.clear(targetSquare + 8);
+                }
+            }
+
             if (Math.abs(startSquare - targetSquare) == 16) {
                 if (currentBoard.whiteToMove) {
                     board.enPassantSquare = targetSquare - 8;
@@ -560,7 +573,16 @@ public class MoveGenerator {
             if (targetSquare - startSquare == -2) { //castle long
                 board.rookPieces.clear(startSquare - 4);
                 board.rookPieces.set(startSquare - 1);
+
+                board.allPieces.clear(startSquare - 4);
                 board.allPieces.set(startSquare - 1);
+
+                if(board.whiteToMove) {
+                    board.whitePieces.set(startSquare - 1);
+                } else {
+                    board.blackPieces.set(startSquare -
+                            1);
+                }
             }
 
             //king move disallows all castling
@@ -675,5 +697,13 @@ public class MoveGenerator {
         }
 
         return moves;
+    }
+
+    public char getFile(int index) {
+        return (char) ((index % 8) + 97);
+    }
+
+    public char getRank(int index) {
+        return (char) ((index / 8) + 49);
     }
 }

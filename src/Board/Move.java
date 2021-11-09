@@ -31,13 +31,7 @@ public class Move {
             for(int i = board.pawnPieces.nextSetBit(0); i >= 0; i = board.pawnPieces.nextSetBit(i + 1)) {
                 if(sideToMove.get(i) && (getFile(i) == move.charAt(0))) {
                     this.startSquare = i;
-                    continue;
                 }
-
-                //only piece moves can have disambiguations i.e. Raxd8
-                //if(move.contains("x")) {
-
-                //}
             }
         }
     }
@@ -58,7 +52,7 @@ public class Move {
     }
 
     private String getMoveInSAN(Board board, MoveGenerator moveGenerator) {
-        String move = "";
+        StringBuilder move = new StringBuilder();
 
         //Castling moves
         if(moveFlag.contains(Flag.CASTLE_SHORT)) return Flag.CASTLE_SHORT.getFlag();
@@ -66,34 +60,85 @@ public class Move {
 
         if(board.pawnPieces.get(startSquare)) { //Pawn Moves
             if(board.allPieces.get(targetSquare) || moveFlag.contains(Flag.EN_PASSANT)) {
-                move = moveFromIndex(startSquare).charAt(0) + "x" + moveFromIndex(targetSquare);
+                move = new StringBuilder(moveFromIndex(startSquare).charAt(0) + "x" + moveFromIndex(targetSquare));
             } else {
-                move = moveFromIndex(targetSquare);
+                move = new StringBuilder(moveFromIndex(targetSquare));
             }
 
-            if(moveFlag.contains(Flag.PROMOTE_QUEEN)) move += Flag.PROMOTE_QUEEN.getFlag();
-            if(moveFlag.contains(Flag.PROMOTE_KNIGHT)) move += Flag.PROMOTE_KNIGHT.getFlag();
-            if(moveFlag.contains(Flag.PROMOTE_BISHOP)) move += Flag.PROMOTE_BISHOP.getFlag();
-            if(moveFlag.contains(Flag.PROMOTE_ROOK)) move += Flag.PROMOTE_ROOK.getFlag();
+            if(moveFlag.contains(Flag.PROMOTE_QUEEN)) move.append(Flag.PROMOTE_QUEEN.getFlag());
+            if(moveFlag.contains(Flag.PROMOTE_KNIGHT)) move.append(Flag.PROMOTE_KNIGHT.getFlag());
+            if(moveFlag.contains(Flag.PROMOTE_BISHOP)) move.append(Flag.PROMOTE_BISHOP.getFlag());
+            if(moveFlag.contains(Flag.PROMOTE_ROOK)) move.append(Flag.PROMOTE_ROOK.getFlag());
         } else { //Piece Moves
-            if(board.kingPieces.get(startSquare)) move += "K";
-            if(board.queenPieces.get(startSquare)) move += "Q";
-            if(board.knightPieces.get(startSquare)) move += "N";
-            if(board.bishopPieces.get(startSquare)) move += "B";
-            if(board.rookPieces.get(startSquare)) move += "R";
+            if(board.kingPieces.get(startSquare)) {
+                move.append("K");
+            } else if(board.queenPieces.get(startSquare)) {
+                move.append("Q");
+
+                for (int i = board.queenPieces.nextSetBit(0); i >= 0; i = board.queenPieces.nextSetBit(i + 1)) {
+                    if(i != startSquare && moveGenerator.isValidMove(i, targetSquare, board)) {
+                        if(getRank(startSquare) == getRank(i)) {
+                            move.append(getFile(startSquare));
+                        } else {
+                            move.append(getRank(startSquare));
+                        }
+                    }
+                }
+            } else if(board.knightPieces.get(startSquare)) {
+                move.append("N");
+
+                for (int i = board.knightPieces.nextSetBit(0); i >= 0; i = board.knightPieces.nextSetBit(i + 1)) {
+                    if(i != startSquare && moveGenerator.isValidMove(i, targetSquare, board)) {
+                        if(getRank(startSquare) == getRank(i)) {
+                            move.append(getFile(startSquare));
+                        } else {
+                            move.append(getRank(startSquare));
+                        }
+                    }
+                }
+            } else if(board.bishopPieces.get(startSquare)) {
+                move.append("B");
+
+                for (int i = board.bishopPieces.nextSetBit(0); i >= 0; i = board.bishopPieces.nextSetBit(i + 1)) {
+                    if(i != startSquare && moveGenerator.isValidMove(i, targetSquare, board)) {
+                        if(getRank(startSquare) == getRank(i)) {
+                            move.append(getFile(startSquare));
+                        } else {
+                            move.append(getRank(startSquare));
+                        }
+                    }
+                }
+            } else if(board.rookPieces.get(startSquare)) {
+                move.append("R");
+
+                for (int i = board.rookPieces.nextSetBit(0); i >= 0; i = board.rookPieces.nextSetBit(i + 1)) {
+                    if(i != startSquare && moveGenerator.isValidMove(i, targetSquare, board)) {
+                        if(getRank(startSquare) == getRank(i)) {
+                            move.append(getFile(startSquare));
+                        } else {
+                            move.append(getRank(startSquare));
+                        }
+                    }
+                }
+            }
+
 
             if(board.allPieces.get(targetSquare)) {
-                move += "x" + moveFromIndex(targetSquare);
+                move.append("x").append(moveFromIndex(targetSquare));
             } else {
-                move += moveFromIndex(targetSquare);
+                move.append(moveFromIndex(targetSquare));
             }
         }
 
-        if(moveGenerator.kingInCheck(moveGenerator.makeMove(startSquare, targetSquare, board, null), !board.whiteToMove)) {
-            move += "+";
+        if(moveGenerator.kingInCheck(moveGenerator.makeMove(startSquare, targetSquare, board, moveFlag), !board.whiteToMove)) {
+            if(moveGenerator.getLegalMoves(moveGenerator.makeMove(startSquare, targetSquare, board, moveFlag)).size() == 0) {
+                move.append("#");
+            } else {
+                move.append("+");
+            }
         }
 
-        return move;
+        return move.toString();
     }
 
     public String toString() {
