@@ -51,6 +51,9 @@ public class Game {
             legalMoves = moveGenerator.getLegalMoves(board);
 
             printBoard();
+            System.out.println();
+            printBoard(moveGenerator.getAttackedSquares(board, true));
+            System.out.println("King in check: " + moveGenerator.kingInCheck(board, true));
 
             System.out.println("\n" + saveGameToFEN());
             System.out.println(legalMoves.size() + " - " + legalMoves);

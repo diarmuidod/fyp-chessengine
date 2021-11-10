@@ -1,14 +1,13 @@
 import chess
 
 def main():
-    fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-    depth = 2
+    fen = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1"
+    depth = 4
     perft(fen, depth)
     
     #open and read the file after the appending:
-    f = open("demofile2.txt", "r")
+    f = open("fen_list.txt", "r")
     print(f.read())
-    inp = input("Press Enter to exit")
 
 def perft(fen, depth):
     board = chess.Board(fen)
@@ -22,14 +21,14 @@ def perft(fen, depth):
             board.pop()
 	
 def writeFenToFile(fen):
-    f = open("demofile2.txt", "a+")
+    f = open("fen_list.txt", "a+")
     data = f.readlines()
-    if fen in data:
-        return
-    else:
-        board = chess.Board(fen)
-        movecount = len(list(board.legal_moves))
-        f.write(fen + ", " + str(movecount) + "\n")
+
+    board = chess.Board(fen)
+    moves = str(board.legal_moves).split(" (")[1]
+    moves = moves.split(">")[0]
+    moves = moves[:-1:]
+    f.write(fen + "--" + moves + "\n")
     
     f.close()
     

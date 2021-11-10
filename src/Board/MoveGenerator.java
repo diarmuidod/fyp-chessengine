@@ -38,14 +38,14 @@ public class MoveGenerator {
 
         //captures
         inRange = (position + (pawnOffsets[2] * sideToMove) >= 0 && position + (pawnOffsets[2] * sideToMove) <= 63);
-        if (inRange && position % 8 != 0) {
+        if (inRange && (Math.abs(getFile(position) - getFile(position + (pawnOffsets[2] * sideToMove))) == 1)) {
             if (sideToWait.get(position + (pawnOffsets[2] * sideToMove)) || currentBoard.enPassantSquare == position + (pawnOffsets[2] * sideToMove)) {
                 pawnMoves.set(position + (pawnOffsets[2] * sideToMove));
             }
         }
 
         inRange = (position + (pawnOffsets[3] * sideToMove) >= 0 && position + (pawnOffsets[3] * sideToMove) <= 63);
-        if (inRange && position % 8 != 7) {
+        if (inRange && (Math.abs(getFile(position) - getFile(position + (pawnOffsets[3] * sideToMove))) == 1)) {
             if (sideToWait.get(position + (pawnOffsets[3] * sideToMove)) || currentBoard.enPassantSquare == position + (pawnOffsets[3] * sideToMove)) {
                 pawnMoves.set(position + (pawnOffsets[3] * sideToMove));
             }
@@ -67,7 +67,7 @@ public class MoveGenerator {
         }
 
         inRange = (position + (pawnOffsets[3] * sideToMove) >= 0 && position + (pawnOffsets[3] * sideToMove) <= 63);
-        if (inRange &&  (Math.abs(getFile(position) - getFile(position + (pawnOffsets[3] * sideToMove))) == 1)) {
+        if (inRange && (Math.abs(getFile(position) - getFile(position + (pawnOffsets[3] * sideToMove))) == 1)) {
             pawnAttacks.set(position + (pawnOffsets[3] * sideToMove));
         }
 
@@ -110,19 +110,11 @@ public class MoveGenerator {
         for (int knightOffset : knightOffsets) {
             if (position + knightOffset < 0 || position + knightOffset > 63) continue;
 
-            if (rank == 0 && knightOffset < 0) continue;
-            if (rank == 1 && knightOffset <= -15) continue;
-            if (rank == 7 && knightOffset > 0) continue;
-            if (rank == 6 && knightOffset >= 15) continue;
-
-            if (file == 0 && (knightOffset == 15 || knightOffset == 6 || knightOffset == -10 || knightOffset == -17))
-                continue;
-            if (file == 1 && (knightOffset == 6 || knightOffset == -10)) continue;
-            if (file == 7 && (knightOffset == -15 || knightOffset == -6 || knightOffset == 10 || knightOffset == 17))
-                continue;
-            if (file == 6 && (knightOffset == -6 || knightOffset == 10)) continue;
-
-            knightAttacks.set(position + knightOffset);
+            if(Math.abs(getFile(position) - getFile(position + knightOffset)) == 2 && Math.abs(getRank(position) - getRank(position + knightOffset)) == 1) {
+                knightAttacks.set(position + knightOffset);
+            } else if(Math.abs(getFile(position) - getFile(position + knightOffset)) == 1 && Math.abs(getRank(position) - getRank(position + knightOffset)) == 2) {
+                knightAttacks.set(position + knightOffset);
+            }
         }
         return knightAttacks;
     }
@@ -184,15 +176,16 @@ public class MoveGenerator {
             offsetPos += bishopOffset;
 
             while (true) {
-                //started on edge, no legal moves
-                if (slidingMoveEdgeCase(bishopOffset, position)) break;
-
                 //out of bounds
                 if (offsetPos > 63 || offsetPos < 0) break;
 
-                //about to wrap around, disallow
-                if (slidingMoveEdgeCase(bishopOffset, offsetPos) && !sideToMove.get(offsetPos)) {
-                    bishopAttacks.set(offsetPos);
+                //non-adjacent indices, both are always adjacent
+                if(Math.abs(getRank(offsetPos - bishopOffset) - getRank(offsetPos)) != 1) {
+                    //System.out.println("Rank - " + (Math.abs(getRank(position) - getRank(offsetPos))) + ", File - " + (Math.abs(getFile(position) - getFile(offsetPos))));
+                    break;
+                }
+
+                if(Math.abs(getFile(offsetPos - bishopOffset) - getFile(offsetPos)) != 1) {
                     break;
                 }
 
@@ -641,7 +634,7 @@ public class MoveGenerator {
                 BitSet pawnMoves = getPawnMoves(i, board);
                 for (int j = pawnMoves.nextSetBit(0); j >= 0; j = pawnMoves.nextSetBit(j + 1)) {
                     if (!isValidMove(i, j, board)) continue;
-                    if (j >= 56 && j <= 63) {
+                    if (j >= 56 && j <= 63 || j <= 7) {
                         moves.add(new Move(i, j, board, this, Move.Flag.PROMOTE_QUEEN));
                         moves.add(new Move(i, j, board, this, Move.Flag.PROMOTE_ROOK));
                         moves.add(new Move(i, j, board, this, Move.Flag.PROMOTE_BISHOP));
