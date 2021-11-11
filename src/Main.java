@@ -1,99 +1,36 @@
 import Board.Board;
 import Board.Move;
-import Board.Perft;
+import Debug.*;
 import GameManager.Game;
 
 import java.io.*;
 import java.util.*;
 
 public class Main {
-    //thinking about writing a python script to pull all positions at n depth from a given fen, as well
-    //as the count of legal moves for each position. do the same for my program, and compare to pinpoint bugs.
-
-    static Perft perft = new Perft();
-    static Game game = new Game("r4k1r/Pp1p1ppp/1P3nbN/nPp5/BB2P3/q4N2/Pp1P2PP/R2Q1RK1 w - c6 0 3");
-    static int diff = 0;
-    static int count = 0;
-
-    /*
-        game.printBoard();
-        System.out.println();
-        game.printBoard(game.moveGenerator.getAttackedSquares(game.board, false));
-        System.out.println("King in check: " + game.moveGenerator.kingInCheck(game.board, true));
-     */
+    static Game game = new Game("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+    static MoveGenTest test = new MoveGenTest(game);
 
     public static void main(String[] args) {
-        //game.printBoard();
-        game.playGame();
-        //getDiffBulk();
-        //System.out.println(count);
-        //getPerft(5);
-        //System.out.println(count);
-        System.out.println("Bad positions: " + diff);
-    }
+        //test.writePerft(3, new Board("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8"));
+        //test.comparePythonToJava();
+        /*
+        String[] testFens = {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+                             "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -",
+                             "8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -",
+                             "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1",
+                             "r2q1rk1/pP1p2pp/Q4n2/bbp1p3/Np6/1B3NBn/pPPP1PPP/R3K2R b KQ - 0 1",
+                             "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
+                             "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10"};
 
-    public static void getDiffBulk() {
-        List<String> pyFenMoveStrings = new LinkedList();
-        List<String> diffList = new LinkedList();
-        try {
-            //txt file obtained from getFenFromPerft.py, passing the fen and depth required
-            FileInputStream fis = new FileInputStream("C:\\Users\\student\\Documents\\GitHub\\fyp-chessengine\\src\\fen_list.txt");
-            Scanner scan = new Scanner(fis);
-
-            while (scan.hasNextLine()) {
-                String s = scan.nextLine();
-                if(s.split("--").length != 2) continue;
-                String fen = s.split("--")[0];
-                String moves = s.split("--")[1];
-
-                //System.out.println(fen);
-                //System.out.println(moves);
-                //System.out.println();
-
-                getDiff(fen, moves);
-                count++;
-            }
-        } catch(Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void getDiff(String fen, String pyMoves) {
-        String[] pythonOutput = pyMoves.split(", ");
-        List<String> pyOut = Arrays.asList(pythonOutput);
-
-        List<String> myOut = new LinkedList<>();
-        game.board = new Board(fen);
-        for(Move m : game.moveGenerator.getLegalMoves(game.board)) myOut.add(m.move);
-
-        List<String> result = new LinkedList<>();
-
-        Collections.sort(myOut);
-        Collections.sort(pyOut);
-
-        //System.out.println("My output: " + myOut);
-        //System.out.println("Py output: " + pyOut);
-
-        for(String s : pyOut) {
-            if(!myOut.contains(s)) result.add(s);
-        }
-
-        for(String s : myOut) {
-            if(!pyOut.contains(s)) result.add("!" + s);
-        }
-
-        if(result.size() != 0) {
-            diff++;
+        for(String fen : testFens) {
+            game.board = new Board(fen);
             System.out.println(fen);
-            System.out.println("My output: " + myOut);
-            System.out.println("Py output: " + pyOut);
-            System.out.println("Result: " + result + "\n");
+            test.getPerft(4);
+            System.out.println();
         }
-    }
 
-    public static void getPerft(int depth) {
-        for (int i = 0; i < depth; i++) {
-            System.out.println("Perft at depth " + i + ": " + perft.perft(i, game.board));
-        }
+        //game.playGame();
+
+         */
     }
 }

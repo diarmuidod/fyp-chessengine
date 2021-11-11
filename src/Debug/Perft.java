@@ -1,12 +1,11 @@
-package Board;
+package Debug;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import Board.Board;
+import Board.Move;
+import Board.MoveGenerator;
 
 public class Perft {
-    private MoveGenerator moveGenerator = new MoveGenerator();
+    private final MoveGenerator moveGenerator = new MoveGenerator();
 
     public char getFile(int index) {
         return (char) ((index % 8) + 97);
@@ -26,9 +25,9 @@ public class Perft {
     public long perft(int depth, Board board) {
         long moves = 0;
 
-        if (depth == 0) {
-            return 1;
-        }
+        if(depth < 1) return 1;
+
+        if (depth == 1) return moveGenerator.getLegalMoves(board).size();
 
         for (Move m : moveGenerator.getLegalMoves(board)) {
             moves += perft(depth - 1, moveGenerator.makeMove(m, board));

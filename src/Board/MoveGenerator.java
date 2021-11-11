@@ -136,7 +136,6 @@ public class MoveGenerator {
 
                 //non-adjacent indices, both are always adjacent
                 if(Math.abs(getRank(offsetPos - bishopOffset) - getRank(offsetPos)) != 1) {
-                    //System.out.println("Rank - " + (Math.abs(getRank(position) - getRank(offsetPos))) + ", File - " + (Math.abs(getFile(position) - getFile(offsetPos))));
                     break;
                 }
 
@@ -488,6 +487,7 @@ public class MoveGenerator {
         if (board.pawnPieces.get(startSquare)) {
             board.pawnPieces.clear(startSquare);
 
+            //promotions
             if(flags != null) {
                 if(flags.contains(Move.Flag.PROMOTE_QUEEN)) {
                     board.queenPieces.set(targetSquare);
@@ -502,16 +502,20 @@ public class MoveGenerator {
                 }
             }
 
+            //en passant capture
             if(targetSquare == currentBoard.enPassantSquare) {
                 if(currentBoard.whiteToMove) {
                     board.allPieces.clear(targetSquare - 8);
+                    board.blackPieces.clear(targetSquare - 8);
                     board.pawnPieces.clear(targetSquare - 8);
                 } else {
                     board.allPieces.clear(targetSquare + 8);
+                    board.whitePieces.clear(targetSquare + 8);
                     board.pawnPieces.clear(targetSquare + 8);
                 }
             }
 
+            //set new en passant square - pawn moved two squares
             if (Math.abs(startSquare - targetSquare) == 16) {
                 if (currentBoard.whiteToMove) {
                     board.enPassantSquare = targetSquare - 8;
@@ -573,8 +577,7 @@ public class MoveGenerator {
                 if(board.whiteToMove) {
                     board.whitePieces.set(startSquare - 1);
                 } else {
-                    board.blackPieces.set(startSquare -
-                            1);
+                    board.blackPieces.set(startSquare - 1);
                 }
             }
 
@@ -594,7 +597,7 @@ public class MoveGenerator {
         if (targetSquare == 63) board.blackKingSide = false;
         if (targetSquare == 56) board.blackQueenSide = false;
 
-        //50 move rule checks
+        //50 move rule checks - capture or pawn move resets clock
         if(currentBoard.allPieces.get(targetSquare) || currentBoard.pawnPieces.get(startSquare)) {
             board.fiftyMoveCount = 0;
         } else {

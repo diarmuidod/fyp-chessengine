@@ -1,12 +1,12 @@
 import chess
 
 def main():
-    fen = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1"
-    depth = 4
+    fen = "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8"
+    depth = 3
     perft(fen, depth)
     
     #open and read the file after the appending:
-    f = open("fen_list.txt", "r")
+    f = open("C:\\Users\\student\\Documents\\GitHub\\fyp-chessengine\\src\\fen_list.txt", "r")
     print(f.read())
 
 def perft(fen, depth):

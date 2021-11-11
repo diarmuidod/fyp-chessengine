@@ -8,14 +8,13 @@ import java.util.Scanner;
 import Board.Board;
 import Board.Move;
 import Board.MoveGenerator;
-import Board.Perft;
+import Debug.Perft;
 
 public class Game {
     public Board board;
     public MoveGenerator moveGenerator;
     public List<Move> movesPlayed;
     public Scanner input;
-    public String currentMove;
 
     public GameState gameState;
 
@@ -52,8 +51,8 @@ public class Game {
 
             printBoard();
             System.out.println();
-            printBoard(moveGenerator.getAttackedSquares(board, true));
-            System.out.println("King in check: " + moveGenerator.kingInCheck(board, true));
+            //printBoard(moveGenerator.getAttackedSquares(board, true));
+            System.out.println("King in check: " + moveGenerator.kingInCheck(board, false));
 
             System.out.println("\n" + saveGameToFEN());
             System.out.println(legalMoves.size() + " - " + legalMoves);
@@ -149,7 +148,8 @@ public class Game {
 
         fen.append(board.fiftyMoveCount).append(" ");
 
-        fen.append((movesPlayed.size() / 2) + 1);
+        fen.append("9");
+        //fen.append((movesPlayed.size() / 2) + 1);
 
         return fen.toString();
     }
