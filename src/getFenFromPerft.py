@@ -28,7 +28,9 @@ def writeFenToFile(fen):
     moves = str(board.legal_moves).split(" (")[1]
     moves = moves.split(">")[0]
     moves = moves[:-1:]
-    f.write(fen + "--" + moves + "\n")
+
+    if(len(moves) != 0):
+        f.write(fen + "--" + moves + "\n")
     
     f.close()
     
