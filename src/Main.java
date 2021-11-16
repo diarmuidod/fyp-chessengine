@@ -7,8 +7,12 @@ import java.io.*;
 import java.util.*;
 
 public class Main {
-    static Game game = new Game("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8");
+    static Game game = new Game("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     static MoveGenTest test = new MoveGenTest(game);
+
+    //  Move generation only fails on below fen, all other test cases are flawless
+    //  "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -" at depth 2
+    //  cannot locate source of problem, may revisit later. Will move on for now.
 
     static String[] testFens = {"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
             "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -",
@@ -19,11 +23,6 @@ public class Main {
             "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10"};
 
     public static void main(String[] args) {
-        //test.getDiff("rnbq1k1r/pp1Pb1pp/2p5/5p2/1PB5/3Q4/P1P1NnPP/RNB1K2R b KQ - 0 9", );
-        //test.writePerft(3, new Board("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8"));
-        //test.comparePythonToJava();
 
-        test.writePerftNumbers(testFens, 8);
-        //game.playGame();
     }
 }

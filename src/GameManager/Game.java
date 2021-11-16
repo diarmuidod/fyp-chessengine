@@ -148,8 +148,7 @@ public class Game {
 
         fen.append(board.fiftyMoveCount).append(" ");
 
-        fen.append("9");
-        //fen.append((movesPlayed.size() / 2) + 1);
+        fen.append((movesPlayed.size() / 2) + 1);
 
         return fen.toString();
     }

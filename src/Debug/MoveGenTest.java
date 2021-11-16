@@ -9,9 +9,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class MoveGenTest {
-    Perft perft;
+    public Perft perft;
     Game game;
     int count = 0;
     int diff = 0;
@@ -36,6 +37,8 @@ public class MoveGenTest {
     }
 
     public void getDiffBulk() {
+        Map<String, List<String>> pythonMoves = new HashMap<>();
+        Map<String, List<String>> javaMoves = new HashMap<>();
         diff = 0;
         count = 0;
 
@@ -50,13 +53,16 @@ public class MoveGenTest {
                 String fen = s.split("--")[0];
                 String moves = s.split("--")[1];
 
+                pythonMoves.put(fen, Arrays.asList(moves.split(", ")));
                 //System.out.println(fen);
                 //System.out.println(moves);
                 //System.out.println();
 
-                getDiff(fen, moves);
+                //getDiff(fen, moves);
                 count++;
             }
+
+
         } catch(Exception e) {
             e.printStackTrace();
         }
@@ -105,8 +111,8 @@ public class MoveGenTest {
         Collections.sort(myOut);
         Collections.sort(pyOut);
 
-        //System.out.println("My output: " + myOut);
-        //System.out.println("Py output: " + pyOut);
+        System.out.println("My output: " + myOut);
+        System.out.println("Py output: " + pyOut);
 
         for(String s : pyOut) {
             if(!myOut.contains(s)) result.add(s);
@@ -142,28 +148,34 @@ public class MoveGenTest {
     }
 
     public void writePerftNumbers(String[] fens, int depth) {
-        List<Long> results = new LinkedList<>();
-        for(String fen : fens) {
-            game.board = new Board(fen);
-            System.out.println(fen);
-            for(int i = 1; i <= depth; i++) {
-                System.out.println("Calculating depth " + i);
-                results.add(perft.perft(i, game.board));
+        long result;
+
+        for(int i = 1; i <= depth; i++) {
+            System.out.println("Calculating depth " + i);
+            for(String fen : fens) {
+                game.board = new Board(fen);
+                result = perft.perft(i, game.board);
+
+                if(i == 1) {
+                    writePerftResults(fen, i, result, true, false);
+                } else {
+                    writePerftResults(fen, i, result, false, i == depth);
+                }
             }
             System.out.println();
-            writePerftResults(fen, depth, results);
-            results.clear();
         }
     }
 
-    void writePerftResults(String fen, int depth, List<Long> results) {
+    public void writePerftResults(String fen, int depth, long result, boolean writeFen, boolean end) {
         try {
             StringBuilder out = new StringBuilder();
-            out.append(fen).append("\n");
-            for(int i = 0; i < depth; i++) {
-                out.append("Perft at depth ").append(i + 1).append(": ").append(results.get(i)).append("\n");
+            if(writeFen) {
+                out.append(fen).append("\n");
             }
-            out.append("\n");
+
+            out.append("Perft at depth ").append(depth).append(": ").append(result).append("\n");
+
+            if(end) out.append("\n");
 
             BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\student\\Documents\\GitHub\\fyp-chessengine\\src\\perft_test_suite_results.txt", true));
             writer.append(out.toString());
@@ -239,7 +251,7 @@ public class MoveGenTest {
 
             String fen = line.split("--")[0];
             String moves = line.split("--")[1];
-            pythonMap.put(fen, Arrays.asList(moves.split(", ")));
+            pythonMap.put(fen.split(" ")[0], Arrays.asList(moves.split(", ")));
         }
 
         for(String line : javaOutput) {
@@ -250,14 +262,33 @@ public class MoveGenTest {
 
             String fen = line.split("--")[0];
             String moves = line.split("--")[1];
-            javaMap.put(fen, Arrays.asList(moves.split(", ")));
+            javaMap.put(fen.split(" ")[0], Arrays.asList(moves.split(", ")));
         }
 
 
-        for (Map.Entry<String, List<String>> pair : pythonMap.entrySet()) {
-            getDiff(pair.getKey(), pair.getValue());
+        for(Map.Entry<String, List<String>> entry : pythonMap.entrySet()) {
+            if(javaMap.get(entry.getKey()) == null) {
+                resultMap.put(entry.getKey(), new LinkedList<>());
+                diff++;
+                continue;
+            }
+
+            List<String> differences = javaMap.get(entry.getKey()).stream()
+                    .filter(element -> !pythonMap.get(entry.getKey()).contains(element))
+                    .collect(Collectors.toList());
+
+            if(differences.size() != 0) {
+                resultMap.put(entry.getKey(), differences);
+                diff++;
+            }
         }
+
+        for(Map.Entry<String, List<String>> entry : resultMap.entrySet()) {
+            System.out.println(entry.getKey() + ", " + entry.getValue());
+        }
+
         System.out.println("Python Length: " + pythonMap.size());
         System.out.println("Java Length: " + javaMap.size());
+        System.out.println("Diff: " + diff);
     }
 }
