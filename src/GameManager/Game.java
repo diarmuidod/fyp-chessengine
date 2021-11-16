@@ -51,18 +51,16 @@ public class Game {
 
             printBoard();
             System.out.println();
-            //printBoard(moveGenerator.getAttackedSquares(board, true));
-            System.out.println("King in check: " + moveGenerator.kingInCheck(board, false));
-
-            System.out.println("\n" + saveGameToFEN());
-            System.out.println(legalMoves.size() + " - " + legalMoves);
-            System.out.println(movesPlayed.size() + " - " + movesPlayed);
 
             if (board.whiteToMove) {
-                System.out.println("\nWhite to move\n");
+                System.out.println("White to move");
             } else {
-                System.out.println("\nBlack to move\n");
+                System.out.println("Black to move");
             }
+
+            System.out.println(saveGameToFEN());
+            System.out.println(legalMoves.size() + " - " + legalMoves);
+            System.out.println(movesPlayed.size() + " - " + movesPlayed);
 
             System.out.print("Enter move: ");
             String inp = input.nextLine();
