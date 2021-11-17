@@ -9,6 +9,7 @@ import Board.Board;
 import Board.Move;
 import Board.MoveGenerator;
 import Debug.Perft;
+import Engine.Engine;
 
 public class Game {
     public Board board;
@@ -17,6 +18,8 @@ public class Game {
     public Scanner input;
 
     public GameState gameState;
+
+    public Engine mctsEngine;
 
     //Stole this from the internet - https://gist.github.com/Dani4kor/e1e8b439115878f8c6dcf127a4ed5d3e
     private static final String FEN_REGEX = "\\s*^(((?:[rnbqkpRNBQKP1-8]+\\/){7})[rnbqkpRNBQKP1-8]+)\\s([b|w])\\s(-|[K|Q|k|q]{1,4})\\s(-|[a-h][1-8])\\s(\\d+\\s\\d+)$";
@@ -30,6 +33,7 @@ public class Game {
         movesPlayed = new LinkedList<>();
         input = new Scanner(System.in);
         gameState = GameState.ONGOING;
+        mctsEngine = loadEngine();
     }
 
     public Game(String FEN) {
@@ -37,7 +41,8 @@ public class Game {
         moveGenerator = new MoveGenerator();
         movesPlayed = new LinkedList<>();
         input = new Scanner(System.in);
-        gameState = GameState.ONGOING;
+        gameState = getGameState(board);
+        mctsEngine = loadEngine();
     }
 
     public void playGame() {
@@ -46,7 +51,7 @@ public class Game {
         List<Move> legalMoves;
         GameState gameState;
 
-        while(getGameState() == GameState.ONGOING) {
+        while(getGameState(board) == GameState.ONGOING) {
             legalMoves = moveGenerator.getLegalMoves(board);
 
             printBoard();
@@ -76,7 +81,7 @@ public class Game {
             }
         }
 
-        switch(getGameState()) {
+        switch(getGameState(board)) {
             case WHITE_WINS:
                 System.out.println("White wins!");
                 break;
@@ -151,6 +156,10 @@ public class Game {
         return fen.toString();
     }
 
+    public String saveGameToPGN() {
+        return null;
+    }
+
     public char getFile(int index) {
         return (char) ((index % 8) + 97);
     }
@@ -178,7 +187,7 @@ public class Game {
         board.printBoard(bitset);
     }
 
-    public GameState getGameState() {
+    public GameState getGameState(Board board) {
         if(board.fiftyMoveCount >= 50) {
             return GameState.DRAW;
         }
@@ -197,13 +206,18 @@ public class Game {
 
             return GameState.DRAW;
         }
+
         return GameState.ONGOING;
     }
 
-    enum GameState {
+    public enum GameState {
         ONGOING,
         WHITE_WINS,
         BLACK_WINS,
         DRAW
+    }
+
+    public Engine loadEngine() {
+        return new Engine();
     }
 }

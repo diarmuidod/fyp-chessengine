@@ -25,6 +25,7 @@ public class Board {
     public int enPassantSquare = -1;
     public int fiftyMoveCount = 0;
 
+
     public Board() {
         loadPositionFromFEN("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     }
@@ -182,17 +183,64 @@ public class Board {
         }
         return sb.toString();
     }
-/*
-    public String toString() {
-        return toBinaryString(allPieces) + '\n' +
-                toBinaryString(whitePieces) + '\n' +
-                toBinaryString(blackPieces) + '\n' +
-                toBinaryString(pawnPieces) + '\n' +
-                toBinaryString(knightPieces) + '\n' +
-                toBinaryString(bishopPieces) + '\n' +
-                toBinaryString(rookPieces) + '\n' +
-                toBinaryString(queenPieces) + '\n' +
-                toBinaryString(kingPieces) + '\n';
+
+    public boolean equals(Board that) {
+        if(!this.allPieces.equals(that.allPieces)) return false;
+
+        if(!this.whitePieces.equals(that.whitePieces)) return false;
+        if(!this.blackPieces.equals(that.blackPieces)) return false;
+
+        if(!this.pawnPieces.equals(that.pawnPieces)) return false;
+        if(!this.knightPieces.equals(that.knightPieces)) return false;
+        if(!this.bishopPieces.equals(that.bishopPieces)) return false;
+        if(!this.rookPieces.equals(that.rookPieces)) return false;
+        if(!this.queenPieces.equals(that.queenPieces)) return false;
+
+        if(this.whiteKingSide != that.whiteKingSide) return false;
+        if(this.whiteQueenSide != that.whiteQueenSide) return false;
+        if(this.blackKingSide != that.blackKingSide) return false;
+        if(this.blackQueenSide != that.blackQueenSide) return false;
+
+        if(this.enPassantSquare != that.enPassantSquare) return false;
+        return this.fiftyMoveCount == that.fiftyMoveCount;
     }
- */
+
+    public String basicFEN() {
+        StringBuilder fen = new StringBuilder();
+        int emptySquares = 0;
+
+        int mark = 64;
+
+        for (int i = 0; i < 8; i++) {
+            for (int j = mark - 8; j < mark; j++) {
+                if (allPieces.get(j)) {
+                    if (emptySquares > 0) {
+                        fen.append(emptySquares);
+                        emptySquares = 0;
+                    }
+
+                    boolean isWhite = whitePieces.get(j);
+                    if (pawnPieces.get(j)) fen.append(isWhite ? "P" : "p");
+                    if (knightPieces.get(j)) fen.append(isWhite ? "N" : "n");
+                    if (bishopPieces.get(j)) fen.append(isWhite ? "B" : "b");
+                    if (rookPieces.get(j)) fen.append(isWhite ? "R" : "r");
+                    if (queenPieces.get(j)) fen.append(isWhite ? "Q" : "q");
+                    if (kingPieces.get(j)) fen.append(isWhite ? "K" : "k");
+                } else {
+                    emptySquares++;
+                }
+                if (j == mark - 1) {
+                    if (emptySquares > 0) {
+                        fen.append(emptySquares);
+                        emptySquares = 0;
+                    }
+
+                    if (j != 7) fen.append("/");
+                }
+            }
+            mark -= 8;
+        }
+
+        return fen.toString();
+    }
 }
