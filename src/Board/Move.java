@@ -117,6 +117,10 @@ public class Move {
         return move.toString();
     }
 
+    public boolean isEqual(Move that) {
+        return this.move.equals(that.move);
+    }
+
     public String toString() {
         return move;
     }

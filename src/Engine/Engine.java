@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Random;
+import java.util.stream.Collectors;
 
 public class Engine implements Serializable {
     //https://medium.com/@ishaan.gupta0401/monte-carlo-tree-search-application-on-chess-5573fc0efb75
@@ -24,17 +25,20 @@ public class Engine implements Serializable {
         root = new Node();
     }
 
-    public Move getBestMove(Node node, long timeInSeconds) {
+    //suspect cause of bug is that engine isn't being updated on the board state
+    public Move getBestMove(List<Move> movesPlayed, List<Move> legalMoves, long timeInSeconds) {
+        Node node = findMoveNode(movesPlayed);
+        System.out.println(node.move);
+        System.out.println(node.boardState.whiteToMove);
+
         if(getGameState(node.boardState) != Game.GameState.ONGOING) return null;
 
         boolean timeRemaining = true;
         long startTime = System.currentTimeMillis();
 
         double currentUCB;
-        double maxUCB = Double.NEGATIVE_INFINITY;
-        double minUCB = Double.POSITIVE_INFINITY;
 
-        if(node.children.size() == 0) {
+        if(node.children == null) {
             node.children = generateChildren(node);
         }
 
@@ -47,24 +51,22 @@ public class Engine implements Serializable {
             node = backpropagation(expandedChild, result);
         }
 
-        Node bestMoveNode = null;
+        Node bestMoveNode = node.children.get(0);
 
         for(Node child : node.children) {
             currentUCB = getUCB(child);
             if(node.boardState.whiteToMove) {
-                if(currentUCB > maxUCB) {
-                    currentUCB = maxUCB;
+                if(currentUCB > getUCB(bestMoveNode)) {
                     bestMoveNode = child;
                 }
             } else {
-                if(currentUCB < minUCB) {
-                    currentUCB = minUCB;
+                if(currentUCB < getUCB(bestMoveNode)) {
                     bestMoveNode = child;
                 }
             }
         }
 
-        Move bestMove = null;
+        Move bestMove = bestMoveNode.move;
 
         //trust me, I hate it too
         for(Move m : moveGenerator.getLegalMoves(bestMoveNode.boardState)) {
@@ -72,7 +74,22 @@ public class Engine implements Serializable {
                 bestMove = m;
             }
         }
+
         return Objects.requireNonNull(bestMove);
+    }
+
+    public Node findMoveNode(List<Move> movesPlayed) {
+        Node leafNode = root;
+
+        for(Move move : movesPlayed) {
+            if(leafNode.children == null) {
+                leafNode.children = generateChildren(leafNode);
+            }
+
+            leafNode = leafNode.children.stream().filter(n -> n.move.isEqual(move)).collect(Collectors.toList()).get(0);
+        }
+
+        return leafNode;
     }
 
     public void trainEngine(long timeInSeconds) {
@@ -100,9 +117,9 @@ public class Engine implements Serializable {
         double currentUCB;
         double maxUCB = Double.NEGATIVE_INFINITY;
         double minUCB = Double.POSITIVE_INFINITY;
-        Node selectedChild = null;
 
         if(node.children == null) node.children = generateChildren(node);
+        Node selectedChild = node.children.get(0);
 
         for(Node n : node.children) {
             currentUCB = getUCB(n);
@@ -211,31 +228,34 @@ public class Engine implements Serializable {
 
      static class Node {
         Node parent;
+        Move move;
         List<Node> children;
         Board boardState;
 
-        long N; //How often parent node has been visited
-        long n; //How often this node has been visited
-        long v; //Result of child nodes games
+        double N; //How often parent node has been visited
+        double n; //How often this node has been visited
+        double v; //Result of child nodes games
 
         public Node() {
             parent = null;
+            move = null;
             children = null;
             boardState = new Board();
 
-            N = 0;
-            n = 0;
-            v = 0;
+            N = 0.0d;
+            n = 0.0d;
+            v = 0.0d;
         }
 
         public Node(Node parent, Move move) {
             this.parent = parent;
+            this.move = move;
             children = null;
             boardState = moveGenerator.makeMove(move, parent.boardState);
 
-            N = 0;
-            n = 0;
-            v = 0;
+            N = 0.0d;
+            n = 0.0d;
+            v = 0.0d;
         }
     }
 }

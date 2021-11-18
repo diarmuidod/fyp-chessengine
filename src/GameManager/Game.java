@@ -1,9 +1,6 @@
 package GameManager;
 
-import java.util.BitSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Scanner;
+import java.util.*;
 
 import Board.Board;
 import Board.Move;
@@ -32,7 +29,7 @@ public class Game {
         moveGenerator = new MoveGenerator();
         movesPlayed = new LinkedList<>();
         input = new Scanner(System.in);
-        gameState = GameState.ONGOING;
+        gameState = getGameState(board);
         mctsEngine = loadEngine();
     }
 
@@ -47,9 +44,8 @@ public class Game {
 
     public void playGame() {
         Perft perft = new Perft();
-        Move activeMove;
+        Move activeMove = null;
         List<Move> legalMoves;
-        GameState gameState;
 
         while(getGameState(board) == GameState.ONGOING) {
             legalMoves = moveGenerator.getLegalMoves(board);
@@ -67,18 +63,28 @@ public class Game {
             System.out.println(legalMoves.size() + " - " + legalMoves);
             System.out.println(movesPlayed.size() + " - " + movesPlayed);
 
-            System.out.print("Enter move: ");
-            String inp = input.nextLine();
+            if (board.whiteToMove) {
+                System.out.print("Enter move: ");
+                String inp = input.nextLine();
 
-            if(inp.equals("quit") || inp.equals("exit")) break;
-
-            for(Move m : legalMoves) {
-                if(m.move.equals(inp)) {
-                    activeMove = m;
-                    board = moveGenerator.makeMove(activeMove, board);
-                    movesPlayed.add(activeMove);
+                if (inp.equals("quit") || inp.equals("exit")) {
+                    saveEngine();
+                    break;
                 }
+
+                for (Move m : legalMoves) {
+                    if (m.move.equals(inp)) {
+                        activeMove = m;
+                        break;
+                    }
+                }
+            } else {
+                activeMove = mctsEngine.getBestMove(movesPlayed, getLegalMoves(), 5);
             }
+
+
+            board = moveGenerator.makeMove(Objects.requireNonNull(activeMove), board);
+            movesPlayed.add(activeMove);
         }
 
         switch(getGameState(board)) {
@@ -219,5 +225,9 @@ public class Game {
 
     public Engine loadEngine() {
         return new Engine();
+    }
+
+    public void saveEngine() {
+
     }
 }

@@ -8,7 +8,7 @@ import java.io.*;
 import java.util.*;
 
 public class Main {
-    static Game game = new Game("5R2/R5k1/3PQ3/5p1p/5PpP/3R2P1/5K2/8 b - - 0 1");
+    static Game game = new Game("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     static MoveGenTest test = new MoveGenTest(game);
 
     //  Move generation only fails on below fen, all other test cases are flawless
@@ -25,9 +25,7 @@ public class Main {
             "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10"};
 
     public static void main(String[] args) {
-        //Move m = game.mctsEngine.getBestMove( , 15);
-        game.mctsEngine.trainEngine(15);
-        //test.getDiff("5R2/R5k1/3PQ3/5p1p/5PpP/3R2P1/5K2/8 b - - 0 1", "Kxf8");
-        //game.playGame();
+        //game.mctsEngine.trainEngine(30);
+        game.playGame();
     }
 }
