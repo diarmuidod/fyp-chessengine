@@ -1,12 +1,12 @@
 package GameManager;
 
-import java.util.*;
-
 import Board.Board;
 import Board.Move;
 import Board.MoveGenerator;
 import Debug.Perft;
 import Engine.Engine;
+
+import java.util.*;
 
 public class Game {
     public Board board;
@@ -47,7 +47,7 @@ public class Game {
         Move activeMove = null;
         List<Move> legalMoves;
 
-        while(getGameState(board) == GameState.ONGOING) {
+        while (getGameState(board) == GameState.ONGOING) {
             legalMoves = moveGenerator.getLegalMoves(board);
 
             printBoard();
@@ -59,9 +59,7 @@ public class Game {
                 System.out.println("Black to move");
             }
 
-            System.out.println(saveGameToFEN());
-            System.out.println(legalMoves.size() + " - " + legalMoves);
-            System.out.println(movesPlayed.size() + " - " + movesPlayed);
+            System.out.println("Legal Moves: " + getLegalMoves());
 
             if (board.whiteToMove) {
                 System.out.print("Enter move: ");
@@ -79,7 +77,7 @@ public class Game {
                     }
                 }
             } else {
-                activeMove = mctsEngine.getBestMove(movesPlayed, getLegalMoves(), 5);
+                activeMove = mctsEngine.getBestMove(movesPlayed, 5);
             }
 
 
@@ -87,7 +85,7 @@ public class Game {
             movesPlayed.add(activeMove);
         }
 
-        switch(getGameState(board)) {
+        switch (getGameState(board)) {
             case WHITE_WINS:
                 System.out.println("White wins!");
                 break;
@@ -110,8 +108,8 @@ public class Game {
 
         for (int i = 0; i < 8; i++) {
             for (int j = mark - 8; j < mark; j++) {
-                if(board.allPieces.get(j)) {
-                    if(emptySquares > 0) {
+                if (board.allPieces.get(j)) {
+                    if (emptySquares > 0) {
                         fen.append(emptySquares);
                         emptySquares = 0;
                     }
@@ -126,13 +124,13 @@ public class Game {
                 } else {
                     emptySquares++;
                 }
-                if(j == mark - 1) {
-                    if(emptySquares > 0) {
+                if (j == mark - 1) {
+                    if (emptySquares > 0) {
                         fen.append(emptySquares);
                         emptySquares = 0;
                     }
 
-                    if(j != 7) fen.append("/");
+                    if (j != 7) fen.append("/");
                 }
             }
             mark -= 8;
@@ -144,12 +142,12 @@ public class Game {
             fen.append(" b ");
         }
 
-        if(board.whiteKingSide) fen.append("K");
-        if(board.whiteQueenSide) fen.append("Q");
-        if(board.blackKingSide) fen.append("k");
-        if(board.blackQueenSide) fen.append("q");
+        if (board.whiteKingSide) fen.append("K");
+        if (board.whiteQueenSide) fen.append("Q");
+        if (board.blackKingSide) fen.append("k");
+        if (board.blackQueenSide) fen.append("q");
 
-        if(board.enPassantSquare == -1) {
+        if (board.enPassantSquare == -1) {
             fen.append(" - ");
         } else {
             fen.append(" ").append(moveFromIndex(board.enPassantSquare)).append(" ");
@@ -194,19 +192,19 @@ public class Game {
     }
 
     public GameState getGameState(Board board) {
-        if(board.fiftyMoveCount >= 50) {
+        if (board.fiftyMoveCount >= 50) {
             return GameState.DRAW;
         }
 
         //no legal moves
-        if(getLegalMoves().size() == 0) {
+        if (getLegalMoves().size() == 0) {
             //white in check
             if (moveGenerator.kingInCheck(board, true)) {
                 return GameState.BLACK_WINS;
             }
 
             //white in check
-            if(moveGenerator.kingInCheck(board, false)) {
+            if (moveGenerator.kingInCheck(board, false)) {
                 return GameState.WHITE_WINS;
             }
 
