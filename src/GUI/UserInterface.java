@@ -1,0 +1,241 @@
+package GUI;
+
+import GameManager.Game;
+
+import javax.imageio.ImageIO;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.LinkedList;
+
+public class UserInterface {
+    private static final int squareSize = 64;
+    private final int xOffset;
+    private final int yOffset;
+
+    private JPanel boardPanel;
+
+    private final Game chessGame;
+
+    LinkedList<PieceUI> pieceList;
+    private final Image[] pieceSprites;
+
+    private final Color darkSquares = Color.decode("#769656");
+    private final Color lightSquares = Color.decode("#EEEED2");
+
+    public UserInterface() throws IOException {
+        chessGame = new Game();
+        pieceList = generatePieceList();
+        pieceSprites = generatePieceSprites();
+
+        JFrame uiFrame = generateFrame();
+        xOffset = SwingUtilities.convertPoint(boardPanel, boardPanel.getX(), boardPanel.getY(), uiFrame).x;
+        yOffset = SwingUtilities.convertPoint(boardPanel, boardPanel.getX(), boardPanel.getY(), uiFrame).y;
+    }
+
+    private JFrame generateFrame() {
+        JFrame frame = new JFrame();
+
+        JMenuBar menuBar = generateMenuBar();
+        boardPanel = generateBoardPanel();
+
+        frame.setJMenuBar(menuBar);
+        frame.add(boardPanel);
+
+        frame.addMouseMotionListener(new MouseMotionListener() {
+
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                boardPanel.repaint();
+            }
+
+            @Override
+            public void mouseMoved(MouseEvent e) {
+                boardPanel.repaint();
+            }
+        });
+
+        frame.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                boardPanel.repaint();
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                boardPanel.repaint();
+                PieceUI piece = getPiece((e.getX() - xOffset) / squareSize, (e.getY() - yOffset) / squareSize);
+                System.out.println("Mouse position: " + (e.getX() - xOffset)/squareSize + ", " + (e.getY() - yOffset)/squareSize);
+                System.out.println("Piece position: " + piece.xPos + ", " + piece.yPos);
+
+                if(piece.isWhite) {
+                    System.out.println("W" + piece.id);
+                } else {
+                    System.out.println("B" + piece.id);
+                }
+                System.out.println();
+            }
+
+            @Override
+            public void mouseReleased(MouseEvent e) {
+                boardPanel.repaint();
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                boardPanel.repaint();
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                boardPanel.repaint();
+            }
+        });
+
+        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+
+        frame.setTitle("Chess Application");
+        frame.setBounds((screenSize.width / 2) - 264, (screenSize.height / 2) - 264, 528, 574);
+        frame.setVisible(true);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+        return frame;
+    }
+
+    private JMenuBar generateMenuBar() {
+        JMenuBar menuBar = new JMenuBar();
+        JMenu fileMenu = new JMenu("File");
+
+        JMenuItem exit = generateExitButton();
+
+        fileMenu.add(exit);
+        menuBar.add(fileMenu);
+        menuBar.setVisible(true);
+        return menuBar;
+    }
+
+    private JMenuItem generateExitButton() {
+        JMenuItem item = new JMenuItem("Exit");
+        item.addActionListener(e -> System.exit(0));
+
+        return item;
+    }
+
+    private JPanel generateBoardPanel() {
+        return new JPanel() {
+            @Override
+            public void paint(Graphics g) {
+                boolean whiteSquare = true;
+                this.setBounds(0, 0, squareSize * 8, squareSize * 8);
+
+                g.setColor(Color.RED);
+                g.fillRect(0, 0, this.getWidth(), this.getHeight());
+
+                for(int y = 0; y < 8; y++) {
+                    for(int x = 0; x < 8; x++) {
+                        if (whiteSquare) {
+                            g.setColor(lightSquares);
+                        } else {
+                            g.setColor(darkSquares);
+                        }
+
+                        g.fillRect(y * squareSize, x * squareSize, squareSize, squareSize);
+                        whiteSquare = !whiteSquare;
+                    }
+                    whiteSquare = !whiteSquare;
+
+                    for(PieceUI piece : pieceList) {
+                        int index = -1;
+
+                        switch(piece.id) {
+                            case "K":
+                                index = 0;
+                                break;
+
+                            case "Q":
+                                index = 1;
+                                break;
+
+                            case "B":
+                                index = 2;
+                                break;
+
+                            case "N":
+                                index = 3;
+                                break;
+
+                            case "R":
+                                index = 4;
+                                break;
+
+                            case "P":
+                                index = 5;
+                                break;
+                        }
+
+                        if(!piece.isWhite) index += 6;
+                        g.drawImage(pieceSprites[index], piece.xPos * squareSize, piece.yPos * squareSize, this);
+                    }
+                }
+            }
+        };
+    }
+
+    public Image[] generatePieceSprites() throws IOException {
+        BufferedImage spriteSheet = ImageIO.read(new File("C:\\Users\\student\\Documents\\GitHub\\fyp-chessengine\\src\\GUI\\Assets\\sprites.png"));
+        Image[] pieceSprites = new Image[12];
+
+        for(int y = 0; y < 2; y++) {
+            for(int x = 0; x < 6; x++) {
+                pieceSprites[(y * 6) + x] = spriteSheet.getSubimage(x * 200, y * 200, 200, 200)
+                                                       .getScaledInstance(squareSize, squareSize, BufferedImage.SCALE_SMOOTH);
+            }
+        }
+
+        return pieceSprites;
+    }
+
+    public LinkedList<PieceUI> generatePieceList() {
+        LinkedList<PieceUI> pieces = new LinkedList<>();
+        String fen = chessGame.saveGameToFEN().split(" ")[0];
+        int file = 0, rank = 0;
+        boolean isWhite;
+
+        for (int i = 0; i < fen.length(); i++) {
+            char symbol = fen.charAt(i);
+            if (symbol == '/') {
+                file = 0;
+                rank++;
+            } else {
+                if (Character.isDigit(symbol)) {
+                    file += Character.getNumericValue(symbol);
+                } else {
+                    isWhite = Character.isUpperCase(symbol);
+
+                    PieceUI piece = new PieceUI(file, rank, isWhite, String.valueOf(Character.toUpperCase(symbol)), pieces);
+                    file++;
+                }
+            }
+        }
+
+        return pieces;
+    }
+
+    public PieceUI getPiece(int xPos, int yPos) {
+        for (PieceUI piece : pieceList) {
+            if (xPos == piece.xPos && yPos == piece.yPos) {
+                return piece;
+            }
+        }
+
+        return null;
+    }
+
+    public int posToIndex(int x, int y) {
+        return Math.abs(7 - y) * 8 + x;
+    }
+}

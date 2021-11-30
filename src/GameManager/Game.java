@@ -61,7 +61,7 @@ public class Game {
 
             System.out.println("Legal Moves: " + getLegalMoves());
 
-            if (board.whiteToMove) {
+            //if (board.whiteToMove) {
                 System.out.print("Enter move: ");
                 String inp = input.nextLine();
 
@@ -76,9 +76,9 @@ public class Game {
                         break;
                     }
                 }
-            } else {
-                activeMove = mctsEngine.getBestMove(movesPlayed, 5);
-            }
+            //} else {
+            //    activeMove = mctsEngine.getBestMove(movesPlayed, 5);
+            //}
 
 
             board = moveGenerator.makeMove(Objects.requireNonNull(activeMove), board);

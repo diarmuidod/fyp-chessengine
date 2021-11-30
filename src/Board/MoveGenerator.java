@@ -17,7 +17,6 @@ public class MoveGenerator {
         BitSet sideToWait = !currentBoard.whiteToMove ? currentBoard.whitePieces : currentBoard.blackPieces;
         boolean inRange;
 
-
         //forward one
         inRange = (position + (pawnOffsets[0] * sideToMove) >= 0 && position + (pawnOffsets[0] * sideToMove) <= 63);
         if(inRange) {
