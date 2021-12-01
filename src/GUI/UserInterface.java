@@ -18,12 +18,12 @@ public class UserInterface {
     private final int xOffset;
     private final int yOffset;
 
-    private JFrame uiFrame;
+    private final JFrame uiFrame;
     private JPanel boardPanel;
 
     private final Game chessGame;
 
-    LinkedList<PieceUI> pieceList;
+    private LinkedList<PieceUI> pieceList;
     private final Image[] pieceSprites;
     private static PieceUI activePiece = null;
     private static int activePieceStartX = 0;
@@ -59,48 +59,49 @@ public class UserInterface {
             @Override
             public void mouseMoved(MouseEvent e) {
                 if(activePiece != null) {
-                    activePiece.xPos = e.getX();
-                    activePiece.yPos = e.getY();
+                    if(boardPanel.contains(e.getPoint())) {
+                        activePiece.xPos = e.getX();
+                        activePiece.yPos = e.getY();
+                    }
                 }
-                frame.repaint();
+                uiFrame.getContentPane().repaint();
             }
         });
 
         frame.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                //pickup piece
                 if(activePiece == null) {
                     activePiece = getPiece((e.getX() - xOffset) / squareSize, (e.getY() - yOffset) / squareSize);
                     if(activePiece != null) {
                         activePieceStartX = activePiece.xPos;
                         activePieceStartY = activePiece.yPos;
                     }
-                //drop piece
                 } else {
                     if (SwingUtilities.isRightMouseButton(e)) {
                         activePiece.movePiece(activePieceStartX, activePieceStartY);
                         activePiece = null;
                     } else if (SwingUtilities.isLeftMouseButton(e)) {
                         Move move;
+
                         int mouseX = (e.getX() - xOffset) / squareSize;
                         int mouseY = (e.getY() - yOffset) / squareSize;
 
                         if ((move = validMove(mouseX, mouseY)) != null) {
                             chessGame.board = chessGame.moveGenerator.makeMove(move, chessGame.board);
-
                             pieceList = generatePieceList();
-
-                            uiFrame.getContentPane().invalidate();
-                            uiFrame.getContentPane().validate();
-                            uiFrame.getContentPane().repaint();
+                        } else if(activePieceStartX == mouseX && activePieceStartY == mouseY) {
+                            activePiece.xPos = activePieceStartX;
+                            activePiece.yPos = activePieceStartY;
                         } else {
                             activePiece.movePiece(activePieceStartX, activePieceStartY);
                         }
                         activePiece = null;
                     }
                 }
-                frame.repaint();
+                uiFrame.getContentPane().invalidate();
+                uiFrame.getContentPane().validate();
+                uiFrame.getContentPane().repaint();
             }
 
             @Override
@@ -118,11 +119,11 @@ public class UserInterface {
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
-        frame.setTitle("Chess Application");
         try {
-            frame.setIconImage(ImageIO.read(new File("src/GUI/Assets/sprites.png"))
-                                      .getSubimage(620, 220, 180, 180));
+            frame.setIconImage(ImageIO.read(new File("src/GUI/Assets/icon2.png")));
         } catch (IOException ignored) {}
+
+        frame.setTitle("Chess Application");
         frame.setBounds((screenSize.width / 2) - 264, (screenSize.height / 2) - 264, 528, 574);
         frame.setVisible(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

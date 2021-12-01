@@ -28,6 +28,7 @@ public class PieceUI {
         for (PieceUI piece : pieceList) {
             if (piece.xPos == xPos && piece.yPos == yPos) {
                 pieceToRemove = piece;
+                break;
             }
         }
 
