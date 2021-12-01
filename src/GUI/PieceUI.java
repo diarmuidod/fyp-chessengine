@@ -7,14 +7,16 @@ public class PieceUI {
     int xPos;
     int yPos;
     boolean isWhite;
+    int imgIndex;
     String id;
 
     LinkedList<PieceUI> pieceList;
 
-    public PieceUI(int xPos, int yPos, boolean isWhite, String id, LinkedList<PieceUI> pieceList) {
+    public PieceUI(int xPos, int yPos, boolean isWhite, int imgIndex, String id, LinkedList<PieceUI> pieceList) {
         this.xPos = xPos;
         this.yPos = yPos;
         this.isWhite = isWhite;
+        this.imgIndex = imgIndex;
         this.id = id;
         this.pieceList = pieceList;
 
@@ -26,11 +28,11 @@ public class PieceUI {
         for (PieceUI piece : pieceList) {
             if (piece.xPos == xPos && piece.yPos == yPos) {
                 pieceToRemove = piece;
-                break;
             }
         }
 
-        pieceList.remove(pieceToRemove);
+        if(pieceToRemove != null) pieceToRemove.remove();
+
         this.xPos = xPos;
         this.yPos = yPos;
     }
