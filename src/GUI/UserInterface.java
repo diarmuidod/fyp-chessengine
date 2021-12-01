@@ -1,6 +1,7 @@
 package GUI;
 
 import Board.Board;
+import Board.Move;
 import GameManager.Game;
 
 import javax.imageio.ImageIO;
@@ -10,7 +11,6 @@ import java.awt.event.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.LinkedList;
 
 public class UserInterface {
@@ -26,8 +26,8 @@ public class UserInterface {
     LinkedList<PieceUI> pieceList;
     private final Image[] pieceSprites;
     private static PieceUI activePiece = null;
-    private static int activePieceX = 0;
-    private static int activePieceY = 0;
+    private static int activePieceStartX = 0;
+    private static int activePieceStartY = 0;
 
     private final Color darkSquares = Color.decode("#769656");
     private final Color lightSquares = Color.decode("#EEEED2");
@@ -69,22 +69,36 @@ public class UserInterface {
         frame.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                //pickup piece
                 if(activePiece == null) {
                     activePiece = getPiece((e.getX() - xOffset) / squareSize, (e.getY() - yOffset) / squareSize);
                     if(activePiece != null) {
-                        activePieceX = activePiece.xPos;
-                        activePieceY = activePiece.yPos;
+                        activePieceStartX = activePiece.xPos;
+                        activePieceStartY = activePiece.yPos;
                     }
+                //drop piece
                 } else {
-                    int mouseX = (e.getX() - xOffset) / squareSize;
-                    int mouseY = (e.getY() - yOffset) / squareSize;
+                    if (SwingUtilities.isRightMouseButton(e)) {
+                        activePiece.movePiece(activePieceStartX, activePieceStartY);
+                        activePiece = null;
+                    } else if (SwingUtilities.isLeftMouseButton(e)) {
+                        Move move;
+                        int mouseX = (e.getX() - xOffset) / squareSize;
+                        int mouseY = (e.getY() - yOffset) / squareSize;
 
-                    if (mouseX >= 0 && mouseX <= 7 && mouseY >= 0 && mouseY <= 7) {
-                        activePiece.movePiece(mouseX, mouseY);
-                    } else {
-                        activePiece.movePiece(activePieceX, activePieceY);
+                        if ((move = validMove(mouseX, mouseY)) != null) {
+                            chessGame.board = chessGame.moveGenerator.makeMove(move, chessGame.board);
+
+                            pieceList = generatePieceList();
+
+                            uiFrame.getContentPane().invalidate();
+                            uiFrame.getContentPane().validate();
+                            uiFrame.getContentPane().repaint();
+                        } else {
+                            activePiece.movePiece(activePieceStartX, activePieceStartY);
+                        }
+                        activePiece = null;
                     }
-                    activePiece = null;
                 }
                 frame.repaint();
             }
@@ -114,6 +128,18 @@ public class UserInterface {
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         return frame;
+    }
+
+    private Move validMove(int targetX, int targetY) {
+        int startIndex = posToIndex(activePieceStartX, activePieceStartY);
+        int targetIndex = posToIndex(targetX, targetY);
+
+        for(Move m : chessGame.getLegalMoves()) {
+            if(m.startSquare == startIndex && m.targetSquare == targetIndex) {
+                return m;
+            }
+        }
+        return null;
     }
 
     private JMenuBar generateMenuBar() {

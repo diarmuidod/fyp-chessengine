@@ -31,7 +31,9 @@ public class PieceUI {
             }
         }
 
-        if(pieceToRemove != null) pieceToRemove.remove();
+        if(pieceToRemove != null) {
+            pieceToRemove.remove();
+        }
 
         this.xPos = xPos;
         this.yPos = yPos;
