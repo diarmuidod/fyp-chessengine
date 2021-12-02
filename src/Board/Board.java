@@ -101,7 +101,7 @@ public class Board {
 
         newBoard.whitePieces.clear();
         newBoard.whitePieces.or(this.whitePieces);
-        
+
         newBoard.blackPieces.clear();
         newBoard.blackPieces.or(this.blackPieces);
 
@@ -185,23 +185,23 @@ public class Board {
     }
 
     public boolean equals(Board that) {
-        if(!this.allPieces.equals(that.allPieces)) return false;
+        if (!this.allPieces.equals(that.allPieces)) return false;
 
-        if(!this.whitePieces.equals(that.whitePieces)) return false;
-        if(!this.blackPieces.equals(that.blackPieces)) return false;
+        if (!this.whitePieces.equals(that.whitePieces)) return false;
+        if (!this.blackPieces.equals(that.blackPieces)) return false;
 
-        if(!this.pawnPieces.equals(that.pawnPieces)) return false;
-        if(!this.knightPieces.equals(that.knightPieces)) return false;
-        if(!this.bishopPieces.equals(that.bishopPieces)) return false;
-        if(!this.rookPieces.equals(that.rookPieces)) return false;
-        if(!this.queenPieces.equals(that.queenPieces)) return false;
+        if (!this.pawnPieces.equals(that.pawnPieces)) return false;
+        if (!this.knightPieces.equals(that.knightPieces)) return false;
+        if (!this.bishopPieces.equals(that.bishopPieces)) return false;
+        if (!this.rookPieces.equals(that.rookPieces)) return false;
+        if (!this.queenPieces.equals(that.queenPieces)) return false;
 
-        if(this.whiteKingSide != that.whiteKingSide) return false;
-        if(this.whiteQueenSide != that.whiteQueenSide) return false;
-        if(this.blackKingSide != that.blackKingSide) return false;
-        if(this.blackQueenSide != that.blackQueenSide) return false;
+        if (this.whiteKingSide != that.whiteKingSide) return false;
+        if (this.whiteQueenSide != that.whiteQueenSide) return false;
+        if (this.blackKingSide != that.blackKingSide) return false;
+        if (this.blackQueenSide != that.blackQueenSide) return false;
 
-        if(this.enPassantSquare != that.enPassantSquare) return false;
+        if (this.enPassantSquare != that.enPassantSquare) return false;
         return this.fiftyMoveCount == that.fiftyMoveCount;
     }
 

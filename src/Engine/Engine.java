@@ -118,7 +118,7 @@ public class Engine implements Serializable {
 
         }
 
-        for(Node child : root.children) {
+        for (Node child : root.children) {
             System.out.println(child.move + ", N: " + child.N + ", n: " + child.n + ", v: " + child.v + ", UCB: " + getUCB(child));
         }
     }
@@ -177,9 +177,7 @@ public class Engine implements Serializable {
     public double rollout(Node node) {
         if (getGameState(node.boardState) != Game.GameState.ONGOING) {
 
-            /*************************************/
             System.out.println(node.boardState.basicFEN());
-            /*************************************/
             if (getGameState(node.boardState) == Game.GameState.WHITE_WINS) return 1;
             if (getGameState(node.boardState) == Game.GameState.BLACK_WINS) return -1;
             if (getGameState(node.boardState) == Game.GameState.DRAW) return 0;

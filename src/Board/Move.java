@@ -24,12 +24,12 @@ public class Move {
         this.move = move;
 
         int start = 0, target = 0;
-        if(!Character.isUpperCase(move.charAt(0))) { // pawn move
+        if (!Character.isUpperCase(move.charAt(0))) { // pawn move
             BitSet sideToMove = (BitSet) (board.whiteToMove ? board.whitePieces.clone() : board.blackPieces.clone());
 
             //check each pawn of the side to move until match is found, for start and target squares
-            for(int i = board.pawnPieces.nextSetBit(0); i >= 0; i = board.pawnPieces.nextSetBit(i + 1)) {
-                if(sideToMove.get(i) && (getFile(i) == move.charAt(0))) {
+            for (int i = board.pawnPieces.nextSetBit(0); i >= 0; i = board.pawnPieces.nextSetBit(i + 1)) {
+                if (sideToMove.get(i) && (getFile(i) == move.charAt(0))) {
                     this.startSquare = i;
                 }
             }
@@ -55,42 +55,43 @@ public class Move {
         StringBuilder move = new StringBuilder();
 
         //Castling moves
-        if(moveFlag.contains(Flag.CASTLE_SHORT)) return Flag.CASTLE_SHORT.getFlag();
-        if(moveFlag.contains(Flag.CASTLE_LONG)) return Flag.CASTLE_LONG.getFlag();
+        if (moveFlag.contains(Flag.CASTLE_SHORT)) return Flag.CASTLE_SHORT.getFlag();
+        if (moveFlag.contains(Flag.CASTLE_LONG)) return Flag.CASTLE_LONG.getFlag();
 
-        if(board.pawnPieces.get(startSquare)) { //Pawn Moves
-            if(board.allPieces.get(targetSquare) || moveFlag.contains(Flag.EN_PASSANT)) {
+        if (board.pawnPieces.get(startSquare)) { //Pawn Moves
+            if (board.allPieces.get(targetSquare) || moveFlag.contains(Flag.EN_PASSANT)) {
                 move = new StringBuilder(moveFromIndex(startSquare).charAt(0) + "x" + moveFromIndex(targetSquare));
             } else {
                 move = new StringBuilder(moveFromIndex(targetSquare));
             }
 
-            if(moveFlag.contains(Flag.PROMOTE_QUEEN)) move.append(Flag.PROMOTE_QUEEN.getFlag());
-            if(moveFlag.contains(Flag.PROMOTE_KNIGHT)) move.append(Flag.PROMOTE_KNIGHT.getFlag());
-            if(moveFlag.contains(Flag.PROMOTE_BISHOP)) move.append(Flag.PROMOTE_BISHOP.getFlag());
-            if(moveFlag.contains(Flag.PROMOTE_ROOK)) move.append(Flag.PROMOTE_ROOK.getFlag());
+            if (moveFlag.contains(Flag.PROMOTE_QUEEN)) move.append(Flag.PROMOTE_QUEEN.getFlag());
+            if (moveFlag.contains(Flag.PROMOTE_KNIGHT)) move.append(Flag.PROMOTE_KNIGHT.getFlag());
+            if (moveFlag.contains(Flag.PROMOTE_BISHOP)) move.append(Flag.PROMOTE_BISHOP.getFlag());
+            if (moveFlag.contains(Flag.PROMOTE_ROOK)) move.append(Flag.PROMOTE_ROOK.getFlag());
         } else { //Piece Moves
-            if(board.kingPieces.get(startSquare)) {
+            if (board.kingPieces.get(startSquare)) {
                 move.append("K");
             } else {
                 BitSet pieceType = new BitSet(64);
-                if(board.queenPieces.get(startSquare)) {
+                if (board.queenPieces.get(startSquare)) {
                     pieceType = board.queenPieces;
                     move.append("Q");
-                } else if(board.knightPieces.get(startSquare)) {
+                } else if (board.knightPieces.get(startSquare)) {
                     pieceType = board.knightPieces;
                     move.append("N");
-                }else if(board.bishopPieces.get(startSquare)) {
+                } else if (board.bishopPieces.get(startSquare)) {
                     pieceType = board.bishopPieces;
                     move.append("B");
-                }if(board.rookPieces.get(startSquare)) {
+                }
+                if (board.rookPieces.get(startSquare)) {
                     pieceType = board.rookPieces;
                     move.append("R");
                 }
 
                 for (int i = pieceType.nextSetBit(0); i >= 0; i = pieceType.nextSetBit(i + 1)) {
-                    if(i != startSquare && moveGenerator.isValidMove(i, targetSquare, board)) {
-                        if(getFile(startSquare) == getFile(i)) {
+                    if (i != startSquare && moveGenerator.isValidMove(i, targetSquare, board)) {
+                        if (getFile(startSquare) == getFile(i)) {
                             move.append(getRank(startSquare));
                         } else {
                             move.append(getFile(startSquare));
@@ -99,15 +100,15 @@ public class Move {
                 }
             }
 
-            if(board.allPieces.get(targetSquare)) {
+            if (board.allPieces.get(targetSquare)) {
                 move.append("x").append(moveFromIndex(targetSquare));
             } else {
                 move.append(moveFromIndex(targetSquare));
             }
         }
 
-        if(moveGenerator.kingInCheck(moveGenerator.makeMove(startSquare, targetSquare, board, moveFlag), !board.whiteToMove)) {
-            if(moveGenerator.getLegalMoves(moveGenerator.makeMove(startSquare, targetSquare, board, moveFlag)).size() == 0) {
+        if (moveGenerator.kingInCheck(moveGenerator.makeMove(startSquare, targetSquare, board, moveFlag), !board.whiteToMove)) {
+            if (moveGenerator.getLegalMoves(moveGenerator.makeMove(startSquare, targetSquare, board, moveFlag)).size() == 0) {
                 move.append("#");
             } else {
                 move.append("+");

@@ -17,7 +17,8 @@ public class MoveGenTest {
     int count = 0;
     int diff = 0;
 
-    private MoveGenTest() {}
+    private MoveGenTest() {
+    }
 
     public MoveGenTest(Game game) {
         this.game = game;
@@ -49,7 +50,7 @@ public class MoveGenTest {
 
             while (scan.hasNextLine()) {
                 String s = scan.nextLine();
-                if(s.split("--").length != 2) continue;
+                if (s.split("--").length != 2) continue;
                 String fen = s.split("--")[0];
                 String moves = s.split("--")[1];
 
@@ -63,7 +64,7 @@ public class MoveGenTest {
             }
 
 
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -71,7 +72,7 @@ public class MoveGenTest {
     public void getDiff(String fen, List<String> pyMoves) {
         List<String> myMoves = new LinkedList<>();
         game.board = new Board(fen);
-        for(Move m : game.moveGenerator.getLegalMoves(game.board)) myMoves.add(m.move);
+        for (Move m : game.moveGenerator.getLegalMoves(game.board)) myMoves.add(m.move);
 
         List<String> result = new LinkedList<>();
 
@@ -81,15 +82,15 @@ public class MoveGenTest {
         //System.out.println("My output: " + myOut);
         //System.out.println("Py output: " + pyOut);
 
-        for(String s : pyMoves) {
-            if(!myMoves.contains(s)) result.add(s);
+        for (String s : pyMoves) {
+            if (!myMoves.contains(s)) result.add(s);
         }
 
-        for(String s : myMoves) {
-            if(!pyMoves.contains(s)) result.add("!" + s);
+        for (String s : myMoves) {
+            if (!pyMoves.contains(s)) result.add("!" + s);
         }
 
-        if(result.size() != 0) {
+        if (result.size() != 0) {
             diff++;
             System.out.println(fen);
             System.out.println("My output: " + myMoves);
@@ -104,7 +105,7 @@ public class MoveGenTest {
 
         List<String> myOut = new LinkedList<>();
         game.board = new Board(fen);
-        for(Move m : game.moveGenerator.getLegalMoves(game.board)) myOut.add(m.move);
+        for (Move m : game.moveGenerator.getLegalMoves(game.board)) myOut.add(m.move);
 
         List<String> result = new LinkedList<>();
 
@@ -114,15 +115,15 @@ public class MoveGenTest {
         System.out.println("My output: " + myOut);
         System.out.println("Py output: " + pyOut);
 
-        for(String s : pyOut) {
-            if(!myOut.contains(s)) result.add(s);
+        for (String s : pyOut) {
+            if (!myOut.contains(s)) result.add(s);
         }
 
-        for(String s : myOut) {
-            if(!pyOut.contains(s)) result.add("!" + s);
+        for (String s : myOut) {
+            if (!pyOut.contains(s)) result.add("!" + s);
         }
 
-        if(result.size() != 0) {
+        if (result.size() != 0) {
             diff++;
             System.out.println(fen);
             System.out.println("My output: " + myOut);
@@ -138,7 +139,7 @@ public class MoveGenTest {
     }
 
     public void writePerft(int depth, Board board) {
-        if(depth == 0) {
+        if (depth == 0) {
             writeOutput(game.saveGameToFEN(), game.moveGenerator.getLegalMoves(board));
         } else {
             for (Move m : game.moveGenerator.getLegalMoves(board)) {
@@ -150,13 +151,13 @@ public class MoveGenTest {
     public void writePerftNumbers(String[] fens, int depth) {
         long result;
 
-        for(int i = 1; i <= depth; i++) {
+        for (int i = 1; i <= depth; i++) {
             System.out.println("Calculating depth " + i);
-            for(String fen : fens) {
+            for (String fen : fens) {
                 game.board = new Board(fen);
                 result = perft.perft(i, game.board);
 
-                if(i == 1) {
+                if (i == 1) {
                     writePerftResults(fen, i, result, true, false);
                 } else {
                     writePerftResults(fen, i, result, false, i == depth);
@@ -169,33 +170,33 @@ public class MoveGenTest {
     public void writePerftResults(String fen, int depth, long result, boolean writeFen, boolean end) {
         try {
             StringBuilder out = new StringBuilder();
-            if(writeFen) {
+            if (writeFen) {
                 out.append(fen).append("\n");
             }
 
             out.append("Perft at depth ").append(depth).append(": ").append(result).append("\n");
 
-            if(end) out.append("\n");
+            if (end) out.append("\n");
 
             BufferedWriter writer = new BufferedWriter(new FileWriter("C:\\Users\\student\\Documents\\GitHub\\fyp-chessengine\\src\\perft_test_suite_results.txt", true));
             writer.append(out.toString());
 
             writer.close();
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     public void writeOutput(String fen, List<Move> moves) {
-        if(moves.size() == 0) {
+        if (moves.size() == 0) {
             System.out.println("No legal moves: " + fen);
             return;
         }
         try {
             StringBuilder out = new StringBuilder(fen + "--");
 
-            for(int i = 0; i < moves.size(); i++) {
-                if(i != moves.size() - 1) {
+            for (int i = 0; i < moves.size(); i++) {
+                if (i != moves.size() - 1) {
                     out.append(moves.get(i).move).append(", ");
                 } else {
                     out.append(moves.get(i).move).append("\n");
@@ -206,7 +207,7 @@ public class MoveGenTest {
             writer.append(out.toString());
 
             writer.close();
-        } catch(Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -228,11 +229,11 @@ public class MoveGenTest {
             Scanner pythonReader = new Scanner(new FileInputStream(pyPath));
             Scanner javaReader = new Scanner(new FileInputStream(myPath));
 
-            while(pythonReader.hasNextLine()) {
+            while (pythonReader.hasNextLine()) {
                 pythonOutput.add(pythonReader.nextLine());
             }
 
-            while(javaReader.hasNextLine()) {
+            while (javaReader.hasNextLine()) {
                 javaOutput.add(javaReader.nextLine());
             }
 
@@ -243,8 +244,8 @@ public class MoveGenTest {
             e.printStackTrace();
         }
 
-        for(String line : pythonOutput) {
-            if(line.split("--").length < 2) {
+        for (String line : pythonOutput) {
+            if (line.split("--").length < 2) {
                 System.out.println("Py Fault - " + line.split("--").length + line);
                 continue;
             }
@@ -254,8 +255,8 @@ public class MoveGenTest {
             pythonMap.put(fen.split(" ")[0], Arrays.asList(moves.split(", ")));
         }
 
-        for(String line : javaOutput) {
-            if(line.split("--").length < 2) {
+        for (String line : javaOutput) {
+            if (line.split("--").length < 2) {
                 System.out.println("Java Fault: " + line.split("--").length + ", " + line);
                 continue;
             }
@@ -266,8 +267,8 @@ public class MoveGenTest {
         }
 
 
-        for(Map.Entry<String, List<String>> entry : pythonMap.entrySet()) {
-            if(javaMap.get(entry.getKey()) == null) {
+        for (Map.Entry<String, List<String>> entry : pythonMap.entrySet()) {
+            if (javaMap.get(entry.getKey()) == null) {
                 resultMap.put(entry.getKey(), new LinkedList<>());
                 diff++;
                 continue;
@@ -277,13 +278,13 @@ public class MoveGenTest {
                     .filter(element -> !pythonMap.get(entry.getKey()).contains(element))
                     .collect(Collectors.toList());
 
-            if(differences.size() != 0) {
+            if (differences.size() != 0) {
                 resultMap.put(entry.getKey(), differences);
                 diff++;
             }
         }
 
-        for(Map.Entry<String, List<String>> entry : resultMap.entrySet()) {
+        for (Map.Entry<String, List<String>> entry : resultMap.entrySet()) {
             System.out.println(entry.getKey() + ", " + entry.getValue());
         }
 

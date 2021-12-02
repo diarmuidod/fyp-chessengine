@@ -25,7 +25,7 @@ public class Perft {
     public long perft(int depth, Board board) {
         long moves = 0;
 
-        if(depth < 1) return 1;
+        if (depth < 1) return 1;
 
         if (depth == 1) return moveGenerator.getLegalMoves(board).size();
 

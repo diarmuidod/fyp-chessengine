@@ -7,7 +7,9 @@ import GameManager.Game;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +27,8 @@ public class UserInterface {
 
     private LinkedList<PieceUI> pieceList;
     private final Image[] pieceSprites;
+    private boolean boardFlipped = false;
+
     private static PieceUI activePiece = null;
     private static int activePieceStartX = 0;
     private static int activePieceStartY = 0;
@@ -54,12 +58,13 @@ public class UserInterface {
         frame.addMouseMotionListener(new MouseMotionListener() {
 
             @Override
-            public void mouseDragged(MouseEvent e) {}
+            public void mouseDragged(MouseEvent e) {
+            }
 
             @Override
             public void mouseMoved(MouseEvent e) {
-                if(activePiece != null) {
-                    if(boardPanel.contains(e.getPoint())) {
+                if (activePiece != null) {
+                    if (boardPanel.contains(e.getPoint())) {
                         activePiece.xPos = e.getX();
                         activePiece.yPos = e.getY();
                     }
@@ -71,9 +76,9 @@ public class UserInterface {
         frame.addMouseListener(new MouseListener() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if(activePiece == null) {
+                if (activePiece == null) {
                     activePiece = getPiece((e.getX() - xOffset) / squareSize, (e.getY() - yOffset) / squareSize);
-                    if(activePiece != null) {
+                    if (activePiece != null) {
                         activePieceStartX = activePiece.xPos;
                         activePieceStartY = activePiece.yPos;
                     }
@@ -90,7 +95,7 @@ public class UserInterface {
                         if ((move = validMove(mouseX, mouseY)) != null) {
                             chessGame.board = chessGame.moveGenerator.makeMove(move, chessGame.board);
                             pieceList = generatePieceList();
-                        } else if(activePieceStartX == mouseX && activePieceStartY == mouseY) {
+                        } else if (activePieceStartX == mouseX && activePieceStartY == mouseY) {
                             activePiece.xPos = activePieceStartX;
                             activePiece.yPos = activePieceStartY;
                         } else {
@@ -105,23 +110,28 @@ public class UserInterface {
             }
 
             @Override
-            public void mousePressed(MouseEvent e) {}
+            public void mousePressed(MouseEvent e) {
+            }
 
             @Override
-            public void mouseReleased(MouseEvent e) {}
+            public void mouseReleased(MouseEvent e) {
+            }
 
             @Override
-            public void mouseEntered(MouseEvent e) {}
+            public void mouseEntered(MouseEvent e) {
+            }
 
             @Override
-            public void mouseExited(MouseEvent e) {}
+            public void mouseExited(MouseEvent e) {
+            }
         });
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
         try {
             frame.setIconImage(ImageIO.read(new File("src/GUI/Assets/icon2.png")));
-        } catch (IOException ignored) {}
+        } catch (IOException ignored) {
+        }
 
         frame.setTitle("Chess Application");
         frame.setBounds((screenSize.width / 2) - 264, (screenSize.height / 2) - 264, 528, 574);
@@ -135,8 +145,8 @@ public class UserInterface {
         int startIndex = posToIndex(activePieceStartX, activePieceStartY);
         int targetIndex = posToIndex(targetX, targetY);
 
-        for(Move m : chessGame.getLegalMoves()) {
-            if(m.startSquare == startIndex && m.targetSquare == targetIndex) {
+        for (Move m : chessGame.getLegalMoves()) {
+            if (m.startSquare == startIndex && m.targetSquare == targetIndex) {
                 return m;
             }
         }
@@ -147,14 +157,30 @@ public class UserInterface {
         JMenuBar menuBar = new JMenuBar();
         JMenu fileMenu = new JMenu("File");
 
+        JMenuItem flipBoard = generateFlipBoardButton();
         JMenuItem reset = generateResetButton();
         JMenuItem exit = generateExitButton();
 
+        fileMenu.add(flipBoard);
         fileMenu.add(reset);
         fileMenu.add(exit);
         menuBar.add(fileMenu);
         menuBar.setVisible(true);
         return menuBar;
+    }
+
+    private JMenuItem generateFlipBoardButton() {
+        JMenuItem item = new JMenuItem("Flip Board");
+        item.addActionListener(e -> {
+            boardFlipped = !boardFlipped;
+            pieceList = generatePieceList();
+
+            uiFrame.getContentPane().invalidate();
+            uiFrame.getContentPane().validate();
+            uiFrame.getContentPane().repaint();
+        });
+
+        return item;
     }
 
     private JMenuItem generateResetButton() {
@@ -182,11 +208,11 @@ public class UserInterface {
         return new JPanel() {
             @Override
             public void paint(Graphics g) {
-                boolean whiteSquare = true;
+                boolean whiteSquare = !boardFlipped;
                 this.setBounds(0, 0, squareSize * 8, squareSize * 8);
 
-                for(int y = 0; y < 8; y++) {
-                    for(int x = 0; x < 8; x++) {
+                for (int y = 0; y < 8; y++) {
+                    for (int x = 0; x < 8; x++) {
                         if (whiteSquare) {
                             g.setColor(lightSquares);
                         } else {
@@ -198,11 +224,11 @@ public class UserInterface {
                     }
                     whiteSquare = !whiteSquare;
 
-                    for(PieceUI piece : pieceList) {
+                    for (PieceUI piece : pieceList) {
                         g.drawImage(pieceSprites[piece.imgIndex], piece.xPos * squareSize, piece.yPos * squareSize, this);
                     }
 
-                    if(activePiece != null) {
+                    if (activePiece != null) {
                         g.drawImage(pieceSprites[activePiece.imgIndex], getMousePosition().x - (squareSize / 2), getMousePosition().y - (squareSize / 2), this);
                     }
                 }
@@ -214,10 +240,10 @@ public class UserInterface {
         BufferedImage spriteSheet = ImageIO.read(new File("C:\\Users\\student\\Documents\\GitHub\\fyp-chessengine\\src\\GUI\\Assets\\sprites.png"));
         Image[] pieceSprites = new Image[12];
 
-        for(int y = 0; y < 2; y++) {
-            for(int x = 0; x < 6; x++) {
+        for (int y = 0; y < 2; y++) {
+            for (int x = 0; x < 6; x++) {
                 pieceSprites[(y * 6) + x] = spriteSheet.getSubimage(x * 200, y * 200, 200, 200)
-                                                       .getScaledInstance(squareSize, squareSize, BufferedImage.SCALE_SMOOTH);
+                        .getScaledInstance(squareSize, squareSize, BufferedImage.SCALE_SMOOTH);
             }
         }
 
@@ -241,34 +267,23 @@ public class UserInterface {
                 } else {
                     isWhite = Character.isUpperCase(symbol);
                     int index = -1;
-                    switch(Character.toUpperCase(symbol)) {
-                        case 'K':
-                            index = 0;
-                            break;
-
-                        case 'Q':
-                            index = 1;
-                            break;
-
-                        case 'B':
-                            index = 2;
-                            break;
-
-                        case 'N':
-                            index = 3;
-                            break;
-
-                        case 'R':
-                            index = 4;
-                            break;
-
-                        case 'P':
-                            index = 5;
-                            break;
+                    char c = Character.toUpperCase(symbol);
+                    if (c == 'K') {
+                        index = 0;
+                    } else if (c == 'Q') {
+                        index = 1;
+                    } else if (c == 'B') {
+                        index = 2;
+                    } else if (c == 'N') {
+                        index = 3;
+                    } else if (c == 'R') {
+                        index = 4;
+                    } else if (c == 'P') {
+                        index = 5;
                     }
 
-                    if(!isWhite) index += 6;
-                    PieceUI piece = new PieceUI(file, rank, isWhite, index, String.valueOf(Character.toUpperCase(symbol)), pieces);
+                    if (!isWhite) index += 6;
+                    PieceUI piece = new PieceUI(file, Math.abs(7 - rank), isWhite, boardFlipped, index, String.valueOf(Character.toUpperCase(symbol)), pieces);
                     file++;
                 }
             }
@@ -288,6 +303,6 @@ public class UserInterface {
     }
 
     public int posToIndex(int x, int y) {
-        return Math.abs(7 - y) * 8 + x;
+        return boardFlipped ? y * 8 + x : Math.abs(y - 7) * 8 + x;
     }
 }

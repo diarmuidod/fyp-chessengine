@@ -1,6 +1,5 @@
 package GUI;
 
-import java.util.Iterator;
 import java.util.LinkedList;
 
 public class PieceUI {
@@ -12,9 +11,9 @@ public class PieceUI {
 
     LinkedList<PieceUI> pieceList;
 
-    public PieceUI(int xPos, int yPos, boolean isWhite, int imgIndex, String id, LinkedList<PieceUI> pieceList) {
+    public PieceUI(int xPos, int yPos, boolean isWhite, boolean boardFlipped, int imgIndex, String id, LinkedList<PieceUI> pieceList) {
         this.xPos = xPos;
-        this.yPos = yPos;
+        this.yPos = boardFlipped ? yPos : Math.abs(yPos - 7);
         this.isWhite = isWhite;
         this.imgIndex = imgIndex;
         this.id = id;
@@ -32,7 +31,7 @@ public class PieceUI {
             }
         }
 
-        if(pieceToRemove != null) {
+        if (pieceToRemove != null) {
             pieceToRemove.remove();
         }
 

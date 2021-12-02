@@ -62,20 +62,20 @@ public class Game {
             System.out.println("Legal Moves: " + getLegalMoves());
 
             //if (board.whiteToMove) {
-                System.out.print("Enter move: ");
-                String inp = input.nextLine();
+            System.out.print("Enter move: ");
+            String inp = input.nextLine();
 
-                if (inp.equals("quit") || inp.equals("exit")) {
-                    saveEngine();
+            if (inp.equals("quit") || inp.equals("exit")) {
+                saveEngine();
+                break;
+            }
+
+            for (Move m : legalMoves) {
+                if (m.move.equals(inp)) {
+                    activeMove = m;
                     break;
                 }
-
-                for (Move m : legalMoves) {
-                    if (m.move.equals(inp)) {
-                        activeMove = m;
-                        break;
-                    }
-                }
+            }
             //} else {
             //    activeMove = mctsEngine.getBestMove(movesPlayed, 5);
             //}
