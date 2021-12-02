@@ -7,6 +7,7 @@ import GameManager.Game;
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -54,6 +55,8 @@ public class UserInterface {
         JMenuBar menuBar = generateMenuBar();
         boardPanel = generateBoardPanel();
         JPanel pgnPanel = generatePgnPanel();
+        JButton copyFenButton = generateCopyFEN();
+        JButton exportPgnButton = generateExportPgn();
 
         frame.setJMenuBar(menuBar);
 
@@ -133,19 +136,40 @@ public class UserInterface {
 
         try {
             frame.setIconImage(ImageIO.read(new File("src/GUI/Assets/icon2.png")));
-        } catch (IOException ignored) {
-        }
-
-        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+        } catch (IOException ignored) {}
 
         frame.setTitle("Chess Application");
         frame.setVisible(true);
-        frame.setBounds(screen.width / 2 - 512, screen.height / 2 - 384, 1024, 768);
+        frame.setSize(new Dimension(692, 750));
+        frame.setLocationRelativeTo(null);
+        frame.setResizable(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLayout(new GridLayout(1, 2, 0, 0));
 
-        frame.add(boardPanel);
-        frame.add(pgnPanel);
+        GridBagLayout gbl = new GridBagLayout();
+        GridBagConstraints gbc = new GridBagConstraints();
+        frame.setLayout(gbl);
+
+        gbc.ipadx = 16;
+        gbc.ipady = 18;
+        gbc.weightx = 0.1;
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.gridwidth = 2;
+        frame.add(boardPanel, gbc);
+
+        gbc.gridx = 2;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        gbc.anchor = GridBagConstraints.FIRST_LINE_END;
+        frame.add(pgnPanel, gbc);
+
+        gbc.gridx = 2;
+        gbc.gridy = 1;
+        gbc.gridwidth = 1;
+        gbc.insets = new Insets(0, 0, 0, 25);
+        gbc.anchor = GridBagConstraints.EAST;
+        frame.add(copyFenButton, gbc);
 
         return frame;
     }
@@ -215,6 +239,19 @@ public class UserInterface {
         return item;
     }
 
+    private JButton generateCopyFEN() {
+        JButton button = new JButton("Copy FEN String");
+        button.setMargin(new Insets(0, 0, 0, 0));
+        button.addActionListener(e -> Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(chessGame.saveGameToFEN()), null));
+        return button;
+    }
+
+    private JButton generateExportPgn() {
+        JButton button = new JButton("Export Pgn");
+        button.setMargin(new Insets(0, 0, 0, 0));
+        return button;
+    }
+
     private JPanel generateBoardPanel() {
         return new JPanel() {
             @Override
@@ -240,7 +277,10 @@ public class UserInterface {
                     }
 
                     if (activePiece != null) {
-                        g.drawImage(pieceSprites[activePiece.imgIndex], getMousePosition().x - (squareSize / 2), getMousePosition().y - (squareSize / 2), this);
+                        Point mousePosition = getMousePosition();
+                        if(mousePosition != null) {
+                            g.drawImage(pieceSprites[activePiece.imgIndex], mousePosition.x - (squareSize / 2), mousePosition.y - (squareSize / 2), this);
+                        }
                     }
                 }
             }
