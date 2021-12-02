@@ -14,6 +14,7 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
+import java.util.List;
 
 public class UserInterface {
     private static final int squareSize = 64;
@@ -22,6 +23,7 @@ public class UserInterface {
 
     private final JFrame uiFrame;
     private JPanel boardPanel;
+    private JTextArea pgnField;
 
     private final Game chessGame;
 
@@ -51,9 +53,9 @@ public class UserInterface {
 
         JMenuBar menuBar = generateMenuBar();
         boardPanel = generateBoardPanel();
+        JPanel pgnPanel = generatePgnPanel();
 
         frame.setJMenuBar(menuBar);
-        frame.add(boardPanel);
 
         frame.addMouseMotionListener(new MouseMotionListener() {
 
@@ -94,7 +96,9 @@ public class UserInterface {
 
                         if ((move = validMove(mouseX, mouseY)) != null) {
                             chessGame.board = chessGame.moveGenerator.makeMove(move, chessGame.board);
+                            chessGame.movesPlayed.add(move);
                             pieceList = generatePieceList();
+                            setPgnText(chessGame.movesPlayed);
                         } else if (activePieceStartX == mouseX && activePieceStartY == mouseY) {
                             activePiece.xPos = activePieceStartX;
                             activePiece.yPos = activePieceStartY;
@@ -104,6 +108,7 @@ public class UserInterface {
                         activePiece = null;
                     }
                 }
+
                 uiFrame.getContentPane().invalidate();
                 uiFrame.getContentPane().validate();
                 uiFrame.getContentPane().repaint();
@@ -126,17 +131,21 @@ public class UserInterface {
             }
         });
 
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-
         try {
             frame.setIconImage(ImageIO.read(new File("src/GUI/Assets/icon2.png")));
         } catch (IOException ignored) {
         }
 
+        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
+
         frame.setTitle("Chess Application");
-        frame.setBounds((screenSize.width / 2) - 264, (screenSize.height / 2) - 264, 528, 574);
         frame.setVisible(true);
+        frame.setBounds(screen.width / 2 - 512, screen.height / 2 - 384, 1024, 768);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(new GridLayout(1, 2, 0, 0));
+
+        frame.add(boardPanel);
+        frame.add(pgnPanel);
 
         return frame;
     }
@@ -164,6 +173,7 @@ public class UserInterface {
         fileMenu.add(flipBoard);
         fileMenu.add(reset);
         fileMenu.add(exit);
+
         menuBar.add(fileMenu);
         menuBar.setVisible(true);
         return menuBar;
@@ -188,6 +198,7 @@ public class UserInterface {
         item.addActionListener(e -> {
             chessGame.board = new Board();
             pieceList = generatePieceList();
+            chessGame.movesPlayed.clear();
 
             uiFrame.getContentPane().invalidate();
             uiFrame.getContentPane().validate();
@@ -234,6 +245,38 @@ public class UserInterface {
                 }
             }
         };
+    }
+
+    private JPanel generatePgnPanel() {
+        JPanel pgnPanel = new JPanel();
+        pgnField = new JTextArea();
+
+        pgnField.setSize(squareSize * 2, squareSize * 8);
+        pgnField.setRows(30);
+        pgnField.setColumns(12);
+        pgnField.setEditable(false);
+        pgnField.setVisible(true);
+
+        JScrollPane pgnScroll = new JScrollPane(pgnField);
+        pgnScroll.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+
+        pgnPanel.add(pgnScroll);
+        return pgnPanel;
+    }
+
+    private void setPgnText(List<Move> movesPlayed) {
+        StringBuilder pgn = new StringBuilder();
+        int index = 0;
+        for (Move m : movesPlayed) {
+            if (index % 2 == 0) {
+                pgn.append((index) / 2 + 1).append(". ").append(m.move).append("\t");
+            } else {
+                pgn.append(m.move).append("\n");
+            }
+            index++;
+        }
+
+        pgnField.setText(pgn.toString());
     }
 
     public Image[] generatePieceSprites() throws IOException {

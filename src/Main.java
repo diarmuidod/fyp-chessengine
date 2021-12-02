@@ -24,5 +24,6 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         ui = new UserInterface();
+        //game.mctsEngine.trainEngine(5);
     }
 }
