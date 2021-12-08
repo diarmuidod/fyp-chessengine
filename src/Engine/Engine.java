@@ -121,6 +121,7 @@ public class Engine implements Serializable {
         for (Node child : root.children) {
             System.out.println(child.move + ", N: " + child.N + ", n: " + child.n + ", v: " + child.v + ", UCB: " + getUCB(child));
         }
+        System.out.println();
     }
 
     public Node selection(Node node) {
@@ -129,17 +130,18 @@ public class Engine implements Serializable {
         double minUCB = Double.POSITIVE_INFINITY;
 
         if (node.children == null) node.children = generateChildren(node);
-        Node selectedChild = null;
+
+        Node selectedChild = node.children.get(0);
 
         for (Node n : node.children) {
             currentUCB = getUCB(n);
 
             if (node.boardState.whiteToMove) {
-                if (currentUCB > maxUCB) {
+                if (currentUCB > getUCB(selectedChild)) {
                     selectedChild = n;
                 }
             } else {
-                if (currentUCB < minUCB) {
+                if (currentUCB < getUCB(selectedChild)) {
                     selectedChild = n;
                 }
             }
@@ -151,21 +153,19 @@ public class Engine implements Serializable {
     public Node expansion(Node node) {
         if (node.children == null) return node;
 
-        double currentUCB;
-        double maxUCB = Double.NEGATIVE_INFINITY;
-        double minUCB = Double.POSITIVE_INFINITY;
 
-        Node currentChild = null;
+        Node currentChild = node.children.get(0);
+        double currentUCB;
 
         for (Node n : node.children) {
             currentUCB = getUCB(n);
 
             if (node.boardState.whiteToMove) {
-                if (currentUCB >= maxUCB) {
+                if (currentUCB > getUCB(currentChild)) {
                     currentChild = n;
                 }
             } else {
-                if (currentUCB <= minUCB) {
+                if (currentUCB < getUCB(currentChild)) {
                     currentChild = n;
                 }
             }
@@ -176,8 +176,6 @@ public class Engine implements Serializable {
 
     public double rollout(Node node) {
         if (getGameState(node.boardState) != Game.GameState.ONGOING) {
-
-            System.out.println(node.boardState.basicFEN());
             if (getGameState(node.boardState) == Game.GameState.WHITE_WINS) return 1;
             if (getGameState(node.boardState) == Game.GameState.BLACK_WINS) return -1;
             if (getGameState(node.boardState) == Game.GameState.DRAW) return 0;
@@ -189,20 +187,21 @@ public class Engine implements Serializable {
     }
 
     public Node backpropagation(Node node, double reward) {
-
-        while (node.parent != null) {
+        while (true) {
+            node.N += 1;
             node.n += 1;
             node.v += reward;
-            node.N += 1;
+
+            if(node.parent == null) return node;
+
             node = node.parent;
         }
-
-        return node;
     }
 
     public double getUCB(Node node) {
         //please don't ask me to explain this
-        return node.v + (2 * (Math.sqrt(Math.log(node.N + Math.exp(1) / node.n))));
+        double mean = node.children == null ? 1 : node.children.size();
+        return (node.v / mean) + Math.sqrt(2) * Math.sqrt(Math.log(Math.max(node.N, 1)) / Math.max(node.n, 1));
     }
 
     public List<Node> generateChildren(Node node) {
