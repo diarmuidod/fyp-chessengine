@@ -8,13 +8,13 @@ public class Move {
     public String move;
     public int startSquare;
     public int targetSquare;
-    public List<Flag> moveFlag;
+    public Flag moveFlag;
 
     //internal use only (ideally want to clean this up, generation isn't particularly great, not a priority)
-    public Move(int startSquare, int targetSquare, Board board, MoveGenerator moveGenerator, Flag... moveFlag) {
+    public Move(int startSquare, int targetSquare, Board board, MoveGenerator moveGenerator, Flag moveFlag) {
         this.startSquare = startSquare;
         this.targetSquare = targetSquare;
-        this.moveFlag = Arrays.asList(moveFlag);
+        this.moveFlag = moveFlag;
 
         move = getMoveInSAN(board, moveGenerator);
     }
@@ -55,20 +55,20 @@ public class Move {
         StringBuilder move = new StringBuilder();
 
         //Castling moves
-        if (moveFlag.contains(Flag.CASTLE_SHORT)) return Flag.CASTLE_SHORT.getFlag();
-        if (moveFlag.contains(Flag.CASTLE_LONG)) return Flag.CASTLE_LONG.getFlag();
+        if (moveFlag.equals(Flag.CASTLE_SHORT)) return Flag.CASTLE_SHORT.getFlag();
+        if (moveFlag.equals(Flag.CASTLE_LONG)) return Flag.CASTLE_LONG.getFlag();
 
         if (board.pawnPieces.get(startSquare)) { //Pawn Moves
-            if (board.allPieces.get(targetSquare) || moveFlag.contains(Flag.EN_PASSANT)) {
+            if (board.allPieces.get(targetSquare) || moveFlag.equals(Flag.EN_PASSANT)) {
                 move = new StringBuilder(moveFromIndex(startSquare).charAt(0) + "x" + moveFromIndex(targetSquare));
             } else {
                 move = new StringBuilder(moveFromIndex(targetSquare));
             }
 
-            if (moveFlag.contains(Flag.PROMOTE_QUEEN)) move.append(Flag.PROMOTE_QUEEN.getFlag());
-            if (moveFlag.contains(Flag.PROMOTE_KNIGHT)) move.append(Flag.PROMOTE_KNIGHT.getFlag());
-            if (moveFlag.contains(Flag.PROMOTE_BISHOP)) move.append(Flag.PROMOTE_BISHOP.getFlag());
-            if (moveFlag.contains(Flag.PROMOTE_ROOK)) move.append(Flag.PROMOTE_ROOK.getFlag());
+            if (moveFlag.equals(Flag.PROMOTE_QUEEN)) move.append(Flag.PROMOTE_QUEEN.getFlag());
+            if (moveFlag.equals(Flag.PROMOTE_KNIGHT)) move.append(Flag.PROMOTE_KNIGHT.getFlag());
+            if (moveFlag.equals(Flag.PROMOTE_BISHOP)) move.append(Flag.PROMOTE_BISHOP.getFlag());
+            if (moveFlag.equals(Flag.PROMOTE_ROOK)) move.append(Flag.PROMOTE_ROOK.getFlag());
         } else { //Piece Moves
             if (board.kingPieces.get(startSquare)) {
                 move.append("K");
@@ -127,6 +127,7 @@ public class Move {
     }
 
     public enum Flag {
+        NONE(""),
         CASTLE_SHORT("O-O"),
         CASTLE_LONG("O-O-O"),
         PROMOTE_QUEEN("=Q"),

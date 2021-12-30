@@ -229,6 +229,7 @@ public class Board {
                 } else {
                     emptySquares++;
                 }
+
                 if (j == mark - 1) {
                     if (emptySquares > 0) {
                         fen.append(emptySquares);

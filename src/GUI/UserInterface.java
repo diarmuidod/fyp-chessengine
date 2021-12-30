@@ -140,7 +140,7 @@ public class UserInterface {
 
         frame.setTitle("Chess Application");
         frame.setVisible(true);
-        frame.setSize(new Dimension(squareSize * 11, squareSize * 10));
+        frame.setSize(new Dimension(692, 750));
         frame.setLocationRelativeTo(null);
         frame.setResizable(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -149,28 +149,25 @@ public class UserInterface {
         GridBagConstraints gbc = new GridBagConstraints();
         frame.setLayout(gbl);
 
-        gbc.weightx = 0.01;
+        gbc.ipadx = 16;
+        gbc.ipady = 18;
+        gbc.weightx = 0.1;
 
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
-        gbc.gridheight = 2;
-        gbc.insets = new Insets(16, 8, 0, 8);
         frame.add(boardPanel, gbc);
 
         gbc.gridx = 2;
         gbc.gridy = 0;
         gbc.gridwidth = 1;
-        gbc.gridheight = 2;
         gbc.anchor = GridBagConstraints.FIRST_LINE_END;
-        gbc.insets = new Insets(0, 0, 0, 8);
         frame.add(pgnPanel, gbc);
 
         gbc.gridx = 2;
-        gbc.gridy = 2;
+        gbc.gridy = 1;
         gbc.gridwidth = 1;
-        gbc.gridheight = 1;
-        gbc.insets = new Insets(0, 8, 0, 16);
+        gbc.insets = new Insets(0, 0, 0, 25);
         gbc.anchor = GridBagConstraints.EAST;
         frame.add(copyFenButton, gbc);
 
@@ -244,7 +241,6 @@ public class UserInterface {
 
     private JButton generateCopyFEN() {
         JButton button = new JButton("Copy FEN String");
-        //button.setBounds(pgnField.getX() + pgnField.getWidth()/2, pgnField.getY() + pgnField.getHeight() + 16, 0, 0);
         button.setMargin(new Insets(0, 0, 0, 0));
         button.addActionListener(e -> Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(chessGame.saveGameToFEN()), null));
         return button;
@@ -261,7 +257,7 @@ public class UserInterface {
             @Override
             public void paint(Graphics g) {
                 boolean whiteSquare = !boardFlipped;
-                this.setBounds(16, 16, squareSize * 8, squareSize * 8);
+                this.setBounds(0, 0, squareSize * 8, squareSize * 8);
 
                 for (int y = 0; y < 8; y++) {
                     for (int x = 0; x < 8; x++) {
@@ -324,7 +320,7 @@ public class UserInterface {
     }
 
     public Image[] generatePieceSprites() throws IOException {
-        BufferedImage spriteSheet = ImageIO.read(new File("C:\\Users\\student\\Documents\\GitHub\\fyp-chessengine\\src\\GUI\\Assets\\sprites.png"));
+        BufferedImage spriteSheet = ImageIO.read(new File("src\\GUI\\Assets\\sprites.png"));
         Image[] pieceSprites = new Image[12];
 
         for (int y = 0; y < 2; y++) {

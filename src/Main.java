@@ -6,7 +6,7 @@ import java.io.IOException;
 
 public class Main {
     static UserInterface ui;
-    static Game game = new Game();
+    static Game game = new Game("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     static MoveGenTest test = new MoveGenTest(game);
 
     //  Move generation only fails on below fen, all other test cases are flawless
@@ -23,7 +23,7 @@ public class Main {
             "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10"};
 
     public static void main(String[] args) throws IOException {
-        game.mctsEngine.trainEngine(10);
-        //ui = new UserInterface();
+        ui = new UserInterface();
     }
 }
+
