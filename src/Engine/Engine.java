@@ -108,15 +108,13 @@ public class Engine implements Serializable {
             root.children = generateChildren(root);
         }
 
-        int iterations = 0;
-        while (iterations < 100) {
-            //timeRemaining = System.currentTimeMillis() < startTime + (timeInSeconds * 1000);
+        while (timeRemaining) {
+            timeRemaining = System.currentTimeMillis() < startTime + (timeInSeconds * 1000);
 
             Node selectedChild = selection(root);
             Node expandedChild = expansion(selectedChild);
             double result = rollout(expandedChild);
             root = backpropagation(expandedChild, result);
-            iterations++;
         }
 
         for (Node child : root.children) {
@@ -211,16 +209,22 @@ public class Engine implements Serializable {
             children.add(new Node(node, move));
         }
 
+        List<Node> toRemove = new LinkedList<>();
         for(Node child : children) {
             Node exists = transpositionTable.get(Zobrist.getZobristKey(child.boardState));
             if(exists != null) { //found known position by transposition
                 exists.parents.add(node);
-                children.add(exists);
-                children.remove(child);
+                toRemove.add(child);
             } else { //found new position
                 transpositionTable.put(Zobrist.getZobristKey(node.boardState), child);
             }
         }
+
+        for (Node value : toRemove) {
+            Node exists = transpositionTable.get(Zobrist.getZobristKey(value.boardState));
+            children.add(exists);
+        }
+        children.removeAll(toRemove);
 
         return children;
     }

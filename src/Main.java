@@ -26,7 +26,7 @@ public class Main {
 
     public static void main(String[] args) {
         Zobrist.readRandomNumbers();
-        game.mctsEngine.trainEngine(10);
+        game.mctsEngine.trainEngine(60);
         //ui = new UserInterface();
 
 
