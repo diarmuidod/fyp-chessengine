@@ -2,14 +2,12 @@ package Engine;
 
 import Board.Board;
 import Board.Move;
+import Board.Zobrist;
 import Board.MoveGenerator;
 import GameManager.Game;
 
 import java.io.Serializable;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Random;
+import java.util.*;
 
 public class Engine implements Serializable {
     //https://medium.com/@ishaan.gupta0401/monte-carlo-tree-search-application-on-chess-5573fc0efb75
@@ -17,14 +15,16 @@ public class Engine implements Serializable {
 
     private static final MoveGenerator moveGenerator = new MoveGenerator();
     private static final Random rand = new Random();
+    private Hashtable<Long, Node> transpositionTable;
 
     public Node root;
 
     public Engine() {
         root = new Node();
+        transpositionTable = new Hashtable<>();
+        transpositionTable.put(Zobrist.getZobristKey(root.boardState), root);
     }
 
-    //suspect cause of bug is that engine isn't being updated on the board state
     public Move getBestMove(List<Move> movesPlayed, long timeInSeconds) {
         Node node = findMoveNode(movesPlayed);
 
@@ -56,7 +56,7 @@ public class Engine implements Serializable {
 
         for (Node child : node.children) {
             currentUCB = getUCB(child);
-            if (node.boardState.whiteToMove) {
+            if (child.boardState.whiteToMove) {
                 if (currentUCB > getUCB(bestMoveNode)) {
                     bestMoveNode = child;
                 }
@@ -108,14 +108,15 @@ public class Engine implements Serializable {
             root.children = generateChildren(root);
         }
 
-        while (timeRemaining) {
-            timeRemaining = System.currentTimeMillis() < startTime + (timeInSeconds * 1000);
+        int iterations = 0;
+        while (iterations < 100) {
+            //timeRemaining = System.currentTimeMillis() < startTime + (timeInSeconds * 1000);
 
             Node selectedChild = selection(root);
             Node expandedChild = expansion(selectedChild);
             double result = rollout(expandedChild);
             root = backpropagation(expandedChild, result);
-
+            iterations++;
         }
 
         for (Node child : root.children) {
@@ -136,7 +137,7 @@ public class Engine implements Serializable {
         for (Node n : node.children) {
             currentUCB = getUCB(n);
 
-            if (node.boardState.whiteToMove) {
+            if (n.boardState.whiteToMove) {
                 if (currentUCB > getUCB(selectedChild)) {
                     selectedChild = n;
                 }
@@ -152,7 +153,6 @@ public class Engine implements Serializable {
 
     public Node expansion(Node node) {
         if (node.children == null) return node;
-
 
         Node currentChild = node.children.get(0);
         double currentUCB;
@@ -181,7 +181,7 @@ public class Engine implements Serializable {
             if (getGameState(node.boardState) == Game.GameState.DRAW) return 0;
         }
 
-        node.children = generateChildren(node);
+        if(node.children == null) node.children = generateChildren(node);
         Node child = node.children.get(rand.nextInt(node.children.size()));
         return rollout(child);
     }
@@ -192,16 +192,16 @@ public class Engine implements Serializable {
             node.n += 1;
             node.v += reward;
 
-            if(node.parent == null) return node;
+            if (node.parents == null) return node;
 
-            node = node.parent;
+            node = node.parents.get(0);
         }
     }
 
     public double getUCB(Node node) {
         //please don't ask me to explain this
-        double mean = node.children == null ? 1 : node.children.size();
-        return (node.v / mean) + Math.sqrt(2) * Math.sqrt(Math.log(Math.max(node.N, 1)) / Math.max(node.n, 1));
+        //double mean = node.children == null ? 1 : node.children.size();
+        return (node.v) + Math.sqrt(2) * Math.sqrt(Math.log(Math.max(node.N, 1)) / Math.max(node.n, 1));
     }
 
     public List<Node> generateChildren(Node node) {
@@ -209,6 +209,17 @@ public class Engine implements Serializable {
 
         for (Move move : moveGenerator.getLegalMoves(node.boardState)) {
             children.add(new Node(node, move));
+        }
+
+        for(Node child : children) {
+            Node exists = transpositionTable.get(Zobrist.getZobristKey(child.boardState));
+            if(exists != null) { //found known position by transposition
+                exists.parents.add(node);
+                children.add(exists);
+                children.remove(child);
+            } else { //found new position
+                transpositionTable.put(Zobrist.getZobristKey(node.boardState), child);
+            }
         }
 
         return children;
@@ -238,17 +249,17 @@ public class Engine implements Serializable {
     }
 
     class Node {
-        Node parent;
+        List<Node> children;
+        double N; //How often parent node has been visited
+        double n; //How often this node has been visited
+        double v; //Result of child nodes games
+
+        List<Node> parents;
         Move move;
-        public List<Node> children;
         Board boardState;
 
-        public double N; //How often parent node has been visited
-        public double n; //How often this node has been visited
-        public double v; //Result of child nodes games
-
         Node() {
-            parent = null;
+            parents = null;
             move = null;
             children = null;
             boardState = new Board();
@@ -259,7 +270,8 @@ public class Engine implements Serializable {
         }
 
         Node(Node parent, Move move) {
-            this.parent = parent;
+            this.parents = new LinkedList<>();
+            parents.add(parent);
             this.move = move;
             children = null;
             boardState = moveGenerator.makeMove(move, parent.boardState);

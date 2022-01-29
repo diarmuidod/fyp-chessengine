@@ -3,6 +3,7 @@ package Board;
 import java.util.BitSet;
 import java.util.LinkedList;
 import java.util.List;
+import Utils.*;
 
 public class MoveGenerator {
     private static final int[] pawnOffsets = {8, 16, 7, 9}; //white offsets, values inverted for black
@@ -37,14 +38,14 @@ public class MoveGenerator {
 
         //captures
         inRange = (position + (pawnOffsets[2] * sideToMove) >= 0 && position + (pawnOffsets[2] * sideToMove) <= 63);
-        if (inRange && (Math.abs(getFile(position) - getFile(position + (pawnOffsets[2] * sideToMove))) == 1)) {
+        if (inRange && (Math.abs(Utils.getFileChar(position) - Utils.getFileChar(position + (pawnOffsets[2] * sideToMove))) == 1)) {
             if (sideToWait.get(position + (pawnOffsets[2] * sideToMove)) || currentBoard.enPassantSquare == position + (pawnOffsets[2] * sideToMove)) {
                 pawnMoves.set(position + (pawnOffsets[2] * sideToMove));
             }
         }
 
         inRange = (position + (pawnOffsets[3] * sideToMove) >= 0 && position + (pawnOffsets[3] * sideToMove) <= 63);
-        if (inRange && (Math.abs(getFile(position) - getFile(position + (pawnOffsets[3] * sideToMove))) == 1)) {
+        if (inRange && (Math.abs(Utils.getFileChar(position) - Utils.getFileChar(position + (pawnOffsets[3] * sideToMove))) == 1)) {
             if (sideToWait.get(position + (pawnOffsets[3] * sideToMove)) || currentBoard.enPassantSquare == position + (pawnOffsets[3] * sideToMove)) {
                 pawnMoves.set(position + (pawnOffsets[3] * sideToMove));
             }
@@ -61,12 +62,12 @@ public class MoveGenerator {
         boolean inRange;
 
         inRange = (position + (pawnOffsets[2] * sideToMove) >= 0 && position + (pawnOffsets[2] * sideToMove) <= 63);
-        if (inRange && (Math.abs(getFile(position) - getFile(position + (pawnOffsets[2] * sideToMove))) == 1)) {
+        if (inRange && (Math.abs(Utils.getFileChar(position) - Utils.getFileChar(position + (pawnOffsets[2] * sideToMove))) == 1)) {
             pawnAttacks.set(position + (pawnOffsets[2] * sideToMove));
         }
 
         inRange = (position + (pawnOffsets[3] * sideToMove) >= 0 && position + (pawnOffsets[3] * sideToMove) <= 63);
-        if (inRange && (Math.abs(getFile(position) - getFile(position + (pawnOffsets[3] * sideToMove))) == 1)) {
+        if (inRange && (Math.abs(Utils.getFileChar(position) - Utils.getFileChar(position + (pawnOffsets[3] * sideToMove))) == 1)) {
             pawnAttacks.set(position + (pawnOffsets[3] * sideToMove));
         }
 
@@ -90,9 +91,11 @@ public class MoveGenerator {
             if (rank == 8 && knightOffset > 0) continue;
             if (rank == 7 && knightOffset >= 15) continue;
 
-            if (file == 1 && (knightOffset == 15 || knightOffset == 6 || knightOffset == -10 || knightOffset == -17)) continue;
+            if (file == 1 && (knightOffset == 15 || knightOffset == 6 || knightOffset == -10 || knightOffset == -17))
+                continue;
             if (file == 2 && (knightOffset == 6 || knightOffset == -10)) continue;
-            if (file == 8 && (knightOffset == -15 || knightOffset == -6 || knightOffset == 10 || knightOffset == 17)) continue;
+            if (file == 8 && (knightOffset == -15 || knightOffset == -6 || knightOffset == 10 || knightOffset == 17))
+                continue;
             if (file == 7 && (knightOffset == -6 || knightOffset == 10)) continue;
 
             if (!sideToMove.get(position + knightOffset)) {
@@ -109,9 +112,9 @@ public class MoveGenerator {
         for (int knightOffset : knightOffsets) {
             if (position + knightOffset < 0 || position + knightOffset > 63) continue;
 
-            if (Math.abs(getFile(position) - getFile(position + knightOffset)) == 2 && Math.abs(getRank(position) - getRank(position + knightOffset)) == 1) {
+            if (Math.abs(Utils.getFileChar(position) - Utils.getFileChar(position + knightOffset)) == 2 && Math.abs(Utils.getRankChar(position) - Utils.getRankChar(position + knightOffset)) == 1) {
                 knightAttacks.set(position + knightOffset);
-            } else if (Math.abs(getFile(position) - getFile(position + knightOffset)) == 1 && Math.abs(getRank(position) - getRank(position + knightOffset)) == 2) {
+            } else if (Math.abs(Utils.getFileChar(position) - Utils.getFileChar(position + knightOffset)) == 1 && Math.abs(Utils.getRankChar(position) - Utils.getRankChar(position + knightOffset)) == 2) {
                 knightAttacks.set(position + knightOffset);
             }
         }
@@ -134,11 +137,11 @@ public class MoveGenerator {
                 if (offsetPos > 63 || offsetPos < 0) break;
 
                 //non-adjacent indices, both are always adjacent
-                if (Math.abs(getRank(offsetPos - bishopOffset) - getRank(offsetPos)) != 1) {
+                if (Math.abs(Utils.getRankChar(offsetPos - bishopOffset) - Utils.getRankChar(offsetPos)) != 1) {
                     break;
                 }
 
-                if (Math.abs(getFile(offsetPos - bishopOffset) - getFile(offsetPos)) != 1) {
+                if (Math.abs(Utils.getFileChar(offsetPos - bishopOffset) - Utils.getFileChar(offsetPos)) != 1) {
                     break;
                 }
 
@@ -178,12 +181,12 @@ public class MoveGenerator {
                 if (offsetPos > 63 || offsetPos < 0) break;
 
                 //non-adjacent indices, both are always adjacent
-                if (Math.abs(getRank(offsetPos - bishopOffset) - getRank(offsetPos)) != 1) {
+                if (Math.abs(Utils.getRankChar(offsetPos - bishopOffset) - Utils.getRankChar(offsetPos)) != 1) {
                     //System.out.println("Rank - " + (Math.abs(getRank(position) - getRank(offsetPos))) + ", File - " + (Math.abs(getFile(position) - getFile(offsetPos))));
                     break;
                 }
 
-                if (Math.abs(getFile(offsetPos - bishopOffset) - getFile(offsetPos)) != 1) {
+                if (Math.abs(Utils.getFileChar(offsetPos - bishopOffset) - Utils.getFileChar(offsetPos)) != 1) {
                     break;
                 }
 
@@ -619,13 +622,10 @@ public class MoveGenerator {
 
         //determine whether the move is among the legal moves for that piece
         if (currentBoard.pawnPieces.get(startSquare)) return getPawnMoves(startSquare, currentBoard).get(targetSquare);
-        if (currentBoard.knightPieces.get(startSquare))
-            return getKnightMoves(startSquare, currentBoard).get(targetSquare);
-        if (currentBoard.bishopPieces.get(startSquare))
-            return getBishopMoves(startSquare, currentBoard).get(targetSquare);
+        if (currentBoard.knightPieces.get(startSquare)) return getKnightMoves(startSquare, currentBoard).get(targetSquare);
+        if (currentBoard.bishopPieces.get(startSquare)) return getBishopMoves(startSquare, currentBoard).get(targetSquare);
         if (currentBoard.rookPieces.get(startSquare)) return getRookMoves(startSquare, currentBoard).get(targetSquare);
-        if (currentBoard.queenPieces.get(startSquare))
-            return getQueenMoves(startSquare, currentBoard).get(targetSquare);
+        if (currentBoard.queenPieces.get(startSquare)) return getQueenMoves(startSquare, currentBoard).get(targetSquare);
         if (currentBoard.kingPieces.get(startSquare)) return getKingMoves(startSquare, currentBoard).get(targetSquare);
 
         return false;
@@ -698,11 +698,4 @@ public class MoveGenerator {
         return moves;
     }
 
-    public char getFile(int index) {
-        return (char) ((index % 8) + 97);
-    }
-
-    public char getRank(int index) {
-        return (char) ((index / 8) + 49);
-    }
 }

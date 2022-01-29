@@ -2,7 +2,9 @@ package GUI;
 
 import Board.Board;
 import Board.Move;
+import Engine.Engine;
 import GameManager.Game;
+import Utils.Utils;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -12,35 +14,31 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.util.LinkedList;
 import java.util.List;
 
 public class UserInterface {
     private static final int squareSize = 64;
-    private final int xOffset;
-    private final int yOffset;
-
-    private final JFrame uiFrame;
-    private JPanel boardPanel;
-    private JTextArea pgnField;
-
-    private final Game chessGame;
-
-    private LinkedList<PieceUI> pieceList;
-    private final Image[] pieceSprites;
-    private boolean boardFlipped = false;
-
     private static PieceUI activePiece = null;
     private static int activePieceStartX = 0;
     private static int activePieceStartY = 0;
-
+    private final int xOffset;
+    private final int yOffset;
+    private final JFrame uiFrame;
+    private final Game chessGame;
+    private final Image[] pieceSprites;
     private final Color darkSquares = Color.decode("#769656");
     private final Color lightSquares = Color.decode("#EEEED2");
+    private JPanel boardPanel;
+    private JTextArea pgnField;
+    private Engine chessEngine;
+    private LinkedList<PieceUI> pieceList;
+    private boolean boardFlipped = false;
 
     public UserInterface() throws IOException {
-        chessGame = new Game();
+        chessEngine = loadEngine();
+        chessGame = new Game("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1", chessEngine);
         pieceList = generatePieceList();
         pieceSprites = generatePieceSprites();
 
@@ -136,7 +134,8 @@ public class UserInterface {
 
         try {
             frame.setIconImage(ImageIO.read(new File("src/GUI/Assets/icon2.png")));
-        } catch (IOException ignored) {}
+        } catch (IOException ignored) {
+        }
 
         frame.setTitle("Chess Application");
         frame.setVisible(true);
@@ -175,8 +174,8 @@ public class UserInterface {
     }
 
     private Move validMove(int targetX, int targetY) {
-        int startIndex = posToIndex(activePieceStartX, activePieceStartY);
-        int targetIndex = posToIndex(targetX, targetY);
+        int startIndex = Utils.posToIndex(activePieceStartX, activePieceStartY, boardFlipped);
+        int targetIndex = Utils.posToIndex(targetX, targetY, boardFlipped);
 
         for (Move m : chessGame.getLegalMoves()) {
             if (m.startSquare == startIndex && m.targetSquare == targetIndex) {
@@ -278,7 +277,7 @@ public class UserInterface {
 
                     if (activePiece != null) {
                         Point mousePosition = getMousePosition();
-                        if(mousePosition != null) {
+                        if (mousePosition != null) {
                             g.drawImage(pieceSprites[activePiece.imgIndex], mousePosition.x - (squareSize / 2), mousePosition.y - (squareSize / 2), this);
                         }
                     }
@@ -385,7 +384,43 @@ public class UserInterface {
         return null;
     }
 
-    public int posToIndex(int x, int y) {
-        return boardFlipped ? y * 8 + x : Math.abs(y - 7) * 8 + x;
+
+    public void saveEngine() {
+        // Serialization
+        try {
+            //Saving of object in a file
+            FileOutputStream file = new FileOutputStream("engine.ser");
+            ObjectOutputStream out = new ObjectOutputStream(file);
+
+            // Method for serialization of object
+            out.writeObject(chessEngine);
+
+            out.close();
+            file.close();
+
+            System.out.println("Object has been serialized");
+
+        } catch (IOException ignored) {
+        }
+    }
+
+    public Engine loadEngine() {
+        try {
+            Engine engine;
+            // Reading the object from a file
+            FileInputStream file = new FileInputStream("engine.ser");
+            ObjectInputStream in = new ObjectInputStream(file);
+
+            // Method for deserialization of object
+            engine = (Engine) in.readObject();
+
+            in.close();
+            file.close();
+
+            return engine;
+        } catch (Exception ignored) {
+        }
+
+        return new Engine();
     }
 }

@@ -5,24 +5,21 @@ import Board.Move;
 import Board.MoveGenerator;
 import Debug.Perft;
 import Engine.Engine;
+import Utils.Utils;
 
 import java.util.*;
 
 public class Game {
+    //Stole this from the internet - https://gist.github.com/Dani4kor/e1e8b439115878f8c6dcf127a4ed5d3e
+    private static final String FEN_REGEX = "\\s*^(((?:[rnbqkpRNBQKP1-8]+\\/){7})[rnbqkpRNBQKP1-8]+)\\s([b|w])\\s(-|[K|Q|k|q]{1,4})\\s(-|[a-h][1-8])\\s(\\d+\\s\\d+)$";
+    //Made this myself
+    private static final String MOVE_REGEX = "((O-O(-O)?)|(?:[KQNBR]([a-h1-8]?x?[a-h][1-8])|((?:[a]x)?[b][2-7])| ((?:[b]x)?[ac][2-7])|((?:[c]x)?[bd][2-7])|((?:[d]x)?[ce][2-7])|((?:[e]x)?[df][2-7])|((?:[f]x)?[eg][2-7])|((?:[g]x)?[fh][2-7]))|(?:((?:[h]x)?[g][2-7])|((?:[a]x)?[b][18])|((?:[b]x)?[ac][18])|((?:[c]x)?[bd][18])|((?:[d]x)?[ce][18])|((?:[e]x)?[df][18])|((?:[f]x)?[eg][18])|((?:[g]x)?[fh][18])|((?:[h]x)?[g][18]))(=[QNBR]))[+#]?";
     public Board board;
     public MoveGenerator moveGenerator;
     public List<Move> movesPlayed;
     public Scanner input;
-
     public GameState gameState;
-
     public Engine mctsEngine;
-
-    //Stole this from the internet - https://gist.github.com/Dani4kor/e1e8b439115878f8c6dcf127a4ed5d3e
-    private static final String FEN_REGEX = "\\s*^(((?:[rnbqkpRNBQKP1-8]+\\/){7})[rnbqkpRNBQKP1-8]+)\\s([b|w])\\s(-|[K|Q|k|q]{1,4})\\s(-|[a-h][1-8])\\s(\\d+\\s\\d+)$";
-
-    //Made this myself
-    private static final String MOVE_REGEX = "((O-O(-O)?)|(?:[KQNBR]([a-h1-8]?x?[a-h][1-8])|((?:[a]x)?[b][2-7])| ((?:[b]x)?[ac][2-7])|((?:[c]x)?[bd][2-7])|((?:[d]x)?[ce][2-7])|((?:[e]x)?[df][2-7])|((?:[f]x)?[eg][2-7])|((?:[g]x)?[fh][2-7]))|(?:((?:[h]x)?[g][2-7])|((?:[a]x)?[b][18])|((?:[b]x)?[ac][18])|((?:[c]x)?[bd][18])|((?:[d]x)?[ce][18])|((?:[e]x)?[df][18])|((?:[f]x)?[eg][18])|((?:[g]x)?[fh][18])|((?:[h]x)?[g][18]))(=[QNBR]))[+#]?";
 
     public Game() {
         board = new Board();
@@ -32,6 +29,15 @@ public class Game {
         gameState = getGameState(board);
         mctsEngine = loadEngine();
     }
+    public Game(Engine engine) {
+        board = new Board();
+        moveGenerator = new MoveGenerator();
+        movesPlayed = new LinkedList<>();
+        input = new Scanner(System.in);
+        gameState = getGameState(board);
+        mctsEngine = engine;
+    }
+
 
     public Game(String FEN) {
         board = new Board(FEN);
@@ -42,6 +48,15 @@ public class Game {
         mctsEngine = loadEngine();
     }
 
+    public Game(String FEN, Engine engine) {
+        board = new Board(FEN);
+        moveGenerator = new MoveGenerator();
+        movesPlayed = new LinkedList<>();
+        input = new Scanner(System.in);
+        gameState = getGameState(board);
+        mctsEngine = engine;
+    }
+
     public void playGame() {
         Perft perft = new Perft();
         Move activeMove = null;
@@ -50,36 +65,35 @@ public class Game {
         while (getGameState(board) == GameState.ONGOING) {
             legalMoves = moveGenerator.getLegalMoves(board);
 
-            printBoard();
-            System.out.println();
-
             if (board.whiteToMove) {
-                System.out.println("White to move");
-            } else {
-                System.out.println("Black to move");
-            }
+                printBoard();
+                System.out.println();
 
-            System.out.println("Legal Moves: " + getLegalMoves());
+                if (board.whiteToMove) {
+                    System.out.println("White to move");
+                } else {
+                    System.out.println("Black to move");
+                }
 
-            //if (board.whiteToMove) {
-            System.out.print("Enter move: ");
-            String inp = input.nextLine();
+                System.out.println("Legal Moves: " + getLegalMoves());
+                System.out.print("Enter move: ");
+                String inp = input.nextLine();
 
-            if (inp.equals("quit") || inp.equals("exit")) {
-                saveEngine();
-                break;
-            }
-
-            for (Move m : legalMoves) {
-                if (m.move.equals(inp)) {
-                    activeMove = m;
+                if (inp.equals("quit") || inp.equals("exit")) {
+                    saveEngine();
                     break;
                 }
-            }
-            //} else {
-            //    activeMove = mctsEngine.getBestMove(movesPlayed, 5);
-            //}
 
+                for (Move m : legalMoves) {
+                    if (m.move.equals(inp)) {
+                        activeMove = m;
+                        break;
+                    }
+                }
+            } else {
+                mctsEngine.trainEngine(5);
+                activeMove = mctsEngine.getBestMove(movesPlayed, 0);
+            }
 
             board = moveGenerator.makeMove(Objects.requireNonNull(activeMove), board);
             movesPlayed.add(activeMove);
@@ -150,7 +164,7 @@ public class Game {
         if (board.enPassantSquare == -1) {
             fen.append(" - ");
         } else {
-            fen.append(" ").append(moveFromIndex(board.enPassantSquare)).append(" ");
+            fen.append(" ").append(Utils.moveFromIndex(board.enPassantSquare)).append(" ");
         }
 
         fen.append(board.fiftyMoveCount).append(" ");
@@ -162,21 +176,6 @@ public class Game {
 
     public String saveGameToPGN() {
         return null;
-    }
-
-    public char getFile(int index) {
-        return (char) ((index % 8) + 97);
-    }
-
-    public char getRank(int index) {
-        return (char) ((index / 8) + 49);
-    }
-
-    public String moveFromIndex(int index) {
-        char number = getRank(index);
-        char letter = getFile(index);
-
-        return letter + String.valueOf(number);
     }
 
     public void printBoard() {
@@ -214,18 +213,18 @@ public class Game {
         return GameState.ONGOING;
     }
 
-    public enum GameState {
-        ONGOING,
-        WHITE_WINS,
-        BLACK_WINS,
-        DRAW
-    }
-
     public Engine loadEngine() {
         return new Engine();
     }
 
     public void saveEngine() {
 
+    }
+
+    public enum GameState {
+        ONGOING,
+        WHITE_WINS,
+        BLACK_WINS,
+        DRAW
     }
 }

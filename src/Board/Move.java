@@ -1,8 +1,8 @@
 package Board;
 
-import java.util.Arrays;
+import Utils.Utils;
+
 import java.util.BitSet;
-import java.util.List;
 
 public class Move {
     public String move;
@@ -29,24 +29,16 @@ public class Move {
 
             //check each pawn of the side to move until match is found, for start and target squares
             for (int i = board.pawnPieces.nextSetBit(0); i >= 0; i = board.pawnPieces.nextSetBit(i + 1)) {
-                if (sideToMove.get(i) && (getFile(i) == move.charAt(0))) {
+                if (sideToMove.get(i) && (Utils.getFileChar(i) == move.charAt(0))) {
                     this.startSquare = i;
                 }
             }
         }
     }
 
-    public char getFile(int index) {
-        return (char) ((index % 8) + 97);
-    }
-
-    public char getRank(int index) {
-        return (char) ((index / 8) + 49);
-    }
-
     public String moveFromIndex(int index) {
-        char number = getRank(index);
-        char letter = getFile(index);
+        char number = Utils.getRankChar(index);
+        char letter = Utils.getFileChar(index);
 
         return letter + String.valueOf(number);
     }
@@ -91,10 +83,10 @@ public class Move {
 
                 for (int i = pieceType.nextSetBit(0); i >= 0; i = pieceType.nextSetBit(i + 1)) {
                     if (i != startSquare && moveGenerator.isValidMove(i, targetSquare, board)) {
-                        if (getFile(startSquare) == getFile(i)) {
-                            move.append(getRank(startSquare));
+                        if (Utils.getFileChar(startSquare) == Utils.getFileChar(i)) {
+                            move.append(Utils.getRankChar(startSquare));
                         } else {
-                            move.append(getFile(startSquare));
+                            move.append(Utils.getFileChar(startSquare));
                         }
                     }
                 }
