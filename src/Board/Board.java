@@ -69,24 +69,12 @@ public class Board {
                     }
 
                     switch (Character.toUpperCase(symbol)) {
-                        case 'P':
-                            pawnPieces.set((rank * 8) + file);
-                            break;
-                        case 'N':
-                            knightPieces.set((rank * 8) + file);
-                            break;
-                        case 'B':
-                            bishopPieces.set((rank * 8) + file);
-                            break;
-                        case 'R':
-                            rookPieces.set((rank * 8) + file);
-                            break;
-                        case 'Q':
-                            queenPieces.set((rank * 8) + file);
-                            break;
-                        case 'K':
-                            kingPieces.set((rank * 8) + file);
-                            break;
+                        case 'P' -> pawnPieces.set((rank * 8) + file);
+                        case 'N' -> knightPieces.set((rank * 8) + file);
+                        case 'B' -> bishopPieces.set((rank * 8) + file);
+                        case 'R' -> rookPieces.set((rank * 8) + file);
+                        case 'Q' -> queenPieces.set((rank * 8) + file);
+                        case 'K' -> kingPieces.set((rank * 8) + file);
                     }
                     file++;
                 }

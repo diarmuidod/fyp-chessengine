@@ -2,33 +2,49 @@ package Engine;
 
 import Board.Board;
 import Board.Move;
-import Board.Zobrist;
 import Board.MoveGenerator;
+import Board.Zobrist;
 import GameManager.Game;
 
-import java.io.Serializable;
+import java.sql.*;
 import java.util.*;
+import java.util.Map.Entry;
 
-public class Engine implements Serializable {
+
+public class Engine {
     //https://medium.com/@ishaan.gupta0401/monte-carlo-tree-search-application-on-chess-5573fc0efb75
-    //https://www.geeksforgeeks.org/serialization-in-java/
+
+    Connection conn = null;
+    Statement stmt = null;
+    ResultSet rs = null;
 
     private static final MoveGenerator moveGenerator = new MoveGenerator();
     private static final Random rand = new Random();
-    private Hashtable<Long, Node> transpositionTable;
+    private static Hashtable<Long, Node> transpositionTable;
+    LinkedList<Node> pathToRoot;
 
     public Node root;
 
     public Engine() {
+        try {
+            conn = DriverManager.getConnection("jdbc:mysql://localhost/test?" + "user=root&password=");
+        } catch (SQLException ex) {
+            // handle any errors
+            System.out.println("SQLException: " + ex.getMessage());
+            System.out.println("SQLState: " + ex.getSQLState());
+            System.out.println("VendorError: " + ex.getErrorCode());
+        }
+
         root = new Node();
         transpositionTable = new Hashtable<>();
         transpositionTable.put(Zobrist.getZobristKey(root.boardState), root);
+        pathToRoot = new LinkedList<>();
     }
 
     public Move getBestMove(List<Move> movesPlayed, long timeInSeconds) {
         Node node = findMoveNode(movesPlayed);
 
-        if (getGameState(node.boardState) != Game.GameState.ONGOING) return null;
+        if (getGameState(node) != Game.GameState.ONGOING) return null;
 
         boolean timeRemaining = true;
         long startTime = System.currentTimeMillis();
@@ -99,7 +115,8 @@ public class Engine implements Serializable {
     }
 
     public void trainEngine(long timeInSeconds) {
-        if (getGameState(root.boardState) != Game.GameState.ONGOING) return;
+        int iterations = 0;
+        if (getGameState(root) != Game.GameState.ONGOING) return;
 
         boolean timeRemaining = true;
         long startTime = System.currentTimeMillis();
@@ -115,18 +132,19 @@ public class Engine implements Serializable {
             Node expandedChild = expansion(selectedChild);
             double result = rollout(expandedChild);
             root = backpropagation(expandedChild, result);
+            iterations++;
         }
 
         for (Node child : root.children) {
             System.out.println(child.move + ", N: " + child.N + ", n: " + child.n + ", v: " + child.v + ", UCB: " + getUCB(child));
         }
         System.out.println();
+        System.out.println("Iterations: " + iterations);
+        System.out.println("Positions:  " + transpositionTable.size());
     }
 
     public Node selection(Node node) {
         double currentUCB;
-        double maxUCB = Double.NEGATIVE_INFINITY;
-        double minUCB = Double.POSITIVE_INFINITY;
 
         if (node.children == null) node.children = generateChildren(node);
 
@@ -173,33 +191,69 @@ public class Engine implements Serializable {
     }
 
     public double rollout(Node node) {
-        if (getGameState(node.boardState) != Game.GameState.ONGOING) {
-            if (getGameState(node.boardState) == Game.GameState.WHITE_WINS) return 1;
-            if (getGameState(node.boardState) == Game.GameState.BLACK_WINS) return -1;
-            if (getGameState(node.boardState) == Game.GameState.DRAW) return 0;
+        if (getGameState(node) != Game.GameState.ONGOING) {
+            if (getGameState(node) == Game.GameState.WHITE_WINS) return 1;
+            if (getGameState(node) == Game.GameState.BLACK_WINS) return -1;
+            if (getGameState(node) == Game.GameState.DRAW) return 0;
         }
 
-        if(node.children == null) node.children = generateChildren(node);
+        if (node.children == null) node.children = generateChildren(node);
         Node child = node.children.get(rand.nextInt(node.children.size()));
         return rollout(child);
     }
 
     public Node backpropagation(Node node, double reward) {
+        node.n += 1;
+        node.v += reward;
+
         while (true) {
             node.N += 1;
-            node.n += 1;
-            node.v += reward;
-
             if (node.parents == null) return node;
-
             node = node.parents.get(0);
         }
     }
 
     public double getUCB(Node node) {
-        //please don't ask me to explain this
-        //double mean = node.children == null ? 1 : node.children.size();
-        return (node.v) + Math.sqrt(2) * Math.sqrt(Math.log(Math.max(node.N, 1)) / Math.max(node.n, 1));
+        return node.v + Math.sqrt(2) * Math.sqrt(Math.log(Math.max(node.N, 1)) / Math.max(node.n, 1));
+    }
+
+    public void storeSearchResults() throws SQLException {
+        Set<Map.Entry<Long, Node>> entrySet = transpositionTable.entrySet();
+        stmt = conn.createStatement();
+
+        long key;
+        Node node;
+        String move;
+
+        for (Entry<Long, Node> entry : entrySet) {
+            key = entry.getKey();
+            node = entry.getValue();
+            move = node.move.toString();
+
+            rs = stmt.executeQuery("SELECT * FROM nodeTbl WHERE zobristKey = " + key);
+
+            if (!rs.next()) { //node does not exist in database
+                stmt.executeUpdate("INSERT INTO nodeTbl VALUES (" + key + ", " + move + ", " + node.N + ", " + node.n + ", " + node.v + ")");
+
+                if (node.parents != null) {
+                    for (Node parent : node.parents) {
+                        long parentKey = Zobrist.getZobristKey(parent.boardState);
+                        rs = stmt.executeQuery("SELECT * FROM parentChildTbl WHERE parentKey = " + parentKey);
+
+                        if (!rs.next()) { //parent child relationship not in db
+                            stmt.executeUpdate("INSERT INTO parentChildTbl VALUES (" + parentKey + ", " + key + ")");
+                        }
+                    }
+                }
+            } else { //node exists in database
+
+            }
+        }
+
+        if (stmt != null) stmt.close();
+        if (rs != null) rs.close();
+
+        transpositionTable = new Hashtable<>();
     }
 
     public List<Node> generateChildren(Node node) {
@@ -210,9 +264,9 @@ public class Engine implements Serializable {
         }
 
         List<Node> toRemove = new LinkedList<>();
-        for(Node child : children) {
+        for (Node child : children) {
             Node exists = transpositionTable.get(Zobrist.getZobristKey(child.boardState));
-            if(exists != null) { //found known position by transposition
+            if (exists != null) { //found known position by transposition
                 exists.parents.add(node);
                 toRemove.add(child);
             } else { //found new position
@@ -224,25 +278,36 @@ public class Engine implements Serializable {
             Node exists = transpositionTable.get(Zobrist.getZobristKey(value.boardState));
             children.add(exists);
         }
+
         children.removeAll(toRemove);
 
         return children;
     }
 
-    public Game.GameState getGameState(Board board) {
-        if (board.fiftyMoveCount >= 50) {
+    public Game.GameState getGameState(Node node) {
+        if (node.boardState.fiftyMoveCount >= 50) {
             return Game.GameState.DRAW;
         }
 
+        pathToRoot.clear();
+        while(node.parents != null) {
+            pathToRoot.add(node);
+            node = node.parents.get(node.parents.size() - 1);
+        }
+
+        for(Node n : pathToRoot) {
+            if(Collections.frequency(pathToRoot, n) >= 3) return Game.GameState.DRAW; //threefold repetition
+        }
+
         //no legal moves
-        if (moveGenerator.getLegalMoves(board).size() == 0) {
+        if (moveGenerator.getLegalMoves(node.boardState).size() == 0) {
             //white in check
-            if (moveGenerator.kingInCheck(board, true)) {
+            if (moveGenerator.kingInCheck(node.boardState, true)) {
                 return Game.GameState.BLACK_WINS;
             }
 
             //white in check
-            if (moveGenerator.kingInCheck(board, false)) {
+            if (moveGenerator.kingInCheck(node.boardState, false)) {
                 return Game.GameState.WHITE_WINS;
             }
 
@@ -252,7 +317,7 @@ public class Engine implements Serializable {
         return Game.GameState.ONGOING;
     }
 
-    class Node {
+    private static class Node {
         List<Node> children;
         double N; //How often parent node has been visited
         double n; //How often this node has been visited

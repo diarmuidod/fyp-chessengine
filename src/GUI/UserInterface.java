@@ -406,18 +406,11 @@ public class UserInterface {
 
     public Engine loadEngine() {
         try {
-            Engine engine;
-            // Reading the object from a file
-            FileInputStream file = new FileInputStream("engine.ser");
-            ObjectInputStream in = new ObjectInputStream(file);
+            Engine engine = null;
 
-            // Method for deserialization of object
-            engine = (Engine) in.readObject();
 
-            in.close();
-            file.close();
 
-            return engine;
+            return null;
         } catch (Exception ignored) {
         }
 
