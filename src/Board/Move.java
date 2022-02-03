@@ -10,6 +10,10 @@ public class Move {
     public int targetSquare;
     public Flag moveFlag;
 
+    public Move() {
+        this.move = "null";
+    }
+
     //internal use only (ideally want to clean this up, generation isn't particularly great, not a priority)
     public Move(int startSquare, int targetSquare, Board board, MoveGenerator moveGenerator, Flag moveFlag) {
         this.startSquare = startSquare;
@@ -115,7 +119,7 @@ public class Move {
     }
 
     public String toString() {
-        return move;
+        return move == null ? "null" : move;
     }
 
     public enum Flag {

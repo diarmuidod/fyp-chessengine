@@ -2,6 +2,7 @@ import Board.Board;
 import Board.Zobrist;
 import Debug.MoveGenTest;
 import Engine.Engine;
+import Engine.Engine.Node;
 import GUI.UserInterface;
 import GameManager.Game;
 
@@ -28,7 +29,8 @@ public class Main {
 
     public static void main(String[] args) throws IOException, SQLException {
         Engine engine = new Engine();
-        engine.trainEngine(0);
+        engine.generateChildren(engine.root);
+        engine.storeSearchResults();
     }
 }
 

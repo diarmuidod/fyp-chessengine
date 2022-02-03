@@ -26,6 +26,7 @@ public class Engine {
     public Node root;
 
     public Engine() {
+        Zobrist.readRandomNumbers();
         root = new Node();
         transpositionTable = new Hashtable<>();
         transpositionTable.put(Zobrist.getZobristKey(root.boardState), root);
@@ -124,7 +125,7 @@ public class Engine {
             double result = rollout(expandedChild);
             root = backpropagation(expandedChild, result);
 
-            if(iterations % 1000 == 0) storeSearchResults();
+            if (iterations % 1000 == 0) storeSearchResults();
             iterations++;
         }
 
@@ -166,12 +167,11 @@ public class Engine {
         System.out.println("expanding child");
         if (node.children == null) return node;
         if (node.children.size() == 0) return node;
-        if(getGameState(node) != Game.GameState.ONGOING) return node;
+        if (getGameState(node) != Game.GameState.ONGOING) return node;
 
         System.out.println("getting child node");
         Node currentChild = node.children.get(0);
         double currentUCB;
-
 
         for (Node n : node.children) {
             currentUCB = getUCB(n);
@@ -241,16 +241,16 @@ public class Engine {
             System.out.println("selected node from table");
 
             if (!rs.next()) { //node does not exist in database
-                stmt.executeUpdate("INSERT INTO nodeTbl VALUES (" + key + ", " + move + ", " + node.N + ", " + node.n + ", " + node.v + ")");
+                stmt.executeUpdate("INSERT INTO nodeTbl VALUES (" + key + ", " + node.N + ", " + node.n + ", " + node.v + ")");
                 System.out.println("inserted new node");
                 if (node.parents != null) {
                     for (Node parent : node.parents) {
                         long parentKey = Zobrist.getZobristKey(parent.boardState);
-                        rs = stmt.executeQuery("SELECT * FROM parentChildTbl WHERE parentKey = " + parentKey);
+                        rs = stmt.executeQuery("SELECT * FROM parentChildTbl WHERE parentKey = " + parentKey + " AND childKey = " + key);
                         System.out.println("selected node for parent child relationship");
 
                         if (!rs.next()) { //parent child relationship not in db
-                            stmt.executeUpdate("INSERT INTO parentChildTbl VALUES (" + parentKey + ", " + key + ")");
+                            stmt.executeUpdate("INSERT INTO parentChildTbl VALUES (" + parentKey + ", " + key + ", \"" + move + "\")");
                             System.out.println("inserted new parent child relationship");
                         }
                     }
@@ -271,6 +271,8 @@ public class Engine {
         if (rs != null) rs.close();
         conn.close();
         System.out.println("closed connection");
+
+        root = new Node();
         transpositionTable = new Hashtable<>();
         transpositionTable.put(Zobrist.getZobristKey(root.boardState), root);
     }
@@ -290,7 +292,8 @@ public class Engine {
                 exists.parents.add(node);
                 toRemove.add(child);
             } else { //found new position
-                transpositionTable.put(Zobrist.getZobristKey(node.boardState), child);
+                transpositionTable.put(Zobrist.getZobristKey(child.boardState), child);
+                System.out.println("put child node " + child.move + " in table - ");
             }
         }
 
@@ -305,19 +308,21 @@ public class Engine {
     }
 
     public Game.GameState getGameState(Node node) {
+        int iterations = 0;
         if (node.boardState.fiftyMoveCount >= 50) {
             return Game.GameState.DRAW;
         }
-        System.out.println("not a 50 move draw");
 
-        while(node.parents != null) {
-            System.out.println("looking for root");
+        //System.out.println("Root parents " + root.parents);
+        while (node.parents != null) {
             pathToRoot.add(node);
-            node = node.parents.get(0);
+            if(node.parents.contains(root)) break;
+            node = node.parents.get(node.parents.size() - 1);
         }
 
-        for(Node n : pathToRoot) {
-            if(Collections.frequency(pathToRoot, n) >= 3) return Game.GameState.DRAW; //threefold repetition
+        for (Node n : pathToRoot) {
+            if (Collections.frequency(pathToRoot, Zobrist.getZobristKey(n.boardState)) >= 3)
+                return Game.GameState.DRAW; //threefold repetition
         }
 
         //no legal moves
@@ -338,8 +343,8 @@ public class Engine {
         return Game.GameState.ONGOING;
     }
 
-    private class Node {
-        List<Node> children;
+    public class Node {
+        public List<Node> children;
         double N; //How often parent node has been visited
         double n; //How often this node has been visited
         double v; //Result of child nodes games
@@ -350,7 +355,7 @@ public class Engine {
 
         Node() {
             parents = null;
-            move = null;
+            move = new Move();
             children = null;
             boardState = new Board();
 
