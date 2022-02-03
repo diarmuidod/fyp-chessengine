@@ -7,6 +7,7 @@ import Debug.Perft;
 import Engine.Engine;
 import Utils.Utils;
 
+import java.sql.SQLException;
 import java.util.*;
 
 public class Game {
@@ -57,7 +58,7 @@ public class Game {
         mctsEngine = engine;
     }
 
-    public void playGame() {
+    public void playGame() throws SQLException {
         Perft perft = new Perft();
         Move activeMove = null;
         List<Move> legalMoves;

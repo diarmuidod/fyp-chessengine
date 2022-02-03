@@ -26,15 +26,6 @@ public class Engine {
     public Node root;
 
     public Engine() {
-        try {
-            conn = DriverManager.getConnection("jdbc:mysql://localhost/test?" + "user=root&password=");
-        } catch (SQLException ex) {
-            // handle any errors
-            System.out.println("SQLException: " + ex.getMessage());
-            System.out.println("SQLState: " + ex.getSQLState());
-            System.out.println("VendorError: " + ex.getErrorCode());
-        }
-
         root = new Node();
         transpositionTable = new Hashtable<>();
         transpositionTable.put(Zobrist.getZobristKey(root.boardState), root);
@@ -114,7 +105,7 @@ public class Engine {
         return leafNode;
     }
 
-    public void trainEngine(long timeInSeconds) {
+    public void trainEngine(long timeInSeconds) throws SQLException {
         int iterations = 0;
         if (getGameState(root) != Game.GameState.ONGOING) return;
 
@@ -132,8 +123,12 @@ public class Engine {
             Node expandedChild = expansion(selectedChild);
             double result = rollout(expandedChild);
             root = backpropagation(expandedChild, result);
+
+            if(iterations % 1000 == 0) storeSearchResults();
             iterations++;
         }
+
+        storeSearchResults();
 
         for (Node child : root.children) {
             System.out.println(child.move + ", N: " + child.N + ", n: " + child.n + ", v: " + child.v + ", UCB: " + getUCB(child));
@@ -163,15 +158,20 @@ public class Engine {
                 }
             }
         }
-
+        System.out.println("selected child");
         return selectedChild;
     }
 
     public Node expansion(Node node) {
+        System.out.println("expanding child");
         if (node.children == null) return node;
+        if (node.children.size() == 0) return node;
+        if(getGameState(node) != Game.GameState.ONGOING) return node;
 
+        System.out.println("getting child node");
         Node currentChild = node.children.get(0);
         double currentUCB;
+
 
         for (Node n : node.children) {
             currentUCB = getUCB(n);
@@ -199,6 +199,8 @@ public class Engine {
 
         if (node.children == null) node.children = generateChildren(node);
         Node child = node.children.get(rand.nextInt(node.children.size()));
+
+        System.out.println("rollout child");
         return rollout(child);
     }
 
@@ -208,8 +210,11 @@ public class Engine {
 
         while (true) {
             node.N += 1;
-            if (node.parents == null) return node;
-            node = node.parents.get(0);
+            if (node.parents == null) {
+                System.out.println("backpropagated child");
+                return node;
+            }
+            node = node.parents.get(node.parents.size() - 1);
         }
     }
 
@@ -218,6 +223,8 @@ public class Engine {
     }
 
     public void storeSearchResults() throws SQLException {
+        conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/chessdb", "root", "");
+        System.out.println("opened connection");
         Set<Map.Entry<Long, Node>> entrySet = transpositionTable.entrySet();
         stmt = conn.createStatement();
 
@@ -231,29 +238,41 @@ public class Engine {
             move = node.move.toString();
 
             rs = stmt.executeQuery("SELECT * FROM nodeTbl WHERE zobristKey = " + key);
+            System.out.println("selected node from table");
 
             if (!rs.next()) { //node does not exist in database
                 stmt.executeUpdate("INSERT INTO nodeTbl VALUES (" + key + ", " + move + ", " + node.N + ", " + node.n + ", " + node.v + ")");
-
+                System.out.println("inserted new node");
                 if (node.parents != null) {
                     for (Node parent : node.parents) {
                         long parentKey = Zobrist.getZobristKey(parent.boardState);
                         rs = stmt.executeQuery("SELECT * FROM parentChildTbl WHERE parentKey = " + parentKey);
+                        System.out.println("selected node for parent child relationship");
 
                         if (!rs.next()) { //parent child relationship not in db
                             stmt.executeUpdate("INSERT INTO parentChildTbl VALUES (" + parentKey + ", " + key + ")");
+                            System.out.println("inserted new parent child relationship");
                         }
                     }
                 }
             } else { //node exists in database
+                double parentVisits = rs.getDouble(3) + node.N;
+                double childVisits = rs.getDouble(4) + node.n;
+                double resultValue = rs.getDouble(5) + node.v;
 
+                stmt.executeUpdate("UPDATE nodeTbl SET parentVisits = " + parentVisits +
+                                                        ", childVisits = " + childVisits +
+                                                        ", nodeValue = " + resultValue + " WHERE zobristKey = " + key);
+                System.out.println("updated existing node values");
             }
         }
 
         if (stmt != null) stmt.close();
         if (rs != null) rs.close();
-
+        conn.close();
+        System.out.println("closed connection");
         transpositionTable = new Hashtable<>();
+        transpositionTable.put(Zobrist.getZobristKey(root.boardState), root);
     }
 
     public List<Node> generateChildren(Node node) {
@@ -267,6 +286,7 @@ public class Engine {
         for (Node child : children) {
             Node exists = transpositionTable.get(Zobrist.getZobristKey(child.boardState));
             if (exists != null) { //found known position by transposition
+                exists.parents = new LinkedList<>();
                 exists.parents.add(node);
                 toRemove.add(child);
             } else { //found new position
@@ -288,11 +308,12 @@ public class Engine {
         if (node.boardState.fiftyMoveCount >= 50) {
             return Game.GameState.DRAW;
         }
+        System.out.println("not a 50 move draw");
 
-        pathToRoot.clear();
         while(node.parents != null) {
+            System.out.println("looking for root");
             pathToRoot.add(node);
-            node = node.parents.get(node.parents.size() - 1);
+            node = node.parents.get(0);
         }
 
         for(Node n : pathToRoot) {
@@ -317,7 +338,7 @@ public class Engine {
         return Game.GameState.ONGOING;
     }
 
-    private static class Node {
+    private class Node {
         List<Node> children;
         double N; //How often parent node has been visited
         double n; //How often this node has been visited

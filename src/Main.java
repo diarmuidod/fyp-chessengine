@@ -1,10 +1,12 @@
 import Board.Board;
 import Board.Zobrist;
 import Debug.MoveGenTest;
+import Engine.Engine;
 import GUI.UserInterface;
 import GameManager.Game;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 public class Main {
     static UserInterface ui;
@@ -24,10 +26,9 @@ public class Main {
             "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
             "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10"};
 
-    public static void main(String[] args) throws IOException {
-        //Zobrist.readRandomNumbers();
-        //game.mctsEngine.trainEngine(60);
-        ui = new UserInterface();
+    public static void main(String[] args) throws IOException, SQLException {
+        Engine engine = new Engine();
+        engine.trainEngine(0);
     }
 }
 

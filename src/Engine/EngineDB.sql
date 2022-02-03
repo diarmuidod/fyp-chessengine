@@ -1,10 +1,8 @@
-CREATE DATABASE IF NOT EXISTS fypChessEngineDB;
-USE fypChessEngineDB;
+USE chessdb;
 
 CREATE TABLE IF NOT EXISTS nodeTbl (
-	zobristKey LONG PRIMARY KEY,
+	zobristKey LONG,
     move CHAR(8),
-    fen CHAR(90),
     parentVisits DOUBLE, # N
     childVisits DOUBLE,  # n
     nodeValue DOUBLE	 # v
