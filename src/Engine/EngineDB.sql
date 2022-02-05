@@ -2,24 +2,30 @@ USE chessdb;
 
 DROP TABLE IF EXISTS nodeTbl;
 CREATE TABLE IF NOT EXISTS nodeTbl (
-	zobristKey LONG,
+	zobristKey BIGINT,
     parentVisits DOUBLE, # N
     childVisits DOUBLE,  # n
-    nodeValue DOUBLE	 # v
+    nodeValue DOUBLE,	 # v
+    CONSTRAINT node_PK PRIMARY KEY (zobristKey)
 );
 
 DROP TABLE IF EXISTS parentChildTbl;
 CREATE TABLE IF NOT EXISTS parentChildTbl (
-	parentKey LONG,
-    childKey LONG,
-    move VARCHAR(8)
+	parentKey BIGINT,
+    childKey BIGINT,
+    move VARCHAR(8),
+    CONSTRAINT parentChild_PK PRIMARY KEY (parentKey, childKey)
 );
 
 DROP TABLE IF EXISTS initialisingZobristValuesTbl;
 CREATE TABLE IF NOT EXISTS initialisingZobristValuesTbl (
-	zobristKey LONG
+	zobristKey BIGINT UNIQUE
 );
 
-DESC nodeTbl;
-SELECT * FROM parentChildTbl;
 SELECT * FROM nodeTbl;
+SELECT * FROM parentChildTbl;
+
+SELECT COUNT(*) FROM nodeTbl;
+SELECT COUNT(*) FROM parentChildTbl;
+
+
