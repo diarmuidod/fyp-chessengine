@@ -18,11 +18,15 @@ public class Engine {
 
     Connection conn = null;
     Statement stmt = null;
+    ResultSet rs= null;
+
     LinkedList<Integer> gameLength = new LinkedList<>();
     private static final MoveGenerator moveGenerator = new MoveGenerator();
     private static final Random rand = new Random();
     private static Hashtable<Long, Node> transpositionTable;
     LinkedList<Node> pathToRoot;
+
+    SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
 
     public Node root;
 
@@ -32,35 +36,18 @@ public class Engine {
         transpositionTable = new Hashtable<>();
         transpositionTable.put(Zobrist.getZobristKey(root.boardState), root);
         pathToRoot = new LinkedList<>();
-
     }
 
-    public Move getBestMove(List<Move> movesPlayed, long timeInSeconds) {
+    public Move getBestMove(List<Move> movesPlayed) {
+        double currentUCB;
         Node node = findMoveNode(movesPlayed);
 
         if (getGameState(node) != Game.GameState.ONGOING) return null;
 
-        boolean timeRemaining = true;
-        long startTime = System.currentTimeMillis();
-
-        double currentUCB;
-
         if (node.children == null) {
             node.children = generateChildren(node);
+            return node.children.get(rand.nextInt(node.children.size() - 1)).move;
         }
-
-        System.out.println("Node children: " + node.children);
-
-        while (timeRemaining) {
-            timeRemaining = System.currentTimeMillis() < startTime + (timeInSeconds * 1000);
-
-            Node selectedChild = selection(node);
-            Node expandedChild = expansion(selectedChild);
-            double result = rollout(expandedChild);
-            node = backpropagation(expandedChild, result);
-        }
-
-        node = findMoveNode(movesPlayed);
 
         Node bestMoveNode = node.children.get(0);
 
@@ -77,16 +64,7 @@ public class Engine {
             }
         }
 
-        Move bestMove = bestMoveNode.move;
-
-        //trust me, I hate it too
-        for (Move m : moveGenerator.getLegalMoves(bestMoveNode.boardState)) {
-            if (bestMoveNode.boardState.equals(moveGenerator.makeMove(m, node.boardState))) {
-                bestMove = m;
-            }
-        }
-
-        return Objects.requireNonNull(bestMove);
+        return Objects.requireNonNull(bestMoveNode.move);
     }
 
     public Node findMoveNode(List<Move> movesPlayed) {
@@ -109,10 +87,10 @@ public class Engine {
     }
 
     public void trainEngine(long timeInSeconds) throws SQLException {
-        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
-        Date date = new Date(System.currentTimeMillis());
+        conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/chessdb", "root", "");
+        stmt = conn.createStatement();
 
-        System.out.println("Start Training: " + formatter.format(date));
+        System.out.println("Start Training: " + formatter.format(new Date(System.currentTimeMillis())));
         if (getGameState(root) != Game.GameState.ONGOING) return;
 
         boolean timeRemaining = true;
@@ -122,7 +100,11 @@ public class Engine {
             root.children = generateChildren(root);
         }
 
+        int gamesPlayed = 0;
+
         while (timeRemaining) {
+            if(gamesPlayed % 64 == 0) storeSearchResults();
+
             timeRemaining = System.currentTimeMillis() < startTime + (timeInSeconds * 1000);
 
             Node selectedChild = selection(root);
@@ -130,21 +112,23 @@ public class Engine {
             double result = rollout(expandedChild);
             root = backpropagation(expandedChild, result);
 
-            gameLength.add(pathToRoot.size() /2);
+            gameLength.add(pathToRoot.size() / 2);
             System.out.println("Moves in game: " + pathToRoot.size() / 2);
 
             pathToRoot.clear();
+            gamesPlayed++;
         }
 
-        date = new Date(System.currentTimeMillis());
         System.out.println("\nGames played: " + gameLength.size());
 
         int avgGame = 0;
         for(Integer i : gameLength) avgGame += i;
         System.out.println("Average game length: " + avgGame / gameLength.size());
 
-        System.out.println("Start Storing: " + formatter.format(date));
         storeSearchResults();
+
+        if (stmt != null) stmt.close();
+        if(conn != null) conn.close();
     }
 
     public Node selection(Node node) {
@@ -218,7 +202,7 @@ public class Engine {
         node.n += 1;
         node.v += reward;
 
-        if(!transpositionTable.contains(node)) transpositionTable.put(Zobrist.getZobristKey(node.boardState), node);
+        transpositionTable.put(Zobrist.getZobristKey(node.boardState), node);
 
         while (true) {
             node.N += 1;
@@ -235,12 +219,11 @@ public class Engine {
     }
 
     public void storeSearchResults() throws SQLException {
-        conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/chessdb", "root", "");
-        stmt = conn.createStatement();
-
         long key;
         Node node;
         String move;
+
+        System.out.println("Start Storing: " + formatter.format(new Date(System.currentTimeMillis())));
 
         for (Entry<Long, Node> entry : transpositionTable.entrySet()) {
             key = entry.getKey();
@@ -264,8 +247,7 @@ public class Engine {
             }
         }
 
-        if (stmt != null) stmt.close();
-        if(conn != null) conn.close();
+        System.out.println("Finish Storing: " + formatter.format(new Date(System.currentTimeMillis())));
 
         root = new Node();
         transpositionTable.clear();
@@ -279,21 +261,37 @@ public class Engine {
             children.add(new Node(node, move));
         }
 
-        List<Node> toRemove = new LinkedList<>();
-        for (Node child : children) {
-            Node exists = transpositionTable.get(Zobrist.getZobristKey(child.boardState));
-            if (exists != null) { //found known position by transposition
-                if(!exists.parents.contains(node)) exists.parents.add(node);
-                toRemove.add(child);
+        //update children with db data
+        String sql = "SELECT * FROM nodeTbl WHERE zobristKey IN (SELECT childKey FROM parentChildTbl WHERE parentKey = "
+                     + Zobrist.getZobristKey(node.boardState) + ")";
+
+        long key;
+        double parentVisits, childVisits, value;
+        try {
+            rs = stmt.executeQuery(sql);
+            boolean found;
+            while(rs.next()) {
+                key = rs.getLong(1);
+                parentVisits = rs.getLong(2);
+                childVisits = rs.getLong(3);
+                value = rs.getLong(4);
+
+                found = false;
+                for(Node n : children) {
+                    if(Zobrist.getZobristKey(n.boardState) == key) {
+                        n.N = parentVisits;
+                        n.n = childVisits;
+                        n.v = value;
+                        found = true;
+                        break;
+                    }
+                }
+
+                if(!found) System.out.println("Child of " + key + " not found.");
             }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
-
-        for (Node value : toRemove) {
-            Node exists = transpositionTable.get(Zobrist.getZobristKey(value.boardState));
-            children.add(exists);
-        }
-
-        children.removeAll(toRemove);
 
         return children;
     }
@@ -301,11 +299,6 @@ public class Engine {
     public Game.GameState getGameState(Node node) {
         if (node.boardState.fiftyMoveCount >= 50) {
             return Game.GameState.DRAW;
-        }
-
-        for (Node n : pathToRoot) {
-            if (Collections.frequency(pathToRoot, Zobrist.getZobristKey(n.boardState)) >= 3)
-                return Game.GameState.DRAW; //threefold repetition
         }
 
         //no legal moves
@@ -321,6 +314,14 @@ public class Engine {
             }
 
             return Game.GameState.DRAW;
+        }
+
+        //threefold repetition
+        for (Node n : pathToRoot) {
+            if (Collections.frequency(pathToRoot, Zobrist.getZobristKey(n.boardState)) >= 3) {
+                System.out.println("Threefold repetition - " + gameLength.size());
+                return Game.GameState.DRAW;
+            }
         }
 
         return Game.GameState.ONGOING;

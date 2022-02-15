@@ -93,7 +93,7 @@ public class Game {
                 }
             } else {
                 mctsEngine.trainEngine(5);
-                activeMove = mctsEngine.getBestMove(movesPlayed, 0);
+                activeMove = mctsEngine.getBestMove(movesPlayed);
             }
 
             board = moveGenerator.makeMove(Objects.requireNonNull(activeMove), board);

@@ -37,7 +37,7 @@ public class Main {
         System.out.println("Start Time: " + formatter.format(date));
         Engine engine = new Engine();
 
-        engine.trainEngine(30);
+        engine.trainEngine(300);
 
         date = new Date(System.currentTimeMillis());
         System.out.println("End Time: " + formatter.format(date));
