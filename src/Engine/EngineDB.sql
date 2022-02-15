@@ -1,6 +1,9 @@
 USE chessdb;
 
+DROP TABLE IF EXISTS parentChildTbl;
 DROP TABLE IF EXISTS nodeTbl;
+DROP TABLE IF EXISTS initialisingZobristValuesTbl;
+
 CREATE TABLE IF NOT EXISTS nodeTbl (
 	zobristKey BIGINT UNIQUE,
     parentVisits DOUBLE, # N
@@ -9,18 +12,13 @@ CREATE TABLE IF NOT EXISTS nodeTbl (
     CONSTRAINT node_PK PRIMARY KEY (zobristKey)
 );
 
-DROP TABLE IF EXISTS parentChildTbl;
 CREATE TABLE IF NOT EXISTS parentChildTbl (
 	parentKey BIGINT,
     childKey BIGINT,
     move VARCHAR(8),
-    CONSTRAINT parentChild_PK PRIMARY KEY (parentKey, childKey),
-    CONSTRAINT parentKey_FK FOREIGN KEY (parentKey) REFERENCES nodeTbl(zobristKey),
-    CONSTRAINT childKey_FK FOREIGN KEY (childKey) REFERENCES nodeTbl(zobristKey),
     CONSTRAINT uniquePairs_UQ UNIQUE (parentKey, childKey)
 );
 
-DROP TABLE IF EXISTS initialisingZobristValuesTbl;
 CREATE TABLE IF NOT EXISTS initialisingZobristValuesTbl (
 	zobristKey BIGINT UNIQUE
 );
