@@ -1,8 +1,5 @@
-import Board.Board;
-import Board.Zobrist;
 import Debug.MoveGenTest;
 import Engine.Engine;
-import Engine.Engine.Node;
 import GUI.UserInterface;
 import GameManager.Game;
 
@@ -10,7 +7,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.LinkedList;
 
 public class Main {
     static UserInterface ui;
@@ -31,13 +27,14 @@ public class Main {
             "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10"};
 
     public static void main(String[] args) throws IOException, SQLException {
+        Engine engine = new Engine();
+
         SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
         Date date = new Date(System.currentTimeMillis());
 
         System.out.println("Start Time: " + formatter.format(date));
-        Engine engine = new Engine();
 
-        engine.trainEngine(300);
+        engine.trainEngine(36000);
 
         date = new Date(System.currentTimeMillis());
         System.out.println("End Time: " + formatter.format(date));

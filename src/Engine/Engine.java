@@ -8,9 +8,13 @@ import GameManager.Game;
 
 import java.sql.*;
 import java.text.SimpleDateFormat;
-import java.util.*;
 import java.util.Date;
+import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.TimeUnit;
+
+import static java.lang.Math.log;
+import static java.lang.Math.sqrt;
 
 
 public class Engine {
@@ -18,7 +22,7 @@ public class Engine {
 
     Connection conn = null;
     Statement stmt = null;
-    ResultSet rs= null;
+    ResultSet rs = null;
 
     LinkedList<Integer> gameLength = new LinkedList<>();
     private static final MoveGenerator moveGenerator = new MoveGenerator();
@@ -103,93 +107,103 @@ public class Engine {
         int gamesPlayed = 0;
 
         while (timeRemaining) {
-            if(gamesPlayed % 64 == 0) storeSearchResults();
-
             timeRemaining = System.currentTimeMillis() < startTime + (timeInSeconds * 1000);
 
             Node selectedChild = selection(root);
             Node expandedChild = expansion(selectedChild);
-            double result = rollout(expandedChild);
+            long result = rollout(expandedChild);
             root = backpropagation(expandedChild, result);
-
-            gameLength.add(pathToRoot.size() / 2);
-            System.out.println("Moves in game: " + pathToRoot.size() / 2);
-
-            pathToRoot.clear();
             gamesPlayed++;
+
+            if (gamesPlayed % 64 == 0) storeSearchResults();
+
+            //System.out.println(pathToRoot);
+            pathToRoot.clear();
         }
 
         System.out.println("\nGames played: " + gameLength.size());
 
         int avgGame = 0;
-        for(Integer i : gameLength) avgGame += i;
+        for (Integer i : gameLength) avgGame += i;
         System.out.println("Average game length: " + avgGame / gameLength.size());
 
         storeSearchResults();
 
         if (stmt != null) stmt.close();
-        if(conn != null) conn.close();
+        if (conn != null) conn.close();
     }
 
     public Node selection(Node node) {
-        if(!pathToRoot.contains(node)) pathToRoot.add(node);
-
-        double currentUCB;
+        if (!pathToRoot.contains(node)) pathToRoot.add(node);
         if (node.children == null) node.children = generateChildren(node);
 
         Node selectedChild = node.children.get(0);
 
-        for (Node n : node.children) {
-            currentUCB = getUCB(n);
+        while (true) {
+            if (node.children == null) node.children = generateChildren(node);
+            if (node.boardState.whiteToMove) {
+                double maxUCB = Double.NEGATIVE_INFINITY;
+                for (Node n : node.children) {
+                    if (n.isLeafNode()) {
+                        return n;
+                    }
 
-            if (n.boardState.whiteToMove) {
-                if (currentUCB > getUCB(selectedChild)) {
-                    selectedChild = n;
+                    if (getUCB(n) > maxUCB) {
+                        maxUCB = getUCB(n);
+                        selectedChild = n;
+                    }
                 }
             } else {
-                if (currentUCB < getUCB(selectedChild)) {
-                    selectedChild = n;
+                double minUCB = Double.POSITIVE_INFINITY;
+                for (Node n : node.children) {
+                    if (n.isLeafNode()) {
+                        return n;
+                    }
+
+                    if (getUCB(n) < minUCB) {
+                        minUCB = getUCB(n);
+                        selectedChild = n;
+                    }
                 }
             }
-        }
 
-        return selectedChild;
+            node = selectedChild;
+        }
     }
 
     public Node expansion(Node node) {
-        if(!pathToRoot.contains(node)) pathToRoot.add(node);
-
-        if (node.children == null) return node;
-        if (node.children.size() == 0) return node;
+        if (!pathToRoot.contains(node)) pathToRoot.add(node);
+        if (node.children == null) node.children = generateChildren(node);
         if (getGameState(node) != Game.GameState.ONGOING) return node;
 
-        Node currentChild = node.children.get(0);
-        double currentUCB;
+        Node expandingChild = node.children.get(0);
 
-        for (Node n : node.children) {
-            currentUCB = getUCB(n);
-
-            if (node.boardState.whiteToMove) {
-                if (currentUCB > getUCB(currentChild)) {
-                    currentChild = n;
-                }
-            } else {
-                if (currentUCB < getUCB(currentChild)) {
-                    currentChild = n;
-                }
+        if (node.boardState.whiteToMove) {
+            double maxUCB = Double.NEGATIVE_INFINITY;
+            for (Node n : node.children) {
+                double tempUCB = getUCB(n);
+                if (tempUCB > maxUCB) expandingChild = n;
+            }
+        } else {
+            double minUCB = Double.POSITIVE_INFINITY;
+            for (Node n : node.children) {
+                double tempUCB = getUCB(n);
+                if (tempUCB < minUCB) expandingChild = n;
             }
         }
 
-        return expansion(Objects.requireNonNull(currentChild));
+        return expandingChild;
     }
 
-    public double rollout(Node node) {
-        if(!pathToRoot.contains(node)) pathToRoot.add(node);
+    public long rollout(Node node) {
+        if (!pathToRoot.contains(node)) pathToRoot.add(node);
 
-        if (getGameState(node) != Game.GameState.ONGOING) {
-            if (getGameState(node) == Game.GameState.WHITE_WINS) return 1;
-            if (getGameState(node) == Game.GameState.BLACK_WINS) return -1;
-            if (getGameState(node) == Game.GameState.DRAW) return 0;
+        Game.GameState state = getGameState(node);
+
+        if (state != Game.GameState.ONGOING) {
+            if (state == Game.GameState.WHITE_WINS) return 1;
+            if (state == Game.GameState.BLACK_WINS) return -1;
+            if (state == Game.GameState.DRAW) return 0;
         }
 
         if (node.children == null) node.children = generateChildren(node);
@@ -198,24 +212,47 @@ public class Engine {
         return rollout(child);
     }
 
-    public Node backpropagation(Node node, double reward) {
-        node.n += 1;
-        node.v += reward;
-
-        transpositionTable.put(Zobrist.getZobristKey(node.boardState), node);
-
-        while (true) {
-            node.N += 1;
-            if (node.parents == null) {
-                return node;
+    public Node backpropagation(Node node, long reward) {
+        while (node.parent != null) {
+            node.n += 1;
+            if (reward == 1) {
+                node.wV++;
+            } else if (reward == -1) {
+                node.bV++;
             }
 
-            node = node.parents.get(node.parents.size() - 1);
+            transpositionTable.put(Zobrist.getZobristKey(node.boardState), node);
+            node = node.parent;
         }
+
+        //update root node
+        node.n = 0;
+        node.wV = 0;
+        node.bV = 0;
+
+        for (Node n : node.children) {
+            node.n += n.n;
+            node.wV += n.wV;
+            node.bV += n.bV;
+        }
+
+        return node;
     }
 
     public double getUCB(Node node) {
-        return node.v + Math.sqrt(2) * Math.sqrt(Math.log(Math.max(node.N, 1)) / Math.max(node.n, 1));
+        double exploit = (node.boardState.whiteToMove ? node.wV : node.bV) / (node.n * 1.0);
+        double constant = sqrt(2);
+        double explore = sqrt(log(node.parent.n / (node.n * 1.0)));
+
+        return node.n == 0 ? 0 : exploit + constant * explore;
+    }
+
+    public double getUCB(double parentN, double thisN, double v) {
+        double exploit = v / thisN;
+        double constant = sqrt(2);
+        double explore = sqrt(log(parentN / thisN));
+
+        return thisN == 0 ? 0 : exploit + constant * explore;
     }
 
     public void storeSearchResults() throws SQLException {
@@ -223,31 +260,32 @@ public class Engine {
         Node node;
         String move;
 
-        System.out.println("Start Storing: " + formatter.format(new Date(System.currentTimeMillis())));
+        long startTime = System.currentTimeMillis();
+
+        System.out.print("Stored ");
 
         for (Entry<Long, Node> entry : transpositionTable.entrySet()) {
             key = entry.getKey();
             node = entry.getValue();
             move = node.move.toString();
 
-            String sql = "INSERT INTO nodeTbl (zobristKey, parentVisits, childVisits, nodeValue) " +
-                         "VALUES (" + key + ", " + node.N + ", " + node.n + ", " + node.v + ") " +
-                         "ON DUPLICATE KEY UPDATE " +
-                         "parentVisits = parentVisits + " + node.N + "," +
-                         "childVisits = childVisits + " + node.n + "," +
-                         "nodeValue = nodeValue + " + node.v;
+            String sql = "INSERT INTO nodeTbl (zobristKey, visits, wValue, bValue) " +
+                    "VALUES (" + key + ", " + node.n + ", " + node.wV + ", " + node.bV + ") " +
+                    "ON DUPLICATE KEY UPDATE " +
+                    "visits = visits + " + node.n + "," +
+                    "wValue = wValue + " + node.wV + "," +
+                    "bValue = bValue + " + node.bV;
 
             stmt.execute(sql);
 
-            if (node.parents == null) continue;
+            if (node.parent == null) continue;
 
-            for (Node parent : node.parents) {
-                long parentKey = Zobrist.getZobristKey(parent.boardState);
-                stmt.executeUpdate("INSERT IGNORE INTO parentChildTbl VALUES (" + parentKey + ", " + key + ", \"" + move + "\")");
-            }
+            long parentKey = Zobrist.getZobristKey(node.parent.boardState);
+            stmt.executeUpdate("INSERT IGNORE INTO parentChildTbl VALUES (" + parentKey + ", " + key + ", \"" + move + "\")");
+
         }
 
-        System.out.println("Finish Storing: " + formatter.format(new Date(System.currentTimeMillis())));
+        System.out.println(transpositionTable.size() + " nodes in " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime) + " seconds.");
 
         root = new Node();
         transpositionTable.clear();
@@ -262,32 +300,28 @@ public class Engine {
         }
 
         //update children with db data
-        String sql = "SELECT * FROM nodeTbl WHERE zobristKey IN (SELECT childKey FROM parentChildTbl WHERE parentKey = "
-                     + Zobrist.getZobristKey(node.boardState) + ")";
+        String dataSQL = "SELECT * FROM nodeTbl WHERE zobristKey IN " +
+                "(SELECT childKey FROM parentChildTbl WHERE parentKey = " + Zobrist.getZobristKey(node.boardState) + ")";
 
-        long key;
-        double parentVisits, childVisits, value;
+        long key, visits, wValue, bValue;
+
         try {
-            rs = stmt.executeQuery(sql);
-            boolean found;
-            while(rs.next()) {
-                key = rs.getLong(1);
-                parentVisits = rs.getLong(2);
-                childVisits = rs.getLong(3);
-                value = rs.getLong(4);
+            rs = stmt.executeQuery(dataSQL);
 
-                found = false;
-                for(Node n : children) {
-                    if(Zobrist.getZobristKey(n.boardState) == key) {
-                        n.N = parentVisits;
-                        n.n = childVisits;
-                        n.v = value;
-                        found = true;
+            while (rs.next()) {
+                key = rs.getLong(1);
+                visits = rs.getLong(2);
+                wValue = rs.getLong(3);
+                bValue = rs.getLong(4);
+
+                for (Node n : children) {
+                    if (Zobrist.getZobristKey(n.boardState) == key) {
+                        n.n = visits;
+                        n.wV = wValue;
+                        n.bV = bValue;
                         break;
                     }
                 }
-
-                if(!found) System.out.println("Child of " + key + " not found.");
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -329,35 +363,38 @@ public class Engine {
 
     public class Node {
         public List<Node> children;
-        double N; //How often parent node has been visited
-        double n; //How often this node has been visited
-        double v; //Result of child nodes games
+        long n; //How often this node has been visited
+        long wV; //White wins from position
+        long bV; //Black wins from position
 
-        List<Node> parents;
+        Node parent;
         Move move;
         Board boardState;
 
         Node() {
-            parents = null;
+            parent = null;
             move = new Move();
             children = null;
             boardState = new Board();
 
-            N = 0.0d;
-            n = 0.0d;
-            v = 0.0d;
+            n = 0;
+            wV = 0;
+            bV = 0;
         }
 
         Node(Node parent, Move move) {
-            this.parents = new LinkedList<>();
-            parents.add(parent);
+            this.parent = parent;
             this.move = move;
             children = null;
             boardState = moveGenerator.makeMove(move, parent.boardState);
 
-            N = 0.0d;
-            n = 0.0d;
-            v = 0.0d;
+            n = 0;
+            wV = 0;
+            bV = 0;
+        }
+
+        public boolean isLeafNode() {
+            return n == 0;
         }
 
         public String toString() {
