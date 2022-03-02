@@ -270,12 +270,8 @@ public class Engine {
             node = entry.getValue();
             move = node.move.toString();
 
-            String sql = "INSERT INTO nodeTbl (zobristKey, visits, wValue, bValue) " +
-                    "VALUES (" + key + ", " + node.n.toString() + ", " + node.wV.toString() + ", " + node.bV.toString() + ") " +
-                    "ON DUPLICATE KEY UPDATE " +
-                    "visits = " + node.n.toString() + "," +
-                    "wValue = " + node.wV.toString() + "," +
-                    "bValue = " + node.bV.toString();
+            String sql = "REPLACE INTO nodeTbl (zobristKey, visits, wValue, bValue) " +
+                    "VALUES (" + key + ", " + node.n.toString() + ", " + node.wV.toString() + ", " + node.bV.toString() + ")";
 
             stmt.execute(sql);
 
