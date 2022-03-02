@@ -50,6 +50,7 @@ import java.util.concurrent.Future;
  * @author Simon Klein
  * @version 0.7
  */
+@SuppressWarnings("ALL")
 public class BigInt extends Number implements Comparable<BigInt> {
     /**
      * Used to cast a (base 2^32) digit to a long without getting unwanted sign extension.

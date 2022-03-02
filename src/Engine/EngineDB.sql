@@ -6,9 +6,9 @@ DROP TABLE IF EXISTS initialisingZobristValuesTbl;
 
 CREATE TABLE IF NOT EXISTS nodeTbl (
 	zobristKey BIGINT UNIQUE,
-    visits BIGINT,  # n
-    wValue BIGINT,	# wV
-    bValue BIGINT,	# bV
+    visits BIGINT UNSIGNED,  # n
+    wValue BIGINT UNSIGNED,	# wV
+    bValue BIGINT UNSIGNED,	# bV
     CONSTRAINT node_PK PRIMARY KEY (zobristKey)
 );
 

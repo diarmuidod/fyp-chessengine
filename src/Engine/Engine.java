@@ -5,6 +5,7 @@ import Board.Move;
 import Board.MoveGenerator;
 import Board.Zobrist;
 import GameManager.Game;
+import Utils.BigInt;
 
 import java.sql.*;
 import java.text.SimpleDateFormat;
@@ -214,11 +215,11 @@ public class Engine {
 
     public Node backpropagation(Node node, long reward) {
         while (node.parent != null) {
-            node.n += 1;
+            node.n.add(1);
             if (reward == 1) {
-                node.wV++;
+                node.wV.add(1);
             } else if (reward == -1) {
-                node.bV++;
+                node.bV.add(1);
             }
 
             transpositionTable.put(Zobrist.getZobristKey(node.boardState), node);
@@ -226,25 +227,25 @@ public class Engine {
         }
 
         //update root node
-        node.n = 0;
-        node.wV = 0;
-        node.bV = 0;
+        node.n.assign(0);
+        node.wV.assign(0);
+        node.bV.assign(0);
 
         for (Node n : node.children) {
-            node.n += n.n;
-            node.wV += n.wV;
-            node.bV += n.bV;
+            node.n.add(n.n);
+            node.wV.add(n.wV);
+            node.bV.add(n.bV);
         }
 
         return node;
     }
 
     public double getUCB(Node node) {
-        double exploit = (node.boardState.whiteToMove ? node.wV : node.bV) / (node.n * 1.0);
+        double exploit = (node.boardState.whiteToMove ? node.wV.doubleValue() : node.bV.doubleValue()) / (node.n.doubleValue());
         double constant = sqrt(2);
-        double explore = sqrt(log(node.parent.n / (node.n * 1.0)));
+        double explore = sqrt(log(node.parent.n.doubleValue() / node.n.doubleValue()));
 
-        return node.n == 0 ? 0 : exploit + constant * explore;
+        return node.n.isZero() ? 0 : exploit + constant * explore;
     }
 
     public double getUCB(double parentN, double thisN, double v) {
@@ -270,11 +271,11 @@ public class Engine {
             move = node.move.toString();
 
             String sql = "INSERT INTO nodeTbl (zobristKey, visits, wValue, bValue) " +
-                    "VALUES (" + key + ", " + node.n + ", " + node.wV + ", " + node.bV + ") " +
+                    "VALUES (" + key + ", " + node.n.toString() + ", " + node.wV.toString() + ", " + node.bV.toString() + ") " +
                     "ON DUPLICATE KEY UPDATE " +
-                    "visits = visits + " + node.n + "," +
-                    "wValue = wValue + " + node.wV + "," +
-                    "bValue = bValue + " + node.bV;
+                    "visits = " + node.n.toString() + "," +
+                    "wValue = " + node.wV.toString() + "," +
+                    "bValue = " + node.bV.toString();
 
             stmt.execute(sql);
 
@@ -282,7 +283,6 @@ public class Engine {
 
             long parentKey = Zobrist.getZobristKey(node.parent.boardState);
             stmt.executeUpdate("INSERT IGNORE INTO parentChildTbl VALUES (" + parentKey + ", " + key + ", \"" + move + "\")");
-
         }
 
         System.out.println(transpositionTable.size() + " nodes in " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime) + " seconds.");
@@ -303,22 +303,23 @@ public class Engine {
         String dataSQL = "SELECT * FROM nodeTbl WHERE zobristKey IN " +
                 "(SELECT childKey FROM parentChildTbl WHERE parentKey = " + Zobrist.getZobristKey(node.boardState) + ")";
 
-        long key, visits, wValue, bValue;
+        long key;
+        String visits, wValue, bValue;
 
         try {
             rs = stmt.executeQuery(dataSQL);
 
             while (rs.next()) {
                 key = rs.getLong(1);
-                visits = rs.getLong(2);
-                wValue = rs.getLong(3);
-                bValue = rs.getLong(4);
+                visits = rs.getString(2);
+                wValue = rs.getString(3);
+                bValue = rs.getString(4);
 
                 for (Node n : children) {
                     if (Zobrist.getZobristKey(n.boardState) == key) {
-                        n.n = visits;
-                        n.wV = wValue;
-                        n.bV = bValue;
+                        n.n = new BigInt(visits);
+                        n.wV = new BigInt(wValue);
+                        n.bV = new BigInt(bValue);
                         break;
                     }
                 }
@@ -363,9 +364,9 @@ public class Engine {
 
     public class Node {
         public List<Node> children;
-        long n; //How often this node has been visited
-        long wV; //White wins from position
-        long bV; //Black wins from position
+        BigInt n; //How often this node has been visited
+        BigInt wV; //White wins from position
+        BigInt bV; //Black wins from position
 
         Node parent;
         Move move;
@@ -377,9 +378,9 @@ public class Engine {
             children = null;
             boardState = new Board();
 
-            n = 0;
-            wV = 0;
-            bV = 0;
+            n = new BigInt(0);
+            wV = new BigInt(0);
+            bV = new BigInt(0);
         }
 
         Node(Node parent, Move move) {
@@ -388,13 +389,13 @@ public class Engine {
             children = null;
             boardState = moveGenerator.makeMove(move, parent.boardState);
 
-            n = 0;
-            wV = 0;
-            bV = 0;
+            n = new BigInt(0);
+            wV = new BigInt(0);
+            bV = new BigInt(0);
         }
 
         public boolean isLeafNode() {
-            return n == 0;
+            return n.isZero();
         }
 
         public String toString() {
