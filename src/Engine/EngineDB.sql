@@ -30,8 +30,10 @@ SELECT * FROM parentChildTbl;
 SELECT n.*, p.move 
 FROM nodeTbl AS n JOIN parentChildTbl AS p
 ON n.zobristKey = p.childKey
-WHERE p.parentKey = -1451015966002190617
+WHERE p.parentKey = -1451015966002190617 #AND n.wValue < n.bValue
 ORDER BY n.visits DESC;
+#ORDER BY n.wValue DESC;
+#ORDER BY (n.wValue/n.bValue) ASC;
 
 SELECT COUNT(*) FROM nodeTbl;
 SELECT COUNT(*) FROM parentChildTbl;
