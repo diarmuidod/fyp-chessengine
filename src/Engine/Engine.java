@@ -17,27 +17,29 @@ import java.util.concurrent.TimeUnit;
 import static java.lang.Math.log;
 import static java.lang.Math.sqrt;
 
-
 public class Engine {
-    //https://medium.com/@ishaan.gupta0401/monte-carlo-tree-search-application-on-chess-5573fc0efb75
-
-    Connection conn = null;
-    Statement stmt = null;
-    ResultSet rs = null;
-
-    LinkedList<Integer> gameLength = new LinkedList<>();
     private static final MoveGenerator moveGenerator = new MoveGenerator();
     private static final Random rand = new Random();
     private static Hashtable<Long, Node> transpositionTable;
+    public Node root;
+    Connection conn = null;
+    Statement stmt = null;
+    ResultSet rs = null;
+    LinkedList<Integer> gameLength = new LinkedList<>();
     LinkedList<Node> pathToRoot;
-
     SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
 
-    public Node root;
-
     public Engine() {
+        try {
+            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/chessdb", "root", "");
+            stmt = conn.createStatement();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         Zobrist.readRandomNumbers();
         root = new Node();
+        root.loadNodeData();
         transpositionTable = new Hashtable<>();
         transpositionTable.put(Zobrist.getZobristKey(root.boardState), root);
         pathToRoot = new LinkedList<>();
@@ -92,9 +94,6 @@ public class Engine {
     }
 
     public void trainEngine(long timeInSeconds) throws SQLException {
-        conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/chessdb", "root", "");
-        stmt = conn.createStatement();
-
         System.out.println("Start Training: " + formatter.format(new Date(System.currentTimeMillis())));
         if (getGameState(root) != Game.GameState.ONGOING) return;
 
@@ -105,7 +104,7 @@ public class Engine {
             root.children = generateChildren(root);
         }
 
-        int gamesPlayed = 0;
+        long gamesPlayed = 0;
 
         while (timeRemaining) {
             timeRemaining = System.currentTimeMillis() < startTime + (timeInSeconds * 1000);
@@ -116,22 +115,12 @@ public class Engine {
             root = backpropagation(expandedChild, result);
             gamesPlayed++;
 
-            if (gamesPlayed % 64 == 0) storeSearchResults();
+            if (gamesPlayed % 256 == 0) storeSearchResults();
 
-            //System.out.println(pathToRoot);
             pathToRoot.clear();
         }
 
-        System.out.println("\nGames played: " + gameLength.size());
-
-        int avgGame = 0;
-        for (Integer i : gameLength) avgGame += i;
-        System.out.println("Average game length: " + avgGame / gameLength.size());
-
         storeSearchResults();
-
-        if (stmt != null) stmt.close();
-        if (conn != null) conn.close();
     }
 
     public Node selection(Node node) {
@@ -241,19 +230,15 @@ public class Engine {
     }
 
     public double getUCB(Node node) {
+        if(node.n.isZero()) return 0;
+
         double exploit = (node.boardState.whiteToMove ? node.wV.doubleValue() : node.bV.doubleValue()) / (node.n.doubleValue());
         double constant = sqrt(2);
-        double explore = sqrt(log(node.parent.n.doubleValue() / node.n.doubleValue()));
+        BigInt temp = node.parent.n.copy();
+        temp.div(node.n);
+        double explore = sqrt(log(temp.doubleValue()));
 
-        return node.n.isZero() ? 0 : exploit + constant * explore;
-    }
-
-    public double getUCB(double parentN, double thisN, double v) {
-        double exploit = v / thisN;
-        double constant = sqrt(2);
-        double explore = sqrt(log(parentN / thisN));
-
-        return thisN == 0 ? 0 : exploit + constant * explore;
+        return exploit + constant * explore;
     }
 
     public void storeSearchResults() throws SQLException {
@@ -282,8 +267,6 @@ public class Engine {
         }
 
         System.out.println(transpositionTable.size() + " nodes in " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime) + " seconds.");
-
-        root = new Node();
         transpositionTable.clear();
         transpositionTable.put(Zobrist.getZobristKey(root.boardState), root);
     }
@@ -392,6 +375,27 @@ public class Engine {
 
         public boolean isLeafNode() {
             return n.isZero();
+        }
+
+        public void loadNodeData() {
+            try {
+                String dataSQL = "SELECT * FROM nodeTbl WHERE zobristKey = " + Zobrist.getZobristKey(this.boardState);
+
+                rs = stmt.executeQuery(dataSQL);
+
+                while (rs.next()) {
+                    long key = rs.getLong(1);
+
+                    if (Zobrist.getZobristKey(this.boardState) == key) {
+                        this.n.assign(rs.getString(2));
+                        this.wV.assign(rs.getString(3));
+                        this.bV.assign(rs.getString(4));
+                        break;
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
         }
 
         public String toString() {
