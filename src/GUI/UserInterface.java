@@ -1,44 +1,40 @@
 package GUI;
 
-import Board.Board;
-import Board.Move;
 import Engine.Engine;
 import GameManager.Game;
-import Utils.Utils;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.awt.image.BufferedImage;
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.util.LinkedList;
-import java.util.List;
 
 public class UserInterface {
-    private static final int squareSize = 64;
-    private static PieceUI activePiece = null;
-    private static int activePieceStartX = 0;
-    private static int activePieceStartY = 0;
-    private final int xOffset;
-    private final int yOffset;
-    private final JFrame uiFrame;
-    private final Game chessGame;
+    public static final int squareSize = 64;
+    public static PieceUI activePiece = null;
+    public static int activePieceStartX = 0;
+    public static int activePieceStartY = 0;
+    public final int xOffset;
+    public final int yOffset;
+    public final JFrame uiFrame;
+    public final Game chessGame;
     private final Image[] pieceSprites;
     private final Color darkSquares = Color.decode("#769656");
     private final Color lightSquares = Color.decode("#EEEED2");
-    private JPanel boardPanel;
-    private JTextArea pgnField;
+    public JPanel boardPanel;
+    public JTextArea pgnField;
     private Engine chessEngine;
-    private LinkedList<PieceUI> pieceList;
-    private boolean boardFlipped = false;
+    public LinkedList<PieceUI> pieceList;
+    public boolean boardFlipped = false;
 
     public UserInterface() throws IOException {
         chessEngine = loadEngine();
-        chessGame = new Game("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - - 0 1", chessEngine);
+        chessGame = new Game();
         pieceList = generatePieceList();
         pieceSprites = generatePieceSprites();
 
@@ -49,8 +45,8 @@ public class UserInterface {
 
     private JFrame generateFrame() {
         JFrame frame = new JFrame();
+        JMenuBar menuBar = new MenuBar(this);
 
-        JMenuBar menuBar = generateMenuBar();
         boardPanel = generateBoardPanel();
         JPanel pgnPanel = generatePgnPanel();
         JButton copyFenButton = generateCopyFEN();
@@ -58,79 +54,8 @@ public class UserInterface {
 
         frame.setJMenuBar(menuBar);
 
-        frame.addMouseMotionListener(new MouseMotionListener() {
-
-            @Override
-            public void mouseDragged(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseMoved(MouseEvent e) {
-                if (activePiece != null) {
-                    if (boardPanel.contains(e.getPoint())) {
-                        activePiece.xPos = e.getX();
-                        activePiece.yPos = e.getY();
-                    }
-                }
-                uiFrame.getContentPane().repaint();
-            }
-        });
-
-        frame.addMouseListener(new MouseListener() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                if (activePiece == null) {
-                    activePiece = getPiece((e.getX() - xOffset) / squareSize, (e.getY() - yOffset) / squareSize);
-                    if (activePiece != null) {
-                        activePieceStartX = activePiece.xPos;
-                        activePieceStartY = activePiece.yPos;
-                    }
-                } else {
-                    if (SwingUtilities.isRightMouseButton(e)) {
-                        activePiece.movePiece(activePieceStartX, activePieceStartY);
-                        activePiece = null;
-                    } else if (SwingUtilities.isLeftMouseButton(e)) {
-                        Move move;
-
-                        int mouseX = (e.getX() - xOffset) / squareSize;
-                        int mouseY = (e.getY() - yOffset) / squareSize;
-
-                        if ((move = validMove(mouseX, mouseY)) != null) {
-                            chessGame.board = chessGame.moveGenerator.makeMove(move, chessGame.board);
-                            chessGame.movesPlayed.add(move);
-                            pieceList = generatePieceList();
-                            setPgnText(chessGame.movesPlayed);
-                        } else if (activePieceStartX == mouseX && activePieceStartY == mouseY) {
-                            activePiece.xPos = activePieceStartX;
-                            activePiece.yPos = activePieceStartY;
-                        } else {
-                            activePiece.movePiece(activePieceStartX, activePieceStartY);
-                        }
-                        activePiece = null;
-                    }
-                }
-
-                uiFrame.getContentPane().invalidate();
-                uiFrame.getContentPane().validate();
-                uiFrame.getContentPane().repaint();
-            }
-
-            @Override
-            public void mousePressed(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseReleased(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseEntered(MouseEvent e) {
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-            }
-        });
+        frame.addMouseMotionListener(new MouseMotionObserver(this));
+        frame.addMouseListener(new MouseObserver(this));
 
         try {
             frame.setIconImage(ImageIO.read(new File("src/GUI/Assets/icon2.png")));
@@ -173,70 +98,6 @@ public class UserInterface {
         return frame;
     }
 
-    private Move validMove(int targetX, int targetY) {
-        int startIndex = Utils.posToIndex(activePieceStartX, activePieceStartY, boardFlipped);
-        int targetIndex = Utils.posToIndex(targetX, targetY, boardFlipped);
-
-        for (Move m : chessGame.getLegalMoves()) {
-            if (m.startSquare == startIndex && m.targetSquare == targetIndex) {
-                return m;
-            }
-        }
-        return null;
-    }
-
-    private JMenuBar generateMenuBar() {
-        JMenuBar menuBar = new JMenuBar();
-        JMenu fileMenu = new JMenu("File");
-
-        JMenuItem flipBoard = generateFlipBoardButton();
-        JMenuItem reset = generateResetButton();
-        JMenuItem exit = generateExitButton();
-
-        fileMenu.add(flipBoard);
-        fileMenu.add(reset);
-        fileMenu.add(exit);
-
-        menuBar.add(fileMenu);
-        menuBar.setVisible(true);
-        return menuBar;
-    }
-
-    private JMenuItem generateFlipBoardButton() {
-        JMenuItem item = new JMenuItem("Flip Board");
-        item.addActionListener(e -> {
-            boardFlipped = !boardFlipped;
-            pieceList = generatePieceList();
-
-            uiFrame.getContentPane().invalidate();
-            uiFrame.getContentPane().validate();
-            uiFrame.getContentPane().repaint();
-        });
-
-        return item;
-    }
-
-    private JMenuItem generateResetButton() {
-        JMenuItem item = new JMenuItem("Reset");
-        item.addActionListener(e -> {
-            chessGame.board = new Board();
-            pieceList = generatePieceList();
-            chessGame.movesPlayed.clear();
-
-            uiFrame.getContentPane().invalidate();
-            uiFrame.getContentPane().validate();
-            uiFrame.getContentPane().repaint();
-        });
-
-        return item;
-    }
-
-    private JMenuItem generateExitButton() {
-        JMenuItem item = new JMenuItem("Exit");
-        item.addActionListener(e -> System.exit(0));
-
-        return item;
-    }
 
     private JButton generateCopyFEN() {
         JButton button = new JButton("Copy FEN String");
@@ -303,20 +164,6 @@ public class UserInterface {
         return pgnPanel;
     }
 
-    private void setPgnText(List<Move> movesPlayed) {
-        StringBuilder pgn = new StringBuilder();
-        int index = 0;
-        for (Move m : movesPlayed) {
-            if (index % 2 == 0) {
-                pgn.append((index) / 2 + 1).append(". ").append(m.move).append("\t");
-            } else {
-                pgn.append(m.move).append("\n");
-            }
-            index++;
-        }
-
-        pgnField.setText(pgn.toString());
-    }
 
     public Image[] generatePieceSprites() throws IOException {
         BufferedImage spriteSheet = ImageIO.read(new File("src\\GUI\\Assets\\sprites.png"));
@@ -407,7 +254,6 @@ public class UserInterface {
     public Engine loadEngine() {
         try {
             Engine engine = null;
-
 
 
             return null;
