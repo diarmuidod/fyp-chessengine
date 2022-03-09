@@ -1,3 +1,4 @@
+CREATE SCHEMA IF NOT EXISTS chessdb;
 USE chessdb;
 
 DROP TABLE IF EXISTS parentChildTbl;
