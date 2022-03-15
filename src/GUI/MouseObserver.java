@@ -9,42 +9,43 @@ import java.awt.event.MouseListener;
 import java.util.List;
 
 public class MouseObserver implements MouseListener {
-    UserInterface ui;
-    public MouseObserver(UserInterface ui) {
+    UI ui;
+    public MouseObserver(UI ui) {
         super();
         this.ui = ui;
     }
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        if (ui.activePiece == null) {
-            ui.activePiece = ui.getPiece((e.getX() - ui.xOffset) / ui.squareSize, (e.getY() - ui.yOffset) / ui.squareSize);
-            if (ui.activePiece != null) {
-                ui.activePieceStartX = ui.activePiece.xPos;
-                ui.activePieceStartY = ui.activePiece.yPos;
+        if (UI.activePiece == null) {
+            UI.activePiece = ui.getPiece((e.getX() - ui.xOffset) / UI.squareSize, (e.getY() - ui.yOffset) / UI.squareSize);
+            if (UI.activePiece != null) {
+                UI.activePieceStartX = UI.activePiece.xPos;
+                UI.activePieceStartY = UI.activePiece.yPos;
             }
         } else {
             if (SwingUtilities.isRightMouseButton(e)) {
-                ui.activePiece.movePiece(ui.activePieceStartX, ui.activePieceStartY);
-                ui.activePiece = null;
+                UI.activePiece.movePiece(UI.activePieceStartX, UI.activePieceStartY);
+                UI.activePiece = null;
             } else if (SwingUtilities.isLeftMouseButton(e)) {
                 Move move;
 
-                int mouseX = (e.getX() - ui.xOffset) / ui.squareSize;
-                int mouseY = (e.getY() - ui.yOffset) / ui.squareSize;
+                int mouseX = (e.getX() - ui.xOffset) / UI.squareSize;
+                int mouseY = (e.getY() - ui.yOffset) / UI.squareSize;
 
                 if ((move = validMove(mouseX, mouseY)) != null) {
                     ui.chessGame.board = ui.chessGame.moveGenerator.makeMove(move, ui.chessGame.board);
                     ui.chessGame.movesPlayed.add(move);
                     ui.pieceList = ui.generatePieceList();
                     setPgnText(ui.chessGame.movesPlayed);
-                } else if (ui.activePieceStartX == mouseX && ui.activePieceStartY == mouseY) {
-                    ui.activePiece.xPos = ui.activePieceStartX;
-                    ui.activePiece.yPos = ui.activePieceStartY;
+                    ui.updateEngineDataField();
+                } else if (UI.activePieceStartX == mouseX && UI.activePieceStartY == mouseY) {
+                    UI.activePiece.xPos = UI.activePieceStartX;
+                    UI.activePiece.yPos = UI.activePieceStartY;
                 } else {
-                    ui.activePiece.movePiece(ui.activePieceStartX, ui.activePieceStartY);
+                    UI.activePiece.movePiece(UI.activePieceStartX, UI.activePieceStartY);
                 }
-                ui.activePiece = null;
+                UI.activePiece = null;
             }
         }
 
@@ -74,7 +75,7 @@ public class MouseObserver implements MouseListener {
     }
 
     private Move validMove(int targetX, int targetY) {
-        int startIndex = Utils.posToIndex(ui.activePieceStartX, ui.activePieceStartY, ui.boardFlipped);
+        int startIndex = Utils.posToIndex(UI.activePieceStartX, UI.activePieceStartY, ui.boardFlipped);
         int targetIndex = Utils.posToIndex(targetX, targetY, ui.boardFlipped);
 
         for (Move m : ui.chessGame.getLegalMoves()) {

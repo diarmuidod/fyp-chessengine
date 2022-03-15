@@ -45,11 +45,29 @@ public class Engine {
         pathToRoot = new LinkedList<>();
     }
 
+    public List<LinkedList<Move>> getBestMoves(Game game, int depth, int variations) {
+        List<LinkedList<Move>> variationsList = new LinkedList<>();
+
+        for (int i = 0; i < variations; i++) {
+            LinkedList<Move> variation = new LinkedList<>();
+            List<Move> tempMoveList = new LinkedList<>(game.movesPlayed);
+
+            for(int j = 0; j < depth; j++) {
+                Move bestMove = getBestMove(tempMoveList);
+                variation.add(bestMove);
+                tempMoveList.add(bestMove);
+            }
+            variationsList.add(variation);
+        }
+
+        return variationsList;
+    }
+
     public Move getBestMove(List<Move> movesPlayed) {
         double currentUCB;
         Node node = findMoveNode(movesPlayed);
 
-        if (getGameState(node) != Game.GameState.ONGOING) return null;
+        if (getGameState(node) != Game.GameState.ONGOING) return new Move();
 
         if (node.children == null) {
             node.children = generateChildren(node);

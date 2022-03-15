@@ -58,63 +58,6 @@ public class Game {
         mctsEngine = engine;
     }
 
-    public void playGame() throws SQLException {
-        Perft perft = new Perft();
-        Move activeMove = null;
-        List<Move> legalMoves;
-
-        while (getGameState(board) == GameState.ONGOING) {
-            legalMoves = moveGenerator.getLegalMoves(board);
-
-            if (board.whiteToMove) {
-                printBoard();
-                System.out.println();
-
-                if (board.whiteToMove) {
-                    System.out.println("White to move");
-                } else {
-                    System.out.println("Black to move");
-                }
-
-                System.out.println("Legal Moves: " + getLegalMoves());
-                System.out.print("Enter move: ");
-                String inp = input.nextLine();
-
-                if (inp.equals("quit") || inp.equals("exit")) {
-                    saveEngine();
-                    break;
-                }
-
-                for (Move m : legalMoves) {
-                    if (m.move.equals(inp)) {
-                        activeMove = m;
-                        break;
-                    }
-                }
-            } else {
-                mctsEngine.trainEngine(5);
-                activeMove = mctsEngine.getBestMove(movesPlayed);
-            }
-
-            board = moveGenerator.makeMove(Objects.requireNonNull(activeMove), board);
-            movesPlayed.add(activeMove);
-        }
-
-        switch (getGameState(board)) {
-            case WHITE_WINS:
-                System.out.println("White wins!");
-                break;
-            case BLACK_WINS:
-                System.out.println("Black wins!");
-                break;
-            case DRAW:
-                System.out.println("It's a draw!");
-                break;
-        }
-        System.out.println(saveGameToFEN());
-        printBoard();
-    }
-
     public String saveGameToFEN() {
         StringBuilder fen = new StringBuilder();
         int emptySquares = 0;

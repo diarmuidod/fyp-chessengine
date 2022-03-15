@@ -9,7 +9,7 @@ public class MenuBar extends JMenuBar {
         throw new UnsupportedOperationException("Stop that you.");
     }
 
-    public MenuBar(UserInterface ui) {
+    public MenuBar(UI ui) {
         super();
         JMenu fileMenu = new JMenu("File");
 
@@ -25,7 +25,7 @@ public class MenuBar extends JMenuBar {
         this.setVisible(true);
     }
 
-    private JMenuItem generateFlipBoardButton(UserInterface ui) {
+    private JMenuItem generateFlipBoardButton(UI ui) {
         JMenuItem item = new JMenuItem("Flip Board");
         item.addActionListener(e -> {
             ui.boardFlipped = !ui.boardFlipped;
@@ -39,13 +39,14 @@ public class MenuBar extends JMenuBar {
         return item;
     }
 
-    private JMenuItem generateResetButton(UserInterface ui) {
+    private JMenuItem generateResetButton(UI ui) {
         JMenuItem item = new JMenuItem("Reset");
         item.addActionListener(e -> {
             ui.chessGame.board = new Board();
             ui.pieceList = ui.generatePieceList();
             ui.chessGame.movesPlayed.clear();
             ui.pgnField.setText("");
+            ui.engineDataField.setText("");
 
             ui.uiFrame.getContentPane().invalidate();
             ui.uiFrame.getContentPane().validate();

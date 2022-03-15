@@ -4,9 +4,9 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 
 public class MouseMotionObserver implements MouseMotionListener {
-    UserInterface ui;
+    UI ui;
 
-    public MouseMotionObserver(UserInterface ui) {
+    public MouseMotionObserver(UI ui) {
         super();
         this.ui = ui;
     }
@@ -17,10 +17,10 @@ public class MouseMotionObserver implements MouseMotionListener {
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        if (ui.activePiece != null) {
+        if (UI.activePiece != null) {
             if (ui.boardPanel.contains(e.getPoint())) {
-                ui.activePiece.xPos = e.getX();
-                ui.activePiece.yPos = e.getY();
+                UI.activePiece.xPos = e.getX();
+                UI.activePiece.yPos = e.getY();
             }
         }
         ui.uiFrame.getContentPane().repaint();

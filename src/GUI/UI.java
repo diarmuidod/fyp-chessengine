@@ -1,5 +1,6 @@
 package GUI;
 
+import Board.Move;
 import Engine.Engine;
 import GameManager.Game;
 
@@ -13,32 +14,41 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.util.LinkedList;
+import java.util.List;
 
-public class UserInterface {
+public class UI {
+    public final JFrame uiFrame;
+    public JPanel mainPanel;
+    public JPanel dataPanel;
+    public JPanel boardPanel;
+    public JPanel buttonsPanel;
+    public JTextArea pgnField;
+    public JTextArea engineDataField;
+
     public static final int squareSize = 64;
+
     public static PieceUI activePiece = null;
     public static int activePieceStartX = 0;
     public static int activePieceStartY = 0;
+
     public final int xOffset;
     public final int yOffset;
-    public final JFrame uiFrame;
     public final Game chessGame;
     private final Image[] pieceSprites;
     private final Color darkSquares = Color.decode("#769656");
     private final Color lightSquares = Color.decode("#EEEED2");
-    public JPanel boardPanel;
-    public JTextArea pgnField;
-    private Engine chessEngine;
+    private static Engine chessEngine;
     public LinkedList<PieceUI> pieceList;
     public boolean boardFlipped = false;
 
-    public UserInterface() throws IOException {
-        chessEngine = loadEngine();
+    public UI() throws IOException {
+        chessEngine = new Engine();
         chessGame = new Game();
         pieceList = generatePieceList();
         pieceSprites = generatePieceSprites();
 
         uiFrame = generateFrame();
+        updateEngineDataField();
         xOffset = SwingUtilities.convertPoint(boardPanel, boardPanel.getX(), boardPanel.getY(), uiFrame).x;
         yOffset = SwingUtilities.convertPoint(boardPanel, boardPanel.getX(), boardPanel.getY(), uiFrame).y;
     }
@@ -49,8 +59,13 @@ public class UserInterface {
 
         boardPanel = generateBoardPanel();
         JPanel pgnPanel = generatePgnPanel();
+        JPanel engineDataPanel = generateEngineDataPanel();
+
+        buttonsPanel = new JPanel(new BorderLayout(5, 5));
         JButton copyFenButton = generateCopyFEN();
         JButton exportPgnButton = generateExportPgn();
+        buttonsPanel.add(copyFenButton, BorderLayout.NORTH);
+        buttonsPanel.add(exportPgnButton, BorderLayout.SOUTH);
 
         frame.setJMenuBar(menuBar);
 
@@ -64,40 +79,25 @@ public class UserInterface {
 
         frame.setTitle("Chess Application");
         frame.setVisible(true);
-        frame.setSize(new Dimension(692, 750));
+        frame.setSize(new Dimension(704, 576));
         frame.setLocationRelativeTo(null);
         frame.setResizable(true);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setLayout(new BorderLayout());
 
-        GridBagLayout gbl = new GridBagLayout();
-        GridBagConstraints gbc = new GridBagConstraints();
-        frame.setLayout(gbl);
+        dataPanel = new JPanel();
+        dataPanel.setLayout(new BorderLayout(0, 5));
+        dataPanel.add(engineDataPanel, BorderLayout.NORTH);
+        dataPanel.add(pgnPanel, BorderLayout.CENTER);
+        dataPanel.add(buttonsPanel, BorderLayout.SOUTH);
 
-        gbc.ipadx = 16;
-        gbc.ipady = 18;
-        gbc.weightx = 0.1;
+        mainPanel = new JPanel(new BorderLayout(5, 5));
+        mainPanel.add(boardPanel, BorderLayout.WEST);
+        mainPanel.add(dataPanel, BorderLayout.EAST);
 
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.gridwidth = 2;
-        frame.add(boardPanel, gbc);
-
-        gbc.gridx = 2;
-        gbc.gridy = 0;
-        gbc.gridwidth = 1;
-        gbc.anchor = GridBagConstraints.FIRST_LINE_END;
-        frame.add(pgnPanel, gbc);
-
-        gbc.gridx = 2;
-        gbc.gridy = 1;
-        gbc.gridwidth = 1;
-        gbc.insets = new Insets(0, 0, 0, 25);
-        gbc.anchor = GridBagConstraints.EAST;
-        frame.add(copyFenButton, gbc);
-
+        frame.add(mainPanel);
         return frame;
     }
-
 
     private JButton generateCopyFEN() {
         JButton button = new JButton("Copy FEN String");
@@ -164,6 +164,19 @@ public class UserInterface {
         return pgnPanel;
     }
 
+    private JPanel generateEngineDataPanel() {
+        JPanel engineDataPanel = new JPanel();
+        engineDataField = new JTextArea();
+
+        engineDataField.setSize(squareSize * 2, squareSize * 8);
+        engineDataField.setRows(6);
+        engineDataField.setColumns(12);
+        engineDataField.setEditable(false);
+        engineDataField.setVisible(true);
+
+        engineDataPanel.add(engineDataField);
+        return engineDataPanel;
+    }
 
     public Image[] generatePieceSprites() throws IOException {
         BufferedImage spriteSheet = ImageIO.read(new File("src\\GUI\\Assets\\sprites.png"));
@@ -231,35 +244,16 @@ public class UserInterface {
         return null;
     }
 
+    public void updateEngineDataField() {
+        List<LinkedList<Move>> variations = chessEngine.getBestMoves(chessGame, 5, 3);
 
-    public void saveEngine() {
-        // Serialization
-        try {
-            //Saving of object in a file
-            FileOutputStream file = new FileOutputStream("engine.ser");
-            ObjectOutputStream out = new ObjectOutputStream(file);
-
-            // Method for serialization of object
-            out.writeObject(chessEngine);
-
-            out.close();
-            file.close();
-
-            System.out.println("Object has been serialized");
-
-        } catch (IOException ignored) {
+        engineDataField.setText("");
+        for(LinkedList<Move> l : variations) {
+            StringBuilder moveList = new StringBuilder();
+            for(Move m : l) {
+                moveList.append(m).append(" ");
+            }
+            engineDataField.append(moveList + "\n");
         }
-    }
-
-    public Engine loadEngine() {
-        try {
-            Engine engine = null;
-
-
-            return null;
-        } catch (Exception ignored) {
-        }
-
-        return new Engine();
     }
 }
