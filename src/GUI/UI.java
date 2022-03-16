@@ -245,7 +245,7 @@ public class UI {
     }
 
     public void updateEngineDataField() {
-        List<LinkedList<Move>> variations = chessEngine.getBestMoves(chessGame, 5, 3);
+        List<LinkedList<Move>> variations = chessEngine.getBestVariations(chessGame, 5, 3);
 
         engineDataField.setText("");
         for(LinkedList<Move> l : variations) {

@@ -31,7 +31,7 @@ public class Engine {
 
     public Engine() {
         try {
-            conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/chessdb", "root", "");
+            conn = DriverManager.getConnection("jdbc:mariadb://localhost:3306/chessdb", "root", "");
             stmt = conn.createStatement();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -45,51 +45,20 @@ public class Engine {
         pathToRoot = new LinkedList<>();
     }
 
-    public List<LinkedList<Move>> getBestMoves(Game game, int depth, int variations) {
-        List<LinkedList<Move>> variationsList = new LinkedList<>();
-
-        for (int i = 0; i < variations; i++) {
-            LinkedList<Move> variation = new LinkedList<>();
-            List<Move> tempMoveList = new LinkedList<>(game.movesPlayed);
-
-            for(int j = 0; j < depth; j++) {
-                Move bestMove = getBestMove(tempMoveList);
-                variation.add(bestMove);
-                tempMoveList.add(bestMove);
-            }
-            variationsList.add(variation);
-        }
-
-        return variationsList;
+    public List<LinkedList<Move>> getBestVariations(Game game, int depth, int variations) {
+        return null;
     }
 
-    public Move getBestMove(List<Move> movesPlayed) {
-        double currentUCB;
-        Node node = findMoveNode(movesPlayed);
+    public List<Move> getBestVariation(Board board, List<Move> allowableMoves, List<Move> variation, int depth) {
+        if(depth == 0) return variation;
 
-        if (getGameState(node) != Game.GameState.ONGOING) return new Move();
+        //board = moveGenerator.makeMove();
+        return null;
+    }
 
-        if (node.children == null) {
-            node.children = generateChildren(node);
-            return node.children.get(rand.nextInt(node.children.size() - 1)).move;
-        }
-
-        Node bestMoveNode = node.children.get(0);
-
-        for (Node child : node.children) {
-            currentUCB = getUCB(child);
-            if (child.boardState.whiteToMove) {
-                if (currentUCB > getUCB(bestMoveNode)) {
-                    bestMoveNode = child;
-                }
-            } else {
-                if (currentUCB < getUCB(bestMoveNode)) {
-                    bestMoveNode = child;
-                }
-            }
-        }
-
-        return Objects.requireNonNull(bestMoveNode.move);
+    public Move getBestMove(Board board) {
+        //insert db query here
+        return null;
     }
 
     public Node findMoveNode(List<Move> movesPlayed) {
@@ -248,7 +217,7 @@ public class Engine {
     }
 
     public double getUCB(Node node) {
-        if(node.n.isZero()) return 0;
+        if (node.n.isZero()) return 0;
 
         double exploit = (node.boardState.whiteToMove ? node.wV.doubleValue() : node.bV.doubleValue()) / (node.n.doubleValue());
         double constant = sqrt(2);

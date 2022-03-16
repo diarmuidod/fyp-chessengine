@@ -3,6 +3,7 @@ package Board;
 import Utils.Utils;
 
 import java.util.BitSet;
+import java.util.Objects;
 
 public class Move {
     public String move;
@@ -116,6 +117,12 @@ public class Move {
 
     public boolean isEqual(Move that) {
         return this.move.equals(that.move);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if(!(o instanceof Move)) return false;
+        return Objects.equals(o.toString(), this.toString());
     }
 
     public String toString() {
