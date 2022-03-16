@@ -45,20 +45,74 @@ public class Engine {
         pathToRoot = new LinkedList<>();
     }
 
-    public List<LinkedList<Move>> getBestVariations(Game game, int depth, int variations) {
-        return null;
+    public List<LinkedList<String>> getBestVariations(Game game, int depth, int variations) {
+        List<LinkedList<String>> variationList = new LinkedList<>();
+        String sideValue = game.board.whiteToMove ? "(n.wValue/n.bValue)" : "(n.bValue/n.wValue)";
+
+        //take top 3 moves
+        String dataSQL = "SELECT n.zobristKey, p.move FROM nodeTbl AS n JOIN parentChildTbl AS p ON n.zobristKey = p.childKey " +
+                         "WHERE p.parentKey = " + Zobrist.getZobristKey(game.board) +
+                         " ORDER BY " + sideValue + " DESC LIMIT " + variations;
+
+        long childKey;
+        String move;
+
+        try {
+            rs = stmt.executeQuery(dataSQL);
+
+            while (rs.next()) {
+                childKey = rs.getLong(1);
+                move = rs.getString(2);
+                System.out.println(childKey + ", " + move);
+
+                LinkedList<String> variation = getVariation(childKey, game.board.whiteToMove, depth);
+                variation.addFirst(move);
+                variationList.add(variation);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        for(LinkedList<String> list : variationList) {
+            System.out.println(list);
+        }
+        return variationList;
     }
 
-    public List<Move> getBestVariation(Board board, List<Move> allowableMoves, List<Move> variation, int depth) {
-        if(depth == 0) return variation;
+    public LinkedList<String> getVariation(long zobristKey, boolean whiteToMove, int depth) {
+        LinkedList<String> variation = new LinkedList<>();
+        String keyMovePair;
 
-        //board = moveGenerator.makeMove();
-        return null;
+        for(int i = 0; i < depth; i++) {
+            keyMovePair = getBestMove(zobristKey, whiteToMove);
+            //if(keyMovePair == null) break;
+            zobristKey = Long.parseLong(keyMovePair.split(",")[0]);
+            variation.add(keyMovePair.split(",")[1]);
+        }
+
+        return variation;
     }
 
-    public Move getBestMove(Board board) {
-        //insert db query here
-        return null;
+    public String getBestMove(long zobristKey, boolean whiteToMove) {
+        String sideValue = whiteToMove ? "(n.wValue/n.bValue)" : "(n.bValue/n.wValue)";
+
+        String dataSQL = "SELECT p.childKey, p.move FROM nodeTbl AS n JOIN parentChildTbl AS p " +
+                         "ON n.zobristKey = p.childKey WHERE p.parentKey = " + zobristKey +
+                         " ORDER BY "+ sideValue + " DESC LIMIT 1";
+
+        String keyPair = null;
+
+        try {
+            rs = stmt.executeQuery(dataSQL);
+
+            while (rs.next()) {
+                keyPair = rs.getString(1) + "," + rs.getString(2);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return keyPair;
     }
 
     public Node findMoveNode(List<Move> movesPlayed) {

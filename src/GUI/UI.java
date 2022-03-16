@@ -245,12 +245,12 @@ public class UI {
     }
 
     public void updateEngineDataField() {
-        List<LinkedList<Move>> variations = chessEngine.getBestVariations(chessGame, 5, 3);
+        List<LinkedList<String>> variations = chessEngine.getBestVariations(chessGame, 7, 8);
 
         engineDataField.setText("");
-        for(LinkedList<Move> l : variations) {
+        for(LinkedList<String> l : variations) {
             StringBuilder moveList = new StringBuilder();
-            for(Move m : l) {
+            for(String m : l) {
                 moveList.append(m).append(" ");
             }
             engineDataField.append(moveList + "\n");
