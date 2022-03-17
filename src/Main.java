@@ -1,6 +1,7 @@
 import GUI.UI;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 public class Main {
     //  Move generation only fails on below fen, all other test cases are flawless
@@ -8,7 +9,7 @@ public class Main {
     //  cannot locate source of problem, may revisit later. Will move on for now.
 
     public static void main(String[] args) throws IOException {
-        new UI();
+        new UI();//.engine.trainEngine(0);
     }
 }
 

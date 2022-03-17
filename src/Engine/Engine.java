@@ -22,6 +22,8 @@ public class Engine {
     private static final Random rand = new Random();
     private static Hashtable<Long, Node> transpositionTable;
     public Node root;
+    public boolean toggleTraining = false;
+    long rootKey;
     Connection conn = null;
     Statement stmt = null;
     ResultSet rs = null;
@@ -38,10 +40,11 @@ public class Engine {
         }
 
         Zobrist.readRandomNumbers();
-        root = new Node();
+        root = generateRootNode();
         root.loadNodeData();
+        rootKey = Zobrist.getZobristKey(root.boardState);
         transpositionTable = new Hashtable<>();
-        transpositionTable.put(Zobrist.getZobristKey(root.boardState), root);
+        transpositionTable.put(rootKey, root);
         pathToRoot = new LinkedList<>();
     }
 
@@ -51,8 +54,8 @@ public class Engine {
 
         //take top 3 moves
         String dataSQL = "SELECT n.zobristKey, p.move FROM nodeTbl AS n JOIN parentChildTbl AS p ON n.zobristKey = p.childKey " +
-                         "WHERE p.parentKey = " + Zobrist.getZobristKey(game.board) +
-                         " ORDER BY " + sideValue + " DESC LIMIT " + variations;
+                "WHERE p.parentKey = " + Zobrist.getZobristKey(game.board) +
+                " ORDER BY " + sideValue + " DESC LIMIT " + variations;
 
         long childKey;
         String move;
@@ -63,7 +66,6 @@ public class Engine {
             while (rs.next()) {
                 childKey = rs.getLong(1);
                 move = rs.getString(2);
-                System.out.println(childKey + ", " + move);
 
                 LinkedList<String> variation = getVariation(childKey, game.board.whiteToMove, depth);
                 variation.addFirst(move);
@@ -73,9 +75,6 @@ public class Engine {
             e.printStackTrace();
         }
 
-        for(LinkedList<String> list : variationList) {
-            System.out.println(list);
-        }
         return variationList;
     }
 
@@ -83,9 +82,9 @@ public class Engine {
         LinkedList<String> variation = new LinkedList<>();
         String keyMovePair;
 
-        for(int i = 0; i < depth; i++) {
+        for (int i = 0; i < depth; i++) {
             keyMovePair = getBestMove(zobristKey, whiteToMove);
-            //if(keyMovePair == null) break;
+            if (keyMovePair == null) return variation;
             zobristKey = Long.parseLong(keyMovePair.split(",")[0]);
             variation.add(keyMovePair.split(",")[1]);
         }
@@ -97,8 +96,8 @@ public class Engine {
         String sideValue = whiteToMove ? "(n.wValue/n.bValue)" : "(n.bValue/n.wValue)";
 
         String dataSQL = "SELECT p.childKey, p.move FROM nodeTbl AS n JOIN parentChildTbl AS p " +
-                         "ON n.zobristKey = p.childKey WHERE p.parentKey = " + zobristKey +
-                         " ORDER BY "+ sideValue + " DESC LIMIT 1";
+                "ON n.zobristKey = p.childKey WHERE p.parentKey = " + zobristKey +
+                " ORDER BY " + sideValue + " DESC LIMIT 1";
 
         String keyPair = null;
 
@@ -138,113 +137,107 @@ public class Engine {
         System.out.println("Start Training: " + formatter.format(new Date(System.currentTimeMillis())));
         if (getGameState(root) != Game.GameState.ONGOING) return;
 
-        boolean timeRemaining = true;
         long startTime = System.currentTimeMillis();
 
-        if (root.children == null) {
-            root.children = generateChildren(root);
-        }
+        if (root.children == null) root.children = generateChildren(root);
 
-        long gamesPlayed = 0;
-
-        while (timeRemaining) {
-            timeRemaining = System.currentTimeMillis() < startTime + (timeInSeconds * 1000);
-
+        while (System.currentTimeMillis() < startTime + (timeInSeconds * 1000)) {
             Node selectedChild = selection(root);
             Node expandedChild = expansion(selectedChild);
-            long result = rollout(expandedChild);
-            root = backpropagation(expandedChild, result);
-            gamesPlayed++;
+            Node result = rollout(expandedChild);
+            root = backpropagation(result);
 
-            if (gamesPlayed % 256 == 0) storeSearchResults();
-
+            storeSearchResults();
             pathToRoot.clear();
         }
+    }
 
-        storeSearchResults();
+    public void trainEngine() throws SQLException {
+        System.out.println("Start Training: " + formatter.format(new Date(System.currentTimeMillis())));
+        if (getGameState(root) != Game.GameState.ONGOING) return;
+
+        if (root.children == null) root.children = generateChildren(root);
+
+        while (toggleTraining) {
+            Node selectedChild = selection(root);
+            Node expandedChild = expansion(selectedChild);
+            Node result = rollout(expandedChild);
+            root = backpropagation(result);
+
+            storeSearchResults();
+            pathToRoot.clear();
+        }
     }
 
     public Node selection(Node node) {
         if (!pathToRoot.contains(node)) pathToRoot.add(node);
         if (node.children == null) node.children = generateChildren(node);
 
-        Node selectedChild = node.children.get(0);
+        Node selectedChild = null;
 
         while (true) {
             if (node.children == null) node.children = generateChildren(node);
-            if (node.boardState.whiteToMove) {
-                double maxUCB = Double.NEGATIVE_INFINITY;
-                for (Node n : node.children) {
-                    if (n.isLeafNode()) {
-                        return n;
-                    }
 
-                    if (getUCB(n) > maxUCB) {
-                        maxUCB = getUCB(n);
-                        selectedChild = n;
-                    }
+            double maxUCB = Double.NEGATIVE_INFINITY;
+            for (Node n : node.children) {
+                if (n.isLeafNode()) {
+                    transpositionTable.put(Zobrist.getZobristKey(node.boardState), node);
+                    return n;
                 }
-            } else {
-                double minUCB = Double.POSITIVE_INFINITY;
-                for (Node n : node.children) {
-                    if (n.isLeafNode()) {
-                        return n;
-                    }
 
-                    if (getUCB(n) < minUCB) {
-                        minUCB = getUCB(n);
-                        selectedChild = n;
-                    }
+                if (getUCB(n) > maxUCB) {
+                    maxUCB = getUCB(n);
+                    selectedChild = n;
                 }
             }
 
-            node = selectedChild;
+            node = selectedChild == null ? node.children.get(rand.nextInt(node.children.size())) : selectedChild;
+            transpositionTable.put(Zobrist.getZobristKey(node.boardState), node);
         }
     }
 
     public Node expansion(Node node) {
+        transpositionTable.put(Zobrist.getZobristKey(node.boardState), node);
         if (!pathToRoot.contains(node)) pathToRoot.add(node);
         if (node.children == null) node.children = generateChildren(node);
         if (getGameState(node) != Game.GameState.ONGOING) return node;
 
-        Node expandingChild = node.children.get(0);
+        Node expandingChild = null;
 
-        if (node.boardState.whiteToMove) {
-            double maxUCB = Double.NEGATIVE_INFINITY;
-            for (Node n : node.children) {
-                double tempUCB = getUCB(n);
-                if (tempUCB > maxUCB) expandingChild = n;
-            }
-        } else {
-            double minUCB = Double.POSITIVE_INFINITY;
-            for (Node n : node.children) {
-                double tempUCB = getUCB(n);
-                if (tempUCB < minUCB) expandingChild = n;
+        double maxUCB = Double.NEGATIVE_INFINITY;
+        for (Node n : node.children) {
+            if (getUCB(n) > maxUCB) {
+                maxUCB = getUCB(n);
+                expandingChild = n;
             }
         }
-
+        transpositionTable.put(Zobrist.getZobristKey(node.boardState), expandingChild);
         return expandingChild;
     }
 
-    public long rollout(Node node) {
+    public Node rollout(Node node) {
         if (!pathToRoot.contains(node)) pathToRoot.add(node);
 
-        Game.GameState state = getGameState(node);
-
-        if (state != Game.GameState.ONGOING) {
-            if (state == Game.GameState.WHITE_WINS) return 1;
-            if (state == Game.GameState.BLACK_WINS) return -1;
-            if (state == Game.GameState.DRAW) return 0;
+        if (getGameState(node) != Game.GameState.ONGOING) {
+            return node;
         }
 
         if (node.children == null) node.children = generateChildren(node);
         Node child = node.children.get(rand.nextInt(node.children.size()));
-
+        transpositionTable.put(Zobrist.getZobristKey(node.boardState), child);
         return rollout(child);
     }
 
-    public Node backpropagation(Node node, long reward) {
-        while (node.parent != null) {
+    public Node backpropagation(Node node) {
+        long reward;
+
+        switch(getGameState(node)) {
+            case WHITE_WINS -> reward = 1;
+            case BLACK_WINS -> reward = -1;
+            default -> reward = 0;
+        }
+
+        while (Zobrist.getZobristKey(node.boardState) != rootKey) {
             node.n.add(1);
             if (reward == 1) {
                 node.wV.add(1);
@@ -273,7 +266,7 @@ public class Engine {
     public double getUCB(Node node) {
         if (node.n.isZero()) return 0;
 
-        double exploit = (node.boardState.whiteToMove ? node.wV.doubleValue() : node.bV.doubleValue()) / (node.n.doubleValue());
+        double exploit = (node.boardState.whiteToMove ? (node.wV.doubleValue() / node.n.doubleValue()) : (node.bV.doubleValue() / node.n.doubleValue()));
         double constant = sqrt(2);
         BigInt temp = node.parent.n.copy();
         temp.div(node.n);
@@ -283,6 +276,7 @@ public class Engine {
     }
 
     public void storeSearchResults() throws SQLException {
+        int nodesStored = 0;
         long key;
         Node node;
         String move;
@@ -299,7 +293,10 @@ public class Engine {
             String sql = "REPLACE INTO nodeTbl (zobristKey, visits, wValue, bValue) " +
                     "VALUES (" + key + ", " + node.n.toString() + ", " + node.wV.toString() + ", " + node.bV.toString() + ")";
 
+            if (node.n.isZero()) continue;
+
             stmt.execute(sql);
+            nodesStored++;
 
             if (node.parent == null) continue;
 
@@ -307,9 +304,39 @@ public class Engine {
             stmt.executeUpdate("INSERT IGNORE INTO parentChildTbl VALUES (" + parentKey + ", " + key + ", \"" + move + "\")");
         }
 
-        System.out.println(transpositionTable.size() + " nodes in " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime) + " seconds.");
+        System.out.println(nodesStored + " nodes in " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime) + " seconds." + new Date());
         transpositionTable.clear();
-        transpositionTable.put(Zobrist.getZobristKey(root.boardState), root);
+        root = generateRootNode();
+        transpositionTable.put(rootKey, root);
+    }
+
+    public Node generateRootNode() {
+        Node node = new Node();
+
+        String dataSQL = "SELECT * FROM nodeTbl WHERE zobristKey NOT IN (SELECT childKey FROM parentChildTbl)";
+
+        long key;
+        String visits, wValue, bValue;
+
+        try {
+            rs = stmt.executeQuery(dataSQL);
+
+            while (rs.next()) {
+                key = rs.getLong(1);
+                visits = rs.getString(2);
+                wValue = rs.getString(3);
+                bValue = rs.getString(4);
+
+                if (Zobrist.getZobristKey(node.boardState) == key) {
+                    node.n = new BigInt(visits);
+                    node.wV = new BigInt(wValue);
+                    node.bV = new BigInt(bValue);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return node;
     }
 
     public List<Node> generateChildren(Node node) {
@@ -389,8 +416,8 @@ public class Engine {
         BigInt bV; //Black wins from position
 
         Node parent;
-        Move move;
-        Board boardState;
+        public Move move;
+        public Board boardState;
 
         Node() {
             parent = null;

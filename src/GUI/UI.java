@@ -1,6 +1,5 @@
 package GUI;
 
-import Board.Move;
 import Engine.Engine;
 import GameManager.Game;
 
@@ -10,9 +9,8 @@ import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
+import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -37,12 +35,14 @@ public class UI {
     private final Image[] pieceSprites;
     private final Color darkSquares = Color.decode("#769656");
     private final Color lightSquares = Color.decode("#EEEED2");
-    private static Engine chessEngine;
+    public static Engine engine;
     public LinkedList<PieceUI> pieceList;
     public boolean boardFlipped = false;
 
+    public boolean toggleEngine = false;
+
     public UI() throws IOException {
-        chessEngine = new Engine();
+        engine = new Engine();
         chessGame = new Game();
         pieceList = generatePieceList();
         pieceSprites = generatePieceSprites();
@@ -63,9 +63,13 @@ public class UI {
 
         buttonsPanel = new JPanel(new BorderLayout(5, 5));
         JButton copyFenButton = generateCopyFEN();
-        JButton exportPgnButton = generateExportPgn();
+        //JButton exportPgnButton = generateExportPgn();
+        JButton startEngineTrainingButton = startEngineTraining();
+        JButton stopEngineTrainingButton = updateEngineVariations();
         buttonsPanel.add(copyFenButton, BorderLayout.NORTH);
-        buttonsPanel.add(exportPgnButton, BorderLayout.SOUTH);
+        //buttonsPanel.add(exportPgnButton, BorderLayout.CENTER);
+        buttonsPanel.add(startEngineTrainingButton, BorderLayout.CENTER);
+        buttonsPanel.add(stopEngineTrainingButton, BorderLayout.SOUTH);
 
         frame.setJMenuBar(menuBar);
 
@@ -107,8 +111,31 @@ public class UI {
     }
 
     private JButton generateExportPgn() {
-        JButton button = new JButton("Export Pgn");
+        JButton button = new JButton("Copy PGN String");
         button.setMargin(new Insets(0, 0, 0, 0));
+        button.addActionListener(e -> Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(pgnField.getText()), null));
+        return button;
+    }
+
+    private JButton startEngineTraining() {
+        JButton button = new JButton("Train Engine (10s)");
+        button.setMargin(new Insets(0, 0, 0, 0));
+        button.addActionListener(e -> {
+            try {
+                engine.trainEngine(10);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+        });
+
+        return button;
+    }
+
+    private JButton updateEngineVariations() {
+        JButton button = new JButton("Update Variations");
+        button.setMargin(new Insets(0, 0, 0, 0));
+        button.addActionListener(e -> updateEngineDataField());
+
         return button;
     }
 
@@ -245,7 +272,7 @@ public class UI {
     }
 
     public void updateEngineDataField() {
-        List<LinkedList<String>> variations = chessEngine.getBestVariations(chessGame, 7, 8);
+        List<LinkedList<String>> variations = engine.getBestVariations(chessGame, 7, 8);
 
         engineDataField.setText("");
         for(LinkedList<String> l : variations) {
@@ -254,6 +281,7 @@ public class UI {
                 moveList.append(m).append(" ");
             }
             engineDataField.append(moveList + "\n");
+
         }
     }
 }

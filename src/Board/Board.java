@@ -172,7 +172,11 @@ public class Board {
         return sb.toString();
     }
 
-    public boolean equals(Board that) {
+    @Override
+    public boolean equals(Object o) {
+        if(o == this) return true;
+        if(!(o instanceof Board that)) return false;
+
         if (!this.allPieces.equals(that.allPieces)) return false;
 
         if (!this.whitePieces.equals(that.whitePieces)) return false;
