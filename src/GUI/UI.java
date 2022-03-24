@@ -15,27 +15,24 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class UI {
-    public final JFrame uiFrame;
-    public JPanel mainPanel;
-    public JPanel dataPanel;
-    public JPanel boardPanel;
-    public JPanel buttonsPanel;
-    public JTextArea pgnField;
-    public JTextArea engineDataField;
-
     public static final int squareSize = 64;
-
     public static PieceUI activePiece = null;
     public static int activePieceStartX = 0;
     public static int activePieceStartY = 0;
-
+    public static Engine engine;
+    public final JFrame uiFrame;
     public final int xOffset;
     public final int yOffset;
     public final Game chessGame;
     private final Image[] pieceSprites;
     private final Color darkSquares = Color.decode("#769656");
     private final Color lightSquares = Color.decode("#EEEED2");
-    public static Engine engine;
+    public JPanel mainPanel;
+    public JPanel dataPanel;
+    public JPanel boardPanel;
+    public JPanel buttonsPanel;
+    public JTextArea pgnField;
+    public JTextArea engineDataField;
     public LinkedList<PieceUI> pieceList;
     public boolean boardFlipped = false;
 
@@ -65,7 +62,7 @@ public class UI {
         JButton copyFenButton = generateCopyFEN();
         //JButton exportPgnButton = generateExportPgn();
         JButton startEngineTrainingButton = startEngineTraining();
-        JButton stopEngineTrainingButton = updateEngineVariations();
+        JButton stopEngineTrainingButton = generateUpdateEngineVariations();
         buttonsPanel.add(copyFenButton, BorderLayout.NORTH);
         //buttonsPanel.add(exportPgnButton, BorderLayout.CENTER);
         buttonsPanel.add(startEngineTrainingButton, BorderLayout.CENTER);
@@ -122,7 +119,7 @@ public class UI {
         button.setMargin(new Insets(0, 0, 0, 0));
         button.addActionListener(e -> {
             try {
-                engine.trainEngine(10);
+                engine.trainEngine(10, engine.findMoveNode(chessGame.movesPlayed));
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -131,7 +128,7 @@ public class UI {
         return button;
     }
 
-    private JButton updateEngineVariations() {
+    private JButton generateUpdateEngineVariations() {
         JButton button = new JButton("Update Variations");
         button.setMargin(new Insets(0, 0, 0, 0));
         button.addActionListener(e -> updateEngineDataField());
@@ -272,13 +269,20 @@ public class UI {
     }
 
     public void updateEngineDataField() {
-        List<LinkedList<String>> variations = engine.getBestVariations(chessGame, 7, 8);
+        List<LinkedList<String>> variations = engine.getBestVariations(chessGame, 5, 5);
 
         engineDataField.setText("");
-        for(LinkedList<String> l : variations) {
+        for (LinkedList<String> l : variations) {
             StringBuilder moveList = new StringBuilder();
-            for(String m : l) {
-                moveList.append(m).append(" ");
+            for (int i = 0; i < l.size(); i++) {
+                String m = l.get(i);
+
+                if (i % 2 == 0) {
+                    moveList.append(chessGame.movesPlayed.size() + (i / 2) + 1).append(". ");
+                    moveList.append(m).append(" ");
+                } else {
+                    moveList.append(m).append(" ");
+                }
             }
             engineDataField.append(moveList + "\n");
 

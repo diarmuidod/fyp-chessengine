@@ -5,7 +5,7 @@ import Board.Board;
 import javax.swing.*;
 
 public class MenuBar extends JMenuBar {
-    private MenuBar(){
+    private MenuBar() {
         throw new UnsupportedOperationException("Stop that you.");
     }
 

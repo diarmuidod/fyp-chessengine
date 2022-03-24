@@ -10,6 +10,7 @@ import java.util.List;
 
 public class MouseObserver implements MouseListener {
     UI ui;
+
     public MouseObserver(UI ui) {
         super();
         this.ui = ui;

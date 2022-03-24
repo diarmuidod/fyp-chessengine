@@ -121,7 +121,7 @@ public class Move {
 
     @Override
     public boolean equals(Object o) {
-        if(!(o instanceof Move)) return false;
+        if (!(o instanceof Move)) return false;
         return Objects.equals(o.toString(), this.toString());
     }
 

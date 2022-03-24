@@ -173,6 +173,211 @@ public class BigInt extends Number implements Comparable<BigInt> {
     /*** </Constructors> ***/
 
     /*** <General Helper> ***/
+
+    /**
+     * Multiplies two magnitude arrays and returns the result.
+     *
+     * @param u    The first magnitude array.
+     * @param ulen The length of the first array.
+     * @param v    The second magnitude array.
+     * @param vlen The length of the second array.
+     * @return A ulen+vlen length array containing the result.
+     * @complexity O(n ^ 2)
+     */
+    private static int[] naiveMul(final int[] u, final int ulen, final int[] v, final int vlen) {
+        final int[] res = new int[ulen + vlen];
+        long carry = 0, tmp, ui = u[0] & mask;
+        for (int j = 0; j < vlen; j++) {
+            tmp = ui * (v[j] & mask) + carry;
+            res[j] = (int) tmp;
+            carry = tmp >>> 32;
+        }
+        res[vlen] = (int) carry;
+        for (int i = 1; i < ulen; i++) {
+            ui = u[i] & mask;
+            carry = 0;
+            for (int j = 0; j < vlen; j++) {
+                tmp = ui * (v[j] & mask) + (res[i + j] & mask) + carry;
+                res[i + j] = (int) tmp;
+                carry = tmp >>> 32;
+            }
+            res[i + vlen] = (int) carry;
+        }
+        return res;
+    }
+
+    /**
+     * Multiplies partial magnitude arrays x[off..off+n) and y[off...off+n) and returns the result.
+     * Algorithm: Karatsuba
+     *
+     * @param x   The first magnitude array.
+     * @param y   The second magnitude array.
+     * @param off The offset, where the first element is residing.
+     * @param n   The length of each of the two partial arrays.
+     * @complexity O(n ^ 1.585)
+     */
+    private static int[] kmul(final int[] x, final int[] y, final int off, final int n) {
+        // x = x1*B^m + x0
+        // y = y1*B^m + y0
+        // xy = z2*B^2m + z1*B^m + z0
+        // z2 = x1*y1, z0 = x0*y0, z1 = (x1+x0)(y1+y0)-z2-z0
+        if (n <= 32) //Basecase
+        {
+            final int[] z = new int[2 * n];
+            long carry = 0, tmp, xi = x[off] & mask;
+            for (int j = 0; j < n; j++) {
+                tmp = xi * (y[off + j] & mask) + carry;
+                z[j] = (int) tmp;
+                carry = tmp >>> 32;
+            }
+            z[n] = (int) carry;
+            for (int i = 1; i < n; i++) {
+                xi = x[off + i] & mask;
+                carry = 0;
+                for (int j = 0; j < n; j++) {
+                    tmp = xi * (y[off + j] & mask) + (z[i + j] & mask) + carry;
+                    z[i + j] = (int) tmp;
+                    carry = tmp >>> 32;
+                }
+                z[i + n] = (int) carry;
+            }
+            return z;
+        }
+
+        final int b = n >>> 1;
+        final int[] z2 = kmul(x, y, off + b, n - b);
+        final int[] z0 = kmul(x, y, off, b);
+
+        final int[] x2 = new int[n - b + 1], y2 = new int[n - b + 1];
+        long carry = 0;
+        for (int i = 0; i < b; i++) {
+            carry = (x[off + b + i] & mask) + (x[off + i] & mask) + carry;
+            x2[i] = (int) carry;
+            carry >>>= 32;
+        }
+        if ((n & 1) != 0) x2[b] = x[off + b + b];
+        if (carry != 0) if (++x2[b] == 0) ++x2[b + 1];
+        carry = 0;
+        for (int i = 0; i < b; i++) {
+            carry = (y[off + b + i] & mask) + (y[off + i] & mask) + carry;
+            y2[i] = (int) carry;
+            carry >>>= 32;
+        }
+        if ((n & 1) != 0) y2[b] = y[off + b + b];
+        if (carry != 0) if (++y2[b] == 0) ++y2[b + 1];
+
+        final int[] z1 = kmul(x2, y2, 0, n - b + (x2[n - b] != 0 || y2[n - b] != 0 ? 1 : 0));
+
+        final int[] z = new int[2 * n];
+        System.arraycopy(z0, 0, z, 0, 2 * b); //Add z0
+        System.arraycopy(z2, 0, z, b + b, 2 * (n - b)); //Add z2
+
+        //Add z1
+        carry = 0;
+        int i = 0;
+        for (; i < 2 * b; i++) {
+            carry = (z[i + b] & mask) + (z1[i] & mask) - (z2[i] & mask) - (z0[i] & mask) + carry;
+            z[i + b] = (int) carry;
+            carry >>= 32;
+        }
+        for (; i < 2 * (n - b); i++) {
+            carry = (z[i + b] & mask) + (z1[i] & mask) - (z2[i] & mask) + carry;
+            z[i + b] = (int) carry;
+            carry >>= 32;
+        }
+        for (; i < z1.length; i++) {
+            carry = (z[i + b] & mask) + (z1[i] & mask) + carry;
+            z[i + b] = (int) carry;
+            carry >>= 32;
+        }
+        if (carry != 0) while (++z[i + b] == 0) ++i;
+
+        return z;
+    }
+
+    /**
+     * Multiplies partial magnitude arrays x[off..off+n) and y[off...off+n) and returns the result.
+     * Algorithm: Parallell Karatsuba
+     *
+     * @param x    The first magnitude array.
+     * @param y    The second magnitude array.
+     * @param off  The offset, where the first element is residing.
+     * @param n    The length of each of the two partial arrays.
+     * @param lim  The recursion depth up until which we will spawn new threads.
+     * @param pool Where spawn threads will be added and executed.
+     * @throws Various thread related exceptions.
+     * @complexity O(n ^ 1.585)
+     */
+    private static int[] pmul(final int[] x, final int[] y, final int off, final int n, final int lim, final ExecutorService pool) throws Exception {
+        final int b = n >>> 1;
+
+        final Future<int[]> left = pool.submit(new Callable<int[]>() {
+            public int[] call() throws Exception {
+                return lim == 0 ? kmul(x, y, off, b) : pmul(x, y, off, b, lim - 1, pool);
+            }
+        });
+
+        final Future<int[]> right = pool.submit(new Callable<int[]>() {
+            public int[] call() throws Exception {
+                return lim == 0 ? kmul(x, y, off + b, n - b) : pmul(x, y, off + b, n - b, lim - 1, pool);
+            }
+        });
+
+        final int[] x2 = new int[n - b + 1], y2 = new int[n - b + 1];
+        long carry = 0;
+        for (int i = 0; i < b; i++) {
+            carry = (x[off + b + i] & mask) + (x[off + i] & mask) + carry;
+            x2[i] = (int) carry;
+            carry >>>= 32;
+        }
+        if ((n & 1) != 0) x2[b] = x[off + b + b];
+        if (carry != 0) if (++x2[b] == 0) ++x2[b + 1];
+        carry = 0;
+        for (int i = 0; i < b; i++) {
+            carry = (y[off + b + i] & mask) + (y[off + i] & mask) + carry;
+            y2[i] = (int) carry;
+            carry >>>= 32;
+        }
+        if ((n & 1) != 0) y2[b] = y[off + b + b];
+        if (carry != 0) if (++y2[b] == 0) ++y2[b + 1];
+
+        final Future<int[]> mid = pool.submit(new Callable<int[]>() {
+            public int[] call() throws Exception {
+                return lim == 0 ? kmul(x2, y2, 0, n - b + (x2[n - b] != 0 || y2[n - b] != 0 ? 1 : 0)) :
+                        pmul(x2, y2, 0, n - b + (x2[n - b] != 0 || y2[n - b] != 0 ? 1 : 0), lim - 1, pool);
+            }
+        });
+
+        final int[] z = new int[2 * n];
+
+        final int[] z0 = left.get();
+        System.arraycopy(z0, 0, z, 0, 2 * b);
+        final int[] z2 = right.get();
+        System.arraycopy(z2, 0, z, b + b, 2 * (n - b));
+
+        final int[] z1 = mid.get();
+
+        carry = 0;
+        int i = 0;
+        for (; i < 2 * b; i++) {
+            carry = (z[i + b] & mask) + (z1[i] & mask) - (z2[i] & mask) - (z0[i] & mask) + carry;
+            z[i + b] = (int) carry;
+            carry >>= 32;
+        }
+        for (; i < 2 * (n - b); i++) {
+            carry = (z[i + b] & mask) + (z1[i] & mask) - (z2[i] & mask) + carry;
+            z[i + b] = (int) carry;
+            carry >>= 32;
+        }
+        for (; i < z1.length; i++) {
+            carry = (z[i + b] & mask) + (z1[i] & mask) + carry;
+            z[i + b] = (int) carry;
+            carry >>= 32;
+        }
+        if (carry != 0) while (++z[i + b] == 0) ++i;
+        return z;
+    }
+
     /**
      * Parses a part of a char array as an unsigned decimal number.
      *
@@ -187,6 +392,9 @@ public class BigInt extends Number implements Comparable<BigInt> {
         while (++from < to) res = res * 10 + s[from] - '0';
         return res;
     }
+    /*** </General Helper> ***/
+
+    /*** <General functions> ***/
 
     /**
      * Multiplies this number and then adds something to it.
@@ -235,9 +443,7 @@ public class BigInt extends Number implements Comparable<BigInt> {
         System.arraycopy(dig, 0, res, 0, len);
         dig = res;
     }
-    /*** </General Helper> ***/
 
-    /*** <General functions> ***/
     /**
      * Creates a copy of this number.
      *
@@ -468,6 +674,9 @@ public class BigInt extends Number implements Comparable<BigInt> {
         if (a.sign > 0 || a.isZero()) return compareAbsTo(a);
         return 1;
     }
+    /*** </General functions> ***/
+
+    /*** <Number Override> ***/
 
     /**
      * Tests equality of this number and the given one.
@@ -503,9 +712,7 @@ public class BigInt extends Number implements Comparable<BigInt> {
         for (int i = 0; i < len; i++) hash = (int) (31 * hash + (dig[i] & mask));
         return sign * hash; //relies on 0 --> hash==0.
     }
-    /*** </General functions> ***/
 
-    /*** <Number Override> ***/
     /**
      * {@inheritDoc}
      * Returns this BigInt as a {@code byte}.
@@ -538,6 +745,9 @@ public class BigInt extends Number implements Comparable<BigInt> {
     public int intValue() {
         return sign * (dig[0] & 0x7FFFFFFF); //relies on that sign always is either 1/-1.
     }
+    /*** </Number Override> ***/
+
+    /*** <Unsigned Int Num> ***/
 
     /**
      * {@inheritDoc}
@@ -601,9 +811,7 @@ public class BigInt extends Number implements Comparable<BigInt> {
 
         return Double.longBitsToDouble(bits);
     }
-    /*** </Number Override> ***/
 
-    /*** <Unsigned Int Num> ***/
     /**
      * Increases the magnitude of this number.
      *
@@ -755,6 +963,9 @@ public class BigInt extends Number implements Comparable<BigInt> {
         if (len == 1 && dig[0] == 0) sign = 1;
         return (int) rem;
     }
+    /*** </Unsigned Int Num> ***/
+
+    /*** <Unsigned Long Num> ***/
 
     /**
      * Modulos this number with an unsigned int.
@@ -801,9 +1012,7 @@ public class BigInt extends Number implements Comparable<BigInt> {
         dig[0] = (int) rem;
         if (dig[0] == 0) sign = 1;
     }
-    /*** </Unsigned Int Num> ***/
 
-    /*** <Unsigned Long Num> ***/
     /**
      * Increases the magnitude of this number.
      *
@@ -912,6 +1121,9 @@ public class BigInt extends Number implements Comparable<BigInt> {
             sign = -1;
         } else uaddMag(a);
     }
+    /*** </Unsigned Long Num> ***/
+
+    /*** <Signed Small Num> ***/
 
     /**
      * Multiplies this number with an unsigned long.
@@ -1034,9 +1246,7 @@ public class BigInt extends Number implements Comparable<BigInt> {
         } //if(dig[0]==0) sign = 1;
         dig[1] = (int) (rem >>> 32);
     }
-    /*** </Unsigned Long Num> ***/
 
-    /*** <Signed Small Num> ***/
     /**
      * Adds an int to this number.
      *
@@ -1048,6 +1258,7 @@ public class BigInt extends Number implements Comparable<BigInt> {
         if (add < 0) usub(-add);
         else uadd(add);
     }
+    // --- Long SubSection ---
 
     /**
      * Subtracts an int from this number.
@@ -1089,7 +1300,6 @@ public class BigInt extends Number implements Comparable<BigInt> {
         }
         return sign * udiv(div);
     }
-    // --- Long SubSection ---
 
     /**
      * Adds a long to this number.
@@ -1101,6 +1311,9 @@ public class BigInt extends Number implements Comparable<BigInt> {
         if (add < 0) usub(-add);
         else uadd(add);
     }
+    /*** </Signed Small Num> ***/
+
+    /*** <Big Num Helper> ***/
 
     /**
      * Subtracts a long from this number.
@@ -1126,6 +1339,9 @@ public class BigInt extends Number implements Comparable<BigInt> {
             umul(-mul);
         } else umul(mul);
     }
+    /*** </Big Num Helper> ***/
+
+    /*** <Big Num> ***/
 
     /**
      * Divides this number with a {@code long}.
@@ -1142,9 +1358,7 @@ public class BigInt extends Number implements Comparable<BigInt> {
         }
         return sign * udiv(div);
     }
-    /*** </Signed Small Num> ***/
 
-    /*** <Big Num Helper> ***/
     /**
      * Increases the magnitude of this number by the given magnitude array.
      *
@@ -1185,6 +1399,8 @@ public class BigInt extends Number implements Comparable<BigInt> {
         }
     }
 
+    // --- Multiplication SubSection ---
+
     /**
      * Decreases the magnitude of this number by the given magnitude array.
      * Behaviour is undefined if u > |this|.
@@ -1211,9 +1427,7 @@ public class BigInt extends Number implements Comparable<BigInt> {
         }
         while (len > 1 && dig[len - 1] == 0) --len;
     }
-    /*** </Big Num Helper> ***/
 
-    /*** <Big Num> ***/
     /**
      * Adds a BigInt to this number.
      *
@@ -1295,8 +1509,6 @@ public class BigInt extends Number implements Comparable<BigInt> {
         //if(i==vlen) should be impossible
     }
 
-    // --- Multiplication SubSection ---
-
     /**
      * Multiplies this number by the given BigInt.
      * Chooses the appropriate algorithm with regards to the size of the numbers.
@@ -1324,6 +1536,8 @@ public class BigInt extends Number implements Comparable<BigInt> {
         else if (Math.max(len, mul.len) < 20000) karatsuba(mul, false); //Tune thresholds and remove hardcode.
         else karatsuba(mul, true);
     }
+
+    /*** <Mul Helper> ***/
 
     /**
      * Multiplies this number by the given (suitably small) BigInt.
@@ -1401,211 +1615,6 @@ public class BigInt extends Number implements Comparable<BigInt> {
         while (res[len - 1] == 0) --len;
         dig = res;
         sign *= mul.sign;
-    }
-
-    /*** <Mul Helper> ***/
-    /**
-     * Multiplies two magnitude arrays and returns the result.
-     *
-     * @param u    The first magnitude array.
-     * @param ulen The length of the first array.
-     * @param v    The second magnitude array.
-     * @param vlen The length of the second array.
-     * @return A ulen+vlen length array containing the result.
-     * @complexity O(n ^ 2)
-     */
-    private static int[] naiveMul(final int[] u, final int ulen, final int[] v, final int vlen) {
-        final int[] res = new int[ulen + vlen];
-        long carry = 0, tmp, ui = u[0] & mask;
-        for (int j = 0; j < vlen; j++) {
-            tmp = ui * (v[j] & mask) + carry;
-            res[j] = (int) tmp;
-            carry = tmp >>> 32;
-        }
-        res[vlen] = (int) carry;
-        for (int i = 1; i < ulen; i++) {
-            ui = u[i] & mask;
-            carry = 0;
-            for (int j = 0; j < vlen; j++) {
-                tmp = ui * (v[j] & mask) + (res[i + j] & mask) + carry;
-                res[i + j] = (int) tmp;
-                carry = tmp >>> 32;
-            }
-            res[i + vlen] = (int) carry;
-        }
-        return res;
-    }
-
-    /**
-     * Multiplies partial magnitude arrays x[off..off+n) and y[off...off+n) and returns the result.
-     * Algorithm: Karatsuba
-     *
-     * @param x   The first magnitude array.
-     * @param y   The second magnitude array.
-     * @param off The offset, where the first element is residing.
-     * @param n   The length of each of the two partial arrays.
-     * @complexity O(n ^ 1.585)
-     */
-    private static int[] kmul(final int[] x, final int[] y, final int off, final int n) {
-        // x = x1*B^m + x0
-        // y = y1*B^m + y0
-        // xy = z2*B^2m + z1*B^m + z0
-        // z2 = x1*y1, z0 = x0*y0, z1 = (x1+x0)(y1+y0)-z2-z0
-        if (n <= 32) //Basecase
-        {
-            final int[] z = new int[2 * n];
-            long carry = 0, tmp, xi = x[off] & mask;
-            for (int j = 0; j < n; j++) {
-                tmp = xi * (y[off + j] & mask) + carry;
-                z[j] = (int) tmp;
-                carry = tmp >>> 32;
-            }
-            z[n] = (int) carry;
-            for (int i = 1; i < n; i++) {
-                xi = x[off + i] & mask;
-                carry = 0;
-                for (int j = 0; j < n; j++) {
-                    tmp = xi * (y[off + j] & mask) + (z[i + j] & mask) + carry;
-                    z[i + j] = (int) tmp;
-                    carry = tmp >>> 32;
-                }
-                z[i + n] = (int) carry;
-            }
-            return z;
-        }
-
-        final int b = n >>> 1;
-        final int[] z2 = kmul(x, y, off + b, n - b);
-        final int[] z0 = kmul(x, y, off, b);
-
-        final int[] x2 = new int[n - b + 1], y2 = new int[n - b + 1];
-        long carry = 0;
-        for (int i = 0; i < b; i++) {
-            carry = (x[off + b + i] & mask) + (x[off + i] & mask) + carry;
-            x2[i] = (int) carry;
-            carry >>>= 32;
-        }
-        if ((n & 1) != 0) x2[b] = x[off + b + b];
-        if (carry != 0) if (++x2[b] == 0) ++x2[b + 1];
-        carry = 0;
-        for (int i = 0; i < b; i++) {
-            carry = (y[off + b + i] & mask) + (y[off + i] & mask) + carry;
-            y2[i] = (int) carry;
-            carry >>>= 32;
-        }
-        if ((n & 1) != 0) y2[b] = y[off + b + b];
-        if (carry != 0) if (++y2[b] == 0) ++y2[b + 1];
-
-        final int[] z1 = kmul(x2, y2, 0, n - b + (x2[n - b] != 0 || y2[n - b] != 0 ? 1 : 0));
-
-        final int[] z = new int[2 * n];
-        System.arraycopy(z0, 0, z, 0, 2 * b); //Add z0
-        System.arraycopy(z2, 0, z, b + b, 2 * (n - b)); //Add z2
-
-        //Add z1
-        carry = 0;
-        int i = 0;
-        for (; i < 2 * b; i++) {
-            carry = (z[i + b] & mask) + (z1[i] & mask) - (z2[i] & mask) - (z0[i] & mask) + carry;
-            z[i + b] = (int) carry;
-            carry >>= 32;
-        }
-        for (; i < 2 * (n - b); i++) {
-            carry = (z[i + b] & mask) + (z1[i] & mask) - (z2[i] & mask) + carry;
-            z[i + b] = (int) carry;
-            carry >>= 32;
-        }
-        for (; i < z1.length; i++) {
-            carry = (z[i + b] & mask) + (z1[i] & mask) + carry;
-            z[i + b] = (int) carry;
-            carry >>= 32;
-        }
-        if (carry != 0) while (++z[i + b] == 0) ++i;
-
-        return z;
-    }
-
-    /**
-     * Multiplies partial magnitude arrays x[off..off+n) and y[off...off+n) and returns the result.
-     * Algorithm: Parallell Karatsuba
-     *
-     * @param x    The first magnitude array.
-     * @param y    The second magnitude array.
-     * @param off  The offset, where the first element is residing.
-     * @param n    The length of each of the two partial arrays.
-     * @param lim  The recursion depth up until which we will spawn new threads.
-     * @param pool Where spawn threads will be added and executed.
-     * @throws Various thread related exceptions.
-     * @complexity O(n ^ 1.585)
-     */
-    private static int[] pmul(final int[] x, final int[] y, final int off, final int n, final int lim, final ExecutorService pool) throws Exception {
-        final int b = n >>> 1;
-
-        final Future<int[]> left = pool.submit(new Callable<int[]>() {
-            public int[] call() throws Exception {
-                return lim == 0 ? kmul(x, y, off, b) : pmul(x, y, off, b, lim - 1, pool);
-            }
-        });
-
-        final Future<int[]> right = pool.submit(new Callable<int[]>() {
-            public int[] call() throws Exception {
-                return lim == 0 ? kmul(x, y, off + b, n - b) : pmul(x, y, off + b, n - b, lim - 1, pool);
-            }
-        });
-
-        final int[] x2 = new int[n - b + 1], y2 = new int[n - b + 1];
-        long carry = 0;
-        for (int i = 0; i < b; i++) {
-            carry = (x[off + b + i] & mask) + (x[off + i] & mask) + carry;
-            x2[i] = (int) carry;
-            carry >>>= 32;
-        }
-        if ((n & 1) != 0) x2[b] = x[off + b + b];
-        if (carry != 0) if (++x2[b] == 0) ++x2[b + 1];
-        carry = 0;
-        for (int i = 0; i < b; i++) {
-            carry = (y[off + b + i] & mask) + (y[off + i] & mask) + carry;
-            y2[i] = (int) carry;
-            carry >>>= 32;
-        }
-        if ((n & 1) != 0) y2[b] = y[off + b + b];
-        if (carry != 0) if (++y2[b] == 0) ++y2[b + 1];
-
-        final Future<int[]> mid = pool.submit(new Callable<int[]>() {
-            public int[] call() throws Exception {
-                return lim == 0 ? kmul(x2, y2, 0, n - b + (x2[n - b] != 0 || y2[n - b] != 0 ? 1 : 0)) :
-                        pmul(x2, y2, 0, n - b + (x2[n - b] != 0 || y2[n - b] != 0 ? 1 : 0), lim - 1, pool);
-            }
-        });
-
-        final int[] z = new int[2 * n];
-
-        final int[] z0 = left.get();
-        System.arraycopy(z0, 0, z, 0, 2 * b);
-        final int[] z2 = right.get();
-        System.arraycopy(z2, 0, z, b + b, 2 * (n - b));
-
-        final int[] z1 = mid.get();
-
-        carry = 0;
-        int i = 0;
-        for (; i < 2 * b; i++) {
-            carry = (z[i + b] & mask) + (z1[i] & mask) - (z2[i] & mask) - (z0[i] & mask) + carry;
-            z[i + b] = (int) carry;
-            carry >>= 32;
-        }
-        for (; i < 2 * (n - b); i++) {
-            carry = (z[i + b] & mask) + (z1[i] & mask) - (z2[i] & mask) + carry;
-            z[i + b] = (int) carry;
-            carry >>= 32;
-        }
-        for (; i < z1.length; i++) {
-            carry = (z[i + b] & mask) + (z1[i] & mask) + carry;
-            z[i + b] = (int) carry;
-            carry >>= 32;
-        }
-        if (carry != 0) while (++z[i + b] == 0) ++i;
-        return z;
     }
     /*** </Mul Helper> ***/
 

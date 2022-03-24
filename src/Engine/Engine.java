@@ -40,9 +40,9 @@ public class Engine {
         }
 
         Zobrist.readRandomNumbers();
-        root = generateRootNode();
+        root = new Node();
         root.loadNodeData();
-        rootKey = Zobrist.getZobristKey(root.boardState);
+        rootKey = Zobrist.getZobristKey(new Board());
         transpositionTable = new Hashtable<>();
         transpositionTable.put(rootKey, root);
         pathToRoot = new LinkedList<>();
@@ -50,9 +50,9 @@ public class Engine {
 
     public List<LinkedList<String>> getBestVariations(Game game, int depth, int variations) {
         List<LinkedList<String>> variationList = new LinkedList<>();
-        String sideValue = game.board.whiteToMove ? "(n.wValue/n.bValue)" : "(n.bValue/n.wValue)";
+        String sideValue = game.board.whiteToMove ? "(n.wValue/n.visits)" : "(n.bValue/n.visits)";
 
-        //take top 3 moves
+        //take top n moves
         String dataSQL = "SELECT n.zobristKey, p.move FROM nodeTbl AS n JOIN parentChildTbl AS p ON n.zobristKey = p.childKey " +
                 "WHERE p.parentKey = " + Zobrist.getZobristKey(game.board) +
                 " ORDER BY " + sideValue + " DESC LIMIT " + variations;
@@ -84,6 +84,7 @@ public class Engine {
 
         for (int i = 0; i < depth; i++) {
             keyMovePair = getBestMove(zobristKey, whiteToMove);
+            whiteToMove = !whiteToMove;
             if (keyMovePair == null) return variation;
             zobristKey = Long.parseLong(keyMovePair.split(",")[0]);
             variation.add(keyMovePair.split(",")[1]);
@@ -93,7 +94,8 @@ public class Engine {
     }
 
     public String getBestMove(long zobristKey, boolean whiteToMove) {
-        String sideValue = whiteToMove ? "(n.wValue/n.bValue)" : "(n.bValue/n.wValue)";
+        ResultSet moveRS;
+        String sideValue = whiteToMove ? "(n.wValue/n.visits)" : "(n.bValue/n.visits)";
 
         String dataSQL = "SELECT p.childKey, p.move FROM nodeTbl AS n JOIN parentChildTbl AS p " +
                 "ON n.zobristKey = p.childKey WHERE p.parentKey = " + zobristKey +
@@ -102,10 +104,10 @@ public class Engine {
         String keyPair = null;
 
         try {
-            rs = stmt.executeQuery(dataSQL);
+            moveRS = stmt.executeQuery(dataSQL);
 
-            while (rs.next()) {
-                keyPair = rs.getString(1) + "," + rs.getString(2);
+            while (moveRS.next()) {
+                keyPair = moveRS.getString(1) + "," + moveRS.getString(2);
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -134,15 +136,19 @@ public class Engine {
     }
 
     public void trainEngine(long timeInSeconds) throws SQLException {
+        trainEngine(timeInSeconds, root);
+    }
+
+    public void trainEngine(long timeInSeconds, Node position) throws SQLException {
         System.out.println("Start Training: " + formatter.format(new Date(System.currentTimeMillis())));
-        if (getGameState(root) != Game.GameState.ONGOING) return;
+        if (getGameState(position) != Game.GameState.ONGOING) return;
 
         long startTime = System.currentTimeMillis();
 
-        if (root.children == null) root.children = generateChildren(root);
+        if (position.children == null) position.children = generateChildren(position);
 
         while (System.currentTimeMillis() < startTime + (timeInSeconds * 1000)) {
-            Node selectedChild = selection(root);
+            Node selectedChild = selection(position);
             Node expandedChild = expansion(selectedChild);
             Node result = rollout(expandedChild);
             root = backpropagation(result);
@@ -152,6 +158,7 @@ public class Engine {
         }
     }
 
+/*
     public void trainEngine() throws SQLException {
         System.out.println("Start Training: " + formatter.format(new Date(System.currentTimeMillis())));
         if (getGameState(root) != Game.GameState.ONGOING) return;
@@ -168,6 +175,8 @@ public class Engine {
             pathToRoot.clear();
         }
     }
+
+*/
 
     public Node selection(Node node) {
         if (!pathToRoot.contains(node)) pathToRoot.add(node);
@@ -202,7 +211,7 @@ public class Engine {
         if (node.children == null) node.children = generateChildren(node);
         if (getGameState(node) != Game.GameState.ONGOING) return node;
 
-        Node expandingChild = null;
+        Node expandingChild = node.children.get(0);
 
         double maxUCB = Double.NEGATIVE_INFINITY;
         for (Node n : node.children) {
@@ -231,7 +240,7 @@ public class Engine {
     public Node backpropagation(Node node) {
         long reward;
 
-        switch(getGameState(node)) {
+        switch (getGameState(node)) {
             case WHITE_WINS -> reward = 1;
             case BLACK_WINS -> reward = -1;
             default -> reward = 0;
@@ -249,15 +258,11 @@ public class Engine {
             node = node.parent;
         }
 
-        //update root node
-        node.n.assign(0);
-        node.wV.assign(0);
-        node.bV.assign(0);
-
-        for (Node n : node.children) {
-            node.n.add(n.n);
-            node.wV.add(n.wV);
-            node.bV.add(n.bV);
+        node.n.add(1);
+        if (reward == 1) {
+            node.wV.add(1);
+        } else if (reward == -1) {
+            node.bV.add(1);
         }
 
         return node;
@@ -281,6 +286,8 @@ public class Engine {
         Node node;
         String move;
 
+        String sql;
+
         long startTime = System.currentTimeMillis();
 
         System.out.print("Stored ");
@@ -290,7 +297,7 @@ public class Engine {
             node = entry.getValue();
             move = node.move.toString();
 
-            String sql = "REPLACE INTO nodeTbl (zobristKey, visits, wValue, bValue) " +
+            sql = "REPLACE INTO nodeTbl (zobristKey, visits, wValue, bValue) " +
                     "VALUES (" + key + ", " + node.n.toString() + ", " + node.wV.toString() + ", " + node.bV.toString() + ")";
 
             if (node.n.isZero()) continue;
@@ -301,42 +308,16 @@ public class Engine {
             if (node.parent == null) continue;
 
             long parentKey = Zobrist.getZobristKey(node.parent.boardState);
-            stmt.executeUpdate("INSERT IGNORE INTO parentChildTbl VALUES (" + parentKey + ", " + key + ", \"" + move + "\")");
+            if (parentKey != key)
+                stmt.executeUpdate("INSERT IGNORE INTO parentChildTbl VALUES (" + parentKey + ", " + key + ", \"" + move + "\")");
         }
 
         System.out.println(nodesStored + " nodes in " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime) + " seconds." + new Date());
         transpositionTable.clear();
-        root = generateRootNode();
+        root = new Node();
+        root.loadNodeData();
+
         transpositionTable.put(rootKey, root);
-    }
-
-    public Node generateRootNode() {
-        Node node = new Node();
-
-        String dataSQL = "SELECT * FROM nodeTbl WHERE zobristKey NOT IN (SELECT childKey FROM parentChildTbl)";
-
-        long key;
-        String visits, wValue, bValue;
-
-        try {
-            rs = stmt.executeQuery(dataSQL);
-
-            while (rs.next()) {
-                key = rs.getLong(1);
-                visits = rs.getString(2);
-                wValue = rs.getString(3);
-                bValue = rs.getString(4);
-
-                if (Zobrist.getZobristKey(node.boardState) == key) {
-                    node.n = new BigInt(visits);
-                    node.wV = new BigInt(wValue);
-                    node.bV = new BigInt(bValue);
-                }
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-        return node;
     }
 
     public List<Node> generateChildren(Node node) {
@@ -411,13 +392,12 @@ public class Engine {
 
     public class Node {
         public List<Node> children;
+        public Move move;
+        public Board boardState;
         BigInt n; //How often this node has been visited
         BigInt wV; //White wins from position
         BigInt bV; //Black wins from position
-
         Node parent;
-        public Move move;
-        public Board boardState;
 
         Node() {
             parent = null;
@@ -446,8 +426,35 @@ public class Engine {
         }
 
         public void loadNodeData() {
+            String dataSQL;
             try {
-                String dataSQL = "SELECT * FROM nodeTbl WHERE zobristKey = " + Zobrist.getZobristKey(this.boardState);
+                if (Zobrist.getZobristKey(this.boardState) == rootKey) {
+                    dataSQL = "UPDATE nodeTbl SET visits = " +
+                            "(SELECT SUM(n.visits) " +
+                            "FROM nodeTbl AS n JOIN parentChildTbl AS p " +
+                            "ON n.zobristKey = p.childKey " +
+                            "WHERE p.parentKey = " + rootKey + ") " +
+                            "WHERE zobristKey = " + rootKey;
+                    stmt.execute(dataSQL);
+
+                    dataSQL = "UPDATE nodeTbl SET wValue = " +
+                            "(SELECT SUM(n.wValue) " +
+                            "FROM nodeTbl AS n JOIN parentChildTbl AS p " +
+                            "ON n.zobristKey = p.childKey " +
+                            "WHERE p.parentKey = " + rootKey + ") " +
+                            "WHERE zobristKey = " + rootKey;
+                    stmt.execute(dataSQL);
+
+                    dataSQL = "UPDATE nodeTbl SET bValue = " +
+                            "(SELECT SUM(n.bValue) " +
+                            "FROM nodeTbl AS n JOIN parentChildTbl AS p " +
+                            "ON n.zobristKey = p.childKey " +
+                            "WHERE p.parentKey = " + rootKey + ") " +
+                            "WHERE zobristKey = " + rootKey;
+                    stmt.execute(dataSQL);
+                }
+
+                dataSQL = "SELECT * FROM nodeTbl WHERE zobristKey = " + Zobrist.getZobristKey(this.boardState);
 
                 rs = stmt.executeQuery(dataSQL);
 

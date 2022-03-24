@@ -31,18 +31,14 @@ SELECT * FROM parentChildTbl;
 SELECT n.*, p.move 
 FROM nodeTbl AS n JOIN parentChildTbl AS p
 ON n.zobristKey = p.childKey
-WHERE p.parentKey = 6224605925038556229 #AND n.wValue < n.bValue
+WHERE p.parentKey = -1451015966002190617
 #ORDER BY n.visits DESC;
 #ORDER BY n.wValue DESC;
-ORDER BY (n.wValue/n.bValue) DESC;
+ORDER BY (n.wValue/n.visits) DESC;
 
 SELECT COUNT(*) FROM nodeTbl;
 SELECT COUNT(*) FROM parentChildTbl;
 
 # All nodes without parents, should always be empty bar Nb8 and Ng8
-SELECT * FROM nodeTbl WHERE zobristKey NOT IN (SELECT parentKey FROM parentChildTbl);
-SELECT * FROM nodeTbl WHERE visits = 0;
-
+SELECT * FROM nodeTbl WHERE zobristKey NOT IN (SELECT childKey FROM parentChildTbl);
 SELECT * FROM nodeTbl WHERE zobristKey = -1451015966002190617;
-SELECT * FROM parentChildTbl WHERE childKey = -1451015966002190617;
-

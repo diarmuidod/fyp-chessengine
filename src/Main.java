@@ -8,8 +8,7 @@ public class Main {
     //  "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq -" at depth 2
     //  cannot locate source of problem, may revisit later. Will move on for now.
 
-    public static void main(String[] args) throws IOException {
-        new UI();//.engine.trainEngine(0);
+    public static void main(String[] args) throws IOException, SQLException {
+        new UI();
     }
 }
-

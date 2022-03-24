@@ -1,9 +1,10 @@
 package Board;
 
+import Utils.Utils;
+
 import java.util.BitSet;
 import java.util.LinkedList;
 import java.util.List;
-import Utils.*;
 
 public class MoveGenerator {
     private static final int[] pawnOffsets = {8, 16, 7, 9}; //white offsets, values inverted for black
@@ -622,10 +623,13 @@ public class MoveGenerator {
 
         //determine whether the move is among the legal moves for that piece
         if (currentBoard.pawnPieces.get(startSquare)) return getPawnMoves(startSquare, currentBoard).get(targetSquare);
-        if (currentBoard.knightPieces.get(startSquare)) return getKnightMoves(startSquare, currentBoard).get(targetSquare);
-        if (currentBoard.bishopPieces.get(startSquare)) return getBishopMoves(startSquare, currentBoard).get(targetSquare);
+        if (currentBoard.knightPieces.get(startSquare))
+            return getKnightMoves(startSquare, currentBoard).get(targetSquare);
+        if (currentBoard.bishopPieces.get(startSquare))
+            return getBishopMoves(startSquare, currentBoard).get(targetSquare);
         if (currentBoard.rookPieces.get(startSquare)) return getRookMoves(startSquare, currentBoard).get(targetSquare);
-        if (currentBoard.queenPieces.get(startSquare)) return getQueenMoves(startSquare, currentBoard).get(targetSquare);
+        if (currentBoard.queenPieces.get(startSquare))
+            return getQueenMoves(startSquare, currentBoard).get(targetSquare);
         if (currentBoard.kingPieces.get(startSquare)) return getKingMoves(startSquare, currentBoard).get(targetSquare);
 
         return false;

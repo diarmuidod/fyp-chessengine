@@ -34,6 +34,16 @@ public class Board {
         loadPositionFromFEN(FEN);
     }
 
+    public static String toBinaryString(BitSet bitSet) {
+        int bits = 64;
+        StringBuilder sb = new StringBuilder(bitSet.length());
+        for (int i = bits - 1; i >= 0; i--) {
+            sb.append(bitSet.get(i) ? '1' : '0');
+            if (i % 8 == 0) sb.append(' ');
+        }
+        return sb.toString();
+    }
+
     public void loadPositionFromFEN(String FEN) {
         String FENtoBoard = FEN.split(" ", 6)[0];
         String sideToMove = FEN.split(" ", 6)[1];
@@ -162,20 +172,10 @@ public class Board {
         }
     }
 
-    public static String toBinaryString(BitSet bitSet) {
-        int bits = 64;
-        StringBuilder sb = new StringBuilder(bitSet.length());
-        for (int i = bits - 1; i >= 0; i--) {
-            sb.append(bitSet.get(i) ? '1' : '0');
-            if (i % 8 == 0) sb.append(' ');
-        }
-        return sb.toString();
-    }
-
     @Override
     public boolean equals(Object o) {
-        if(o == this) return true;
-        if(!(o instanceof Board that)) return false;
+        if (o == this) return true;
+        if (!(o instanceof Board that)) return false;
 
         if (!this.allPieces.equals(that.allPieces)) return false;
 

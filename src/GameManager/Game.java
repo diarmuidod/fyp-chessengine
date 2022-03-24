@@ -3,12 +3,13 @@ package GameManager;
 import Board.Board;
 import Board.Move;
 import Board.MoveGenerator;
-import Debug.Perft;
 import Engine.Engine;
 import Utils.Utils;
 
-import java.sql.SQLException;
-import java.util.*;
+import java.util.BitSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Scanner;
 
 public class Game {
     //Stole this from the internet - https://gist.github.com/Dani4kor/e1e8b439115878f8c6dcf127a4ed5d3e
@@ -30,6 +31,7 @@ public class Game {
         gameState = getGameState(board);
         mctsEngine = loadEngine();
     }
+
     public Game(Engine engine) {
         board = new Board();
         moveGenerator = new MoveGenerator();
