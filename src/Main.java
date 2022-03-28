@@ -1,3 +1,5 @@
+import Board.Zobrist;
+import Engine.Engine;
 import GUI.UI;
 
 import java.io.IOException;
@@ -9,6 +11,8 @@ public class Main {
     //  cannot locate source of problem, may revisit later. Will move on for now.
 
     public static void main(String[] args) throws IOException, SQLException {
+        //Zobrist.writeRandomNumbersToDB();
+        //new Engine().trainEngine(885);
         new UI();
     }
 }

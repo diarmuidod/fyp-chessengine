@@ -30,8 +30,10 @@ public class Engine {
     LinkedList<Integer> gameLength = new LinkedList<>();
     LinkedList<Node> pathToRoot;
     SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
+    long timeSinceLastSave;
 
     public Engine() {
+        Zobrist.readRandomNumbersFromDB();
         try {
             conn = DriverManager.getConnection("jdbc:mariadb://localhost:3306/chessdb", "root", "");
             stmt = conn.createStatement();
@@ -39,7 +41,6 @@ public class Engine {
             e.printStackTrace();
         }
 
-        Zobrist.readRandomNumbers();
         root = new Node();
         root.loadNodeData();
         rootKey = Zobrist.getZobristKey(new Board());
@@ -147,6 +148,7 @@ public class Engine {
 
         if (position.children == null) position.children = generateChildren(position);
 
+        timeSinceLastSave = System.currentTimeMillis();
         while (System.currentTimeMillis() < startTime + (timeInSeconds * 1000)) {
             Node selectedChild = selection(position);
             Node expandedChild = expansion(selectedChild);
@@ -312,7 +314,10 @@ public class Engine {
                 stmt.executeUpdate("INSERT IGNORE INTO parentChildTbl VALUES (" + parentKey + ", " + key + ", \"" + move + "\")");
         }
 
-        System.out.println(nodesStored + " nodes in " + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime) + " seconds." + new Date());
+        System.out.println(nodesStored + " nodes in "
+                + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - startTime) + " seconds. Time since last save: "
+                + TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - timeSinceLastSave) + " seconds." + new Date());
+        timeSinceLastSave = System.currentTimeMillis();
         transpositionTable.clear();
         root = new Node();
         root.loadNodeData();

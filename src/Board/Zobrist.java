@@ -3,6 +3,7 @@ package Board;
 import Utils.Utils;
 
 import java.io.*;
+import java.sql.*;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.Scanner;
@@ -25,6 +26,36 @@ public class Zobrist {
             }
             writer.close();
         } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void writeRandomNumbersToDB() {
+        Connection conn;
+        Statement stmt;
+
+        try {
+            conn = DriverManager.getConnection("jdbc:mariadb://localhost:3306/chessdb", "root", "");
+            stmt = conn.createStatement();
+
+            String sql;
+
+            Scanner scanner = new Scanner(new File("ZobristKeys.txt"));
+
+            LinkedList<Long> keys = new LinkedList<>();
+
+            while (scanner.hasNextLine()) {
+                keys.add(Long.parseLong(scanner.nextLine()));
+            }
+
+            for(Long key : keys) {
+                sql = "INSERT IGNORE INTO initialisingZobristValuesTbl VALUES (" + key + ")";
+                stmt.executeUpdate(sql);
+            }
+
+            stmt.close();
+            conn.close();
+        } catch (SQLException | FileNotFoundException e) {
             e.printStackTrace();
         }
     }
@@ -58,6 +89,53 @@ public class Zobrist {
 
             blackMove = keys.pop();
         } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void readRandomNumbersFromDB() {
+        Connection conn;
+        Statement stmt;
+        ResultSet rs;
+
+        try {
+            conn = DriverManager.getConnection("jdbc:mariadb://localhost:3306/chessdb", "root", "");
+            stmt = conn.createStatement();
+
+            String sql = "SELECT * FROM initialisingZobristValuesTbl";
+            rs = stmt.executeQuery(sql);
+
+            if(!rs.next()) writeRandomNumbersToDB();
+
+            sql = "SELECT * FROM initialisingZobristValuesTbl";
+            rs = stmt.executeQuery(sql);
+
+            LinkedList<Long> keys = new LinkedList<>();
+
+            while(rs.next()) {
+                keys.add(rs.getLong(1));
+            }
+
+            for (int i = 0; i < 2; i++) {
+                for (int j = 0; j < 6; j++) {
+                    for (int k = 0; k < 64; k++) {
+                        board[i][j][k] = keys.pop();
+                    }
+                }
+            }
+
+            for (int i = 0; i < 8; i++) {
+                enPassant[i] = keys.pop();
+            }
+
+            for (int i = 0; i < 4; i++) {
+                castling[i] = keys.pop();
+            }
+
+            blackMove = keys.pop();
+            stmt.close();
+            conn.close();
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }

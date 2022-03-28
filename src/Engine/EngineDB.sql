@@ -9,8 +9,7 @@ CREATE TABLE IF NOT EXISTS nodeTbl (
 	zobristKey BIGINT UNIQUE,
     visits BIGINT UNSIGNED,  # n
     wValue BIGINT UNSIGNED,	# wV
-    bValue BIGINT UNSIGNED,	# bV
-    CONSTRAINT node_PK PRIMARY KEY (zobristKey)
+    bValue BIGINT UNSIGNED	# bV
 );
 
 CREATE TABLE IF NOT EXISTS parentChildTbl (
@@ -24,8 +23,12 @@ CREATE TABLE IF NOT EXISTS initialisingZobristValuesTbl (
 	zobristKey BIGINT UNIQUE
 );
 
+/*
 SELECT * FROM nodeTbl ORDER BY visits DESC;
 SELECT * FROM parentChildTbl;
+SELECT * FROM initialisingzobristvaluestbl;
+
+SELECT * FROM nodeTbl WHERE zobristKey = -1451015966002190617;
 
 # select all children of root node, plus the move to reach them
 SELECT n.*, p.move 
@@ -39,6 +42,5 @@ ORDER BY (n.wValue/n.visits) DESC;
 SELECT COUNT(*) FROM nodeTbl;
 SELECT COUNT(*) FROM parentChildTbl;
 
-# All nodes without parents, should always be empty bar Nb8 and Ng8
-SELECT * FROM nodeTbl WHERE zobristKey NOT IN (SELECT childKey FROM parentChildTbl);
-SELECT * FROM nodeTbl WHERE zobristKey = -1451015966002190617;
+SELECT * FROM nodeTbl WHERE visits = 0;
+*/

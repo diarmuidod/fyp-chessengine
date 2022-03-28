@@ -115,11 +115,11 @@ public class UI {
     }
 
     private JButton startEngineTraining() {
-        JButton button = new JButton("Train Engine (10s)");
+        JButton button = new JButton("Train Engine (15m)");
         button.setMargin(new Insets(0, 0, 0, 0));
         button.addActionListener(e -> {
             try {
-                engine.trainEngine(10, engine.findMoveNode(chessGame.movesPlayed));
+                engine.trainEngine(900, engine.findMoveNode(chessGame.movesPlayed));
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
