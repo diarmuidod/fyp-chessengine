@@ -12,7 +12,7 @@ public class Main {
 
     public static void main(String[] args) throws IOException, SQLException {
         //Zobrist.writeRandomNumbersToDB();
-        //new Engine().trainEngine(885);
-        new UI();
+        new Engine().trainEngine(885);
+        //new UI();
     }
 }

@@ -6,7 +6,7 @@ echo.
 
 TIMEOUT /T 900 /NOBREAK
 	echo.
-	start java -Xms8G -Xmx24G -jar fyp-chessengine.jar
+	start java -Xms8G -Xmx28G -jar fyp-chessengine.jar
 	echo.
 
 GOTO LOOP
