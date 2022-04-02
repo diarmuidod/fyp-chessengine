@@ -1,5 +1,6 @@
-package Board;
+package Utils;
 
+import Board.Board;
 import Utils.Utils;
 
 import java.io.*;
@@ -39,9 +40,7 @@ public class Zobrist {
             stmt = conn.createStatement();
 
             String sql;
-
             Scanner scanner = new Scanner(new File("ZobristKeys.txt"));
-
             LinkedList<Long> keys = new LinkedList<>();
 
             while (scanner.hasNextLine()) {

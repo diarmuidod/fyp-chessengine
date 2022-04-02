@@ -34,6 +34,7 @@ public class Board {
         loadPositionFromFEN(FEN);
     }
 
+    //Returns formatted String of BitSet
     public static String toBinaryString(BitSet bitSet) {
         int bits = 64;
         StringBuilder sb = new StringBuilder(bitSet.length());
@@ -86,6 +87,7 @@ public class Board {
                         case 'Q' -> queenPieces.set((rank * 8) + file);
                         case 'K' -> kingPieces.set((rank * 8) + file);
                     }
+
                     file++;
                 }
             }
@@ -196,6 +198,7 @@ public class Board {
         return this.enPassantSquare == that.enPassantSquare;
     }
 
+    //Board section of FEN, solely used for debugging
     public String basicFEN() {
         StringBuilder fen = new StringBuilder();
         int emptySquares = 0;

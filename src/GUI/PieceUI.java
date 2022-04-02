@@ -11,6 +11,7 @@ public class PieceUI {
 
     LinkedList<PieceUI> pieceList;
 
+    //creates piece and adds it to the passed piece list
     public PieceUI(int xPos, int yPos, boolean isWhite, boolean boardFlipped, int imgIndex, String id, LinkedList<PieceUI> pieceList) {
         this.xPos = xPos;
         this.yPos = boardFlipped ? yPos : Math.abs(yPos - 7);
@@ -22,6 +23,7 @@ public class PieceUI {
         pieceList.add(this);
     }
 
+    //moves a piece to the specified square, removing any piece which exists there already
     public void movePiece(int xPos, int yPos) {
         PieceUI pieceToRemove = null;
         for (PieceUI piece : pieceList) {

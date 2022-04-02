@@ -29,18 +29,8 @@ public class Game {
         movesPlayed = new LinkedList<>();
         input = new Scanner(System.in);
         gameState = getGameState(board);
-        mctsEngine = loadEngine();
+        mctsEngine = new Engine();
     }
-
-    public Game(Engine engine) {
-        board = new Board();
-        moveGenerator = new MoveGenerator();
-        movesPlayed = new LinkedList<>();
-        input = new Scanner(System.in);
-        gameState = getGameState(board);
-        mctsEngine = engine;
-    }
-
 
     public Game(String FEN) {
         board = new Board(FEN);
@@ -48,18 +38,10 @@ public class Game {
         movesPlayed = new LinkedList<>();
         input = new Scanner(System.in);
         gameState = getGameState(board);
-        mctsEngine = loadEngine();
+        mctsEngine = new Engine();
     }
 
-    public Game(String FEN, Engine engine) {
-        board = new Board(FEN);
-        moveGenerator = new MoveGenerator();
-        movesPlayed = new LinkedList<>();
-        input = new Scanner(System.in);
-        gameState = getGameState(board);
-        mctsEngine = engine;
-    }
-
+    //Generate FEN String from the current position
     public String saveGameToFEN() {
         StringBuilder fen = new StringBuilder();
         int emptySquares = 0;
@@ -120,22 +102,22 @@ public class Game {
         return fen.toString();
     }
 
-    public String saveGameToPGN() {
-        return null;
-    }
-
+    //Prints full board
     public void printBoard() {
         board.printBoard();
     }
 
+    //Retrieves all fully legal moves
     public List<Move> getLegalMoves() {
         return moveGenerator.getLegalMoves(board);
     }
 
+    //Prints the board, populated only with the set bits of a bitset
     public void printBoard(BitSet bitset) {
         board.printBoard(bitset);
     }
 
+    //Determines game state
     public GameState getGameState(Board board) {
         if (board.fiftyMoveCount >= 50) {
             return GameState.DRAW;
@@ -157,14 +139,6 @@ public class Game {
         }
 
         return GameState.ONGOING;
-    }
-
-    public Engine loadEngine() {
-        return new Engine();
-    }
-
-    public void saveEngine() {
-
     }
 
     public enum GameState {

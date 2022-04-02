@@ -17,6 +17,7 @@ public class MouseMotionObserver implements MouseMotionListener {
 
     @Override
     public void mouseMoved(MouseEvent e) {
+        //Updates the active UI piece to follow the mouse
         if (UI.activePiece != null) {
             if (ui.boardPanel.contains(e.getPoint())) {
                 UI.activePiece.xPos = e.getX();

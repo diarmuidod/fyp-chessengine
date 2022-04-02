@@ -46,6 +46,8 @@ public class UI {
 
         uiFrame = generateFrame();
         updateEngineDataField();
+
+        //offset for making piece interaction pixel accurate
         xOffset = SwingUtilities.convertPoint(boardPanel, boardPanel.getX(), boardPanel.getY(), uiFrame).x;
         yOffset = SwingUtilities.convertPoint(boardPanel, boardPanel.getX(), boardPanel.getY(), uiFrame).y;
     }
@@ -59,14 +61,20 @@ public class UI {
         JPanel engineDataPanel = generateEngineDataPanel();
 
         buttonsPanel = new JPanel(new BorderLayout(5, 5));
+
         JButton copyFenButton = generateCopyFEN();
-        //JButton exportPgnButton = generateExportPgn();
         JButton startEngineTrainingButton = startEngineTraining();
         JButton stopEngineTrainingButton = generateUpdateEngineVariations();
+
         buttonsPanel.add(copyFenButton, BorderLayout.NORTH);
-        //buttonsPanel.add(exportPgnButton, BorderLayout.CENTER);
         buttonsPanel.add(startEngineTrainingButton, BorderLayout.CENTER);
         buttonsPanel.add(stopEngineTrainingButton, BorderLayout.SOUTH);
+
+        dataPanel = new JPanel();
+        dataPanel.setLayout(new BorderLayout(0, 5));
+        dataPanel.add(engineDataPanel, BorderLayout.NORTH);
+        dataPanel.add(pgnPanel, BorderLayout.CENTER);
+        dataPanel.add(buttonsPanel, BorderLayout.SOUTH);
 
         frame.setJMenuBar(menuBar);
 
@@ -74,23 +82,17 @@ public class UI {
         frame.addMouseListener(new MouseObserver(this));
 
         try {
+            //set application icon
             frame.setIconImage(ImageIO.read(new File("src/GUI/Assets/icon2.png")));
-        } catch (IOException ignored) {
-        }
+        } catch (IOException ignored) {}
 
         frame.setTitle("Chess Application");
         frame.setVisible(true);
-        frame.setSize(new Dimension(704, 576));
+        frame.setSize(new Dimension(720, 576));
         frame.setLocationRelativeTo(null);
-        frame.setResizable(true);
+        frame.setResizable(false);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setLayout(new BorderLayout());
-
-        dataPanel = new JPanel();
-        dataPanel.setLayout(new BorderLayout(0, 5));
-        dataPanel.add(engineDataPanel, BorderLayout.NORTH);
-        dataPanel.add(pgnPanel, BorderLayout.CENTER);
-        dataPanel.add(buttonsPanel, BorderLayout.SOUTH);
 
         mainPanel = new JPanel(new BorderLayout(5, 5));
         mainPanel.add(boardPanel, BorderLayout.WEST);
@@ -104,13 +106,6 @@ public class UI {
         JButton button = new JButton("Copy FEN String");
         button.setMargin(new Insets(0, 0, 0, 0));
         button.addActionListener(e -> Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(chessGame.saveGameToFEN()), null));
-        return button;
-    }
-
-    private JButton generateExportPgn() {
-        JButton button = new JButton("Copy PGN String");
-        button.setMargin(new Insets(0, 0, 0, 0));
-        button.addActionListener(e -> Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(pgnField.getText()), null));
         return button;
     }
 
@@ -136,6 +131,7 @@ public class UI {
         return button;
     }
 
+    //draw board and pieces
     private JPanel generateBoardPanel() {
         return new JPanel() {
             @Override
@@ -202,6 +198,7 @@ public class UI {
         return engineDataPanel;
     }
 
+    //split piece sprite sheet and load into array for later
     public Image[] generatePieceSprites() throws IOException {
         BufferedImage spriteSheet = ImageIO.read(new File("src\\GUI\\Assets\\sprites.png"));
         Image[] pieceSprites = new Image[12];

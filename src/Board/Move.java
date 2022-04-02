@@ -11,11 +11,14 @@ public class Move {
     public int targetSquare;
     public Flag moveFlag;
 
+    //Only used for root node in Engine
     public Move() {
         this.move = "null";
+        this.startSquare = -1;
+        this.targetSquare = -1;
     }
 
-    //internal use only (ideally want to clean this up, generation isn't particularly great, not a priority)
+    //Called by MoveGenerator
     public Move(int startSquare, int targetSquare, Board board, MoveGenerator moveGenerator, Flag moveFlag) {
         this.startSquare = startSquare;
         this.targetSquare = targetSquare;
@@ -24,8 +27,9 @@ public class Move {
         move = getMoveInSAN(board, moveGenerator);
     }
 
-    //translate user input to board representation
-    public Move(String move, Board board) {
+    //translate user input
+    //incomplete, do not call
+    private Move(String move, Board board) {
         this.move = move;
 
         int start = 0, target = 0;
@@ -41,13 +45,15 @@ public class Move {
         }
     }
 
-    public String moveFromIndex(int index) {
+    //Get square index refers to
+    public String squareFromIndex(int index) {
         char number = Utils.getRankChar(index);
         char letter = Utils.getFileChar(index);
 
         return letter + String.valueOf(number);
     }
 
+    //Get Move represented in Standard Algebraic Notation
     private String getMoveInSAN(Board board, MoveGenerator moveGenerator) {
         StringBuilder move = new StringBuilder();
 
@@ -55,11 +61,12 @@ public class Move {
         if (moveFlag.equals(Flag.CASTLE_SHORT)) return Flag.CASTLE_SHORT.getFlag();
         if (moveFlag.equals(Flag.CASTLE_LONG)) return Flag.CASTLE_LONG.getFlag();
 
-        if (board.pawnPieces.get(startSquare)) { //Pawn Moves
+        //Pawn Moves
+        if (board.pawnPieces.get(startSquare)) {
             if (board.allPieces.get(targetSquare) || moveFlag.equals(Flag.EN_PASSANT)) {
-                move = new StringBuilder(moveFromIndex(startSquare).charAt(0) + "x" + moveFromIndex(targetSquare));
+                move = new StringBuilder(squareFromIndex(startSquare).charAt(0) + "x" + squareFromIndex(targetSquare));
             } else {
-                move = new StringBuilder(moveFromIndex(targetSquare));
+                move = new StringBuilder(squareFromIndex(targetSquare));
             }
 
             if (moveFlag.equals(Flag.PROMOTE_QUEEN)) move.append(Flag.PROMOTE_QUEEN.getFlag());
@@ -80,12 +87,12 @@ public class Move {
                 } else if (board.bishopPieces.get(startSquare)) {
                     pieceType = board.bishopPieces;
                     move.append("B");
-                }
-                if (board.rookPieces.get(startSquare)) {
+                } else if (board.rookPieces.get(startSquare)) {
                     pieceType = board.rookPieces;
                     move.append("R");
                 }
 
+                //Validating moves
                 for (int i = pieceType.nextSetBit(0); i >= 0; i = pieceType.nextSetBit(i + 1)) {
                     if (i != startSquare && moveGenerator.isValidMove(i, targetSquare, board)) {
                         if (Utils.getFileChar(startSquare) == Utils.getFileChar(i)) {
@@ -97,13 +104,15 @@ public class Move {
                 }
             }
 
+            //Check for captures
             if (board.allPieces.get(targetSquare)) {
-                move.append("x").append(moveFromIndex(targetSquare));
+                move.append("x").append(squareFromIndex(targetSquare));
             } else {
-                move.append(moveFromIndex(targetSquare));
+                move.append(squareFromIndex(targetSquare));
             }
         }
 
+        //Check for checks and checkmates
         if (moveGenerator.kingInCheck(moveGenerator.makeMove(startSquare, targetSquare, board, moveFlag), !board.whiteToMove)) {
             if (moveGenerator.getLegalMoves(moveGenerator.makeMove(startSquare, targetSquare, board, moveFlag)).size() == 0) {
                 move.append("#");
@@ -115,14 +124,10 @@ public class Move {
         return move.toString();
     }
 
-    public boolean isEqual(Move that) {
-        return this.move.equals(that.move);
-    }
-
     @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof Move)) return false;
-        return Objects.equals(o.toString(), this.toString());
+    public boolean equals(Object that) {
+        if (!(that instanceof Move)) return false;
+        return this.toString().equals(that.toString());
     }
 
     public String toString() {

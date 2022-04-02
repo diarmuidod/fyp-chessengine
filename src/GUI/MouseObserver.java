@@ -18,31 +18,38 @@ public class MouseObserver implements MouseListener {
 
     @Override
     public void mouseClicked(MouseEvent e) {
+        //If no active piece exists, and one exists at the clicked cell, set it as the active piece
         if (UI.activePiece == null) {
             UI.activePiece = ui.getPiece((e.getX() - ui.xOffset) / UI.squareSize, (e.getY() - ui.yOffset) / UI.squareSize);
             if (UI.activePiece != null) {
                 UI.activePieceStartX = UI.activePiece.xPos;
                 UI.activePieceStartY = UI.activePiece.yPos;
             }
-        } else {
+        } else {//If an active piece exists
+            //if right-clicked, null the active piece having returned it to the original square
             if (SwingUtilities.isRightMouseButton(e)) {
                 UI.activePiece.movePiece(UI.activePieceStartX, UI.activePieceStartY);
                 UI.activePiece = null;
+            //if left-clicked
             } else if (SwingUtilities.isLeftMouseButton(e)) {
                 Move move;
 
                 int mouseX = (e.getX() - ui.xOffset) / UI.squareSize;
                 int mouseY = (e.getY() - ui.yOffset) / UI.squareSize;
 
+                //if the piece can legally move there, do so, and null the active piece
+                //play the move and update the pgn and engine data accordingly
                 if ((move = validMove(mouseX, mouseY)) != null) {
                     ui.chessGame.board = ui.chessGame.moveGenerator.makeMove(move, ui.chessGame.board);
                     ui.chessGame.movesPlayed.add(move);
                     ui.pieceList = ui.generatePieceList();
                     setPgnText(ui.chessGame.movesPlayed);
                     ui.updateEngineDataField();
+                //if  the clicked square is the original square, set it back there
                 } else if (UI.activePieceStartX == mouseX && UI.activePieceStartY == mouseY) {
                     UI.activePiece.xPos = UI.activePieceStartX;
                     UI.activePiece.yPos = UI.activePieceStartY;
+                //otherwise, reset it to its original position
                 } else {
                     UI.activePiece.movePiece(UI.activePieceStartX, UI.activePieceStartY);
                 }
@@ -75,6 +82,7 @@ public class MouseObserver implements MouseListener {
 
     }
 
+    //use the start and target squares clicked to match moves against the legal move list
     private Move validMove(int targetX, int targetY) {
         int startIndex = Utils.posToIndex(UI.activePieceStartX, UI.activePieceStartY, ui.boardFlipped);
         int targetIndex = Utils.posToIndex(targetX, targetY, ui.boardFlipped);
@@ -84,9 +92,11 @@ public class MouseObserver implements MouseListener {
                 return m;
             }
         }
+
         return null;
     }
 
+    //update the pgn field to accurately display moves played
     public void setPgnText(List<Move> movesPlayed) {
         StringBuilder pgn = new StringBuilder();
         int index = 0;
