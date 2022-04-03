@@ -1,7 +1,6 @@
 package Utils;
 
 import Board.Board;
-import Utils.Utils;
 
 import java.io.*;
 import java.sql.*;
@@ -19,7 +18,7 @@ public class Zobrist {
         Random random = new Random();
 
         try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter("ZobristKeys.txt"));
+            BufferedWriter writer = new BufferedWriter(new FileWriter("/ZobristKeys.txt"));
 
             int keys = 64 * 6 * 2 + 8 + 4 + 1;
             for (int i = 0; i < keys; i++) {
@@ -40,7 +39,7 @@ public class Zobrist {
             stmt = conn.createStatement();
 
             String sql;
-            Scanner scanner = new Scanner(new File("ZobristKeys.txt"));
+            Scanner scanner = new Scanner(new File("/ZobristKeys.txt"));
             LinkedList<Long> keys = new LinkedList<>();
 
             while (scanner.hasNextLine()) {
@@ -62,7 +61,7 @@ public class Zobrist {
     public static void readRandomNumbers() { //read random numbers into arrays
         Scanner scanner;
         try {
-            scanner = new Scanner(new File("ZobristKeys.txt"));
+            scanner = new Scanner(new File("/ZobristKeys.txt"));
 
             LinkedList<Long> keys = new LinkedList<>();
 

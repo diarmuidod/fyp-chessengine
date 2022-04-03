@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 public class UI {
     public static final int squareSize = 64;
@@ -83,7 +84,7 @@ public class UI {
 
         try {
             //set application icon
-            frame.setIconImage(ImageIO.read(new File("src/GUI/Assets/icon2.png")));
+            frame.setIconImage(ImageIO.read(Objects.requireNonNull(this.getClass().getClassLoader().getResource("icon2.png"))));
         } catch (IOException ignored) {}
 
         frame.setTitle("Chess Application");
@@ -110,11 +111,11 @@ public class UI {
     }
 
     private JButton startEngineTraining() {
-        JButton button = new JButton("Train Engine (15m)");
+        JButton button = new JButton("Train Engine (60s)");
         button.setMargin(new Insets(0, 0, 0, 0));
         button.addActionListener(e -> {
             try {
-                engine.trainEngine(900, engine.findMoveNode(chessGame.movesPlayed));
+                engine.trainEngine(60, engine.findMoveNode(chessGame.movesPlayed));
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -200,7 +201,7 @@ public class UI {
 
     //split piece sprite sheet and load into array for later
     public Image[] generatePieceSprites() throws IOException {
-        BufferedImage spriteSheet = ImageIO.read(new File("src\\GUI\\Assets\\sprites.png"));
+        BufferedImage spriteSheet = ImageIO.read(Objects.requireNonNull(this.getClass().getClassLoader().getResource("sprites.png")));
         Image[] pieceSprites = new Image[12];
 
         for (int y = 0; y < 2; y++) {
